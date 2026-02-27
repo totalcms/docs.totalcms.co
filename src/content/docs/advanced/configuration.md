@@ -1,7 +1,7 @@
 ---
 title: "Configuration"
+description: "Configure Total CMS with hierarchical PHP settings for security, storage, caching, email, API, logging, and environment-specific overrides."
 ---
-
 Total CMS uses a hierarchical configuration system based on PHP files. This allows for flexible environment-specific settings while maintaining secure defaults.
 
 ## Configuration Load Order

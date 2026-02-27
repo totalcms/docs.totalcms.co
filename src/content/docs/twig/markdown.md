@@ -1,7 +1,7 @@
 ---
 title: "Twig Markdown Integration"
+description: "Convert markdown to HTML in Total CMS Twig templates using ParsedownExtra with block and inline rendering via the markdown filter."
 ---
-
 Total CMS provides seamless markdown processing through Twig templates using ParsedownExtra, a powerful PHP markdown parser that supports extended markdown syntax.
 
 ## Overview

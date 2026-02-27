@@ -1,7 +1,7 @@
 ---
 title: "White Label Dashboard"
+description: "Customize the Total CMS admin with white label branding including custom logos, login pages, CSS variables, and localized form labels. Pro edition only."
 ---
-
 **Available in:** Total CMS Pro only
 
 The white label feature allows you to customize the Total CMS admin dashboard with your own branding, making it appear as your own custom CMS solution for clients.

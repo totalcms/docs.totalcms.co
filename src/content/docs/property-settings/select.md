@@ -1,7 +1,7 @@
 ---
 title: "Select & Multiselect"
+description: "Configure select and multiselect dropdown fields in Total CMS with the clearValue button setting for optional selection clearing."
 ---
-
 ## Clear Button
 
 Select fields include a clear button (x) that appears when a value is selected, allowing users to quickly reset the selection. This feature is enabled by default but can be disabled using the `clearValue` setting.

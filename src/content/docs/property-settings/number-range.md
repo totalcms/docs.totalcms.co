@@ -1,7 +1,7 @@
 ---
 title: "Number and Range Fields"
+description: "Configure number and range input fields in Total CMS with min, max, and step settings for precise numeric value control."
 ---
-
 ```json
 {
   "min"  : 1,

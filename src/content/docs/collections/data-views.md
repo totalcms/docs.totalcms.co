@@ -1,7 +1,7 @@
 ---
 title: "Data Views"
+description: "Pre-compute and cache data structures from Total CMS collections using Twig templates. Data Views auto-rebuild when dependencies change."
 ---
-
 Data Views let you pre-compute data structures from your collections using Twig templates. Instead of querying and transforming data on every page load, a Data View runs your Twig template once and caches the result. You can then access the pre-built data instantly in any template.
 
 ## Why Use Data Views?

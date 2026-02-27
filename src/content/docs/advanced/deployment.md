@@ -1,7 +1,7 @@
 ---
 title: "Deployment Guide"
+description: "Deploy Total CMS to production with Git configuration, cache clearing scripts, CI/CD integration for GitHub Actions and GitLab, and troubleshooting."
 ---
-
 This guide covers best practices for deploying Total CMS sites to production and managing deployments with version control.
 
 ## Git Configuration

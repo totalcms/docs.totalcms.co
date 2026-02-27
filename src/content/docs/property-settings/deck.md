@@ -1,7 +1,7 @@
 ---
 title: "Deck Item Label"
+description: "Customize deck item labels in the Total CMS admin using template syntax with field references, minItems, and maxItems constraints."
 ---
-
 The `deckItemLabel` setting controls how deck items are labeled in the admin interface. It uses the same template syntax as the `autogen` setting (see [ID Autogen](/property-settings/id/) documentation), but displays raw values without slugification.
 
 **Default:** `${id}` (displays the item's ID)

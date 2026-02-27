@@ -48,7 +48,16 @@ process_file() {
     first_line=$(head -1 "$src_file")
 
     if [[ "$first_line" == "---" ]]; then
-        cp "$src_file" "$dest_file"
+        # Has frontmatter — preserve it but strip the H1 (Starlight renders title from frontmatter)
+        awk '
+            BEGIN { in_fm=0; past_fm=0; skipped_h1=0 }
+            !past_fm && /^---$/ { in_fm=!in_fm; if(!in_fm) past_fm=1; print; next }
+            !past_fm { print; next }
+            past_fm && !skipped_h1 && /^$/ { next }
+            past_fm && !skipped_h1 && /^# / { skipped_h1=1; next }
+            past_fm && skipped_h1==1 && /^$/ { skipped_h1=2; next }
+            { skipped_h1=2; print }
+        ' "$src_file" > "$dest_file"
     else
         {
             echo "---"

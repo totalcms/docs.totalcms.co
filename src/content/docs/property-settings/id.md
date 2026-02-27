@@ -1,7 +1,7 @@
 ---
 title: "ID"
+description: "Auto-generate object IDs in Total CMS from field values using autogen templates with variables like uuid, date components, and custom formats."
 ---
-
 For the ID field, you can use the following setting to autogenerate the id from one or
 multiple fields. You can use standard Javascript string interpolation to inject field
 values. You simply need to use the property name in the autogen value. There are also

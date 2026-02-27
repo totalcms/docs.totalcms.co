@@ -1,7 +1,7 @@
 ---
 title: "Getting Started with Total CMS"
+description: "Get started with Total CMS, a flat-file PHP content management system featuring JSON storage, Twig templating, and a built-in admin dashboard."
 ---
-
 Welcome to Total CMS! This guide will help you get up and running quickly.
 
 ## What is Total CMS?

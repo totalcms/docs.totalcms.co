@@ -1,7 +1,7 @@
 ---
 title: "Total CMS Twig Adapter"
+description: "Complete reference for the cms global variable in Twig templates covering collections, objects, images, galleries, files, pagination, and configuration."
 ---
-
 The Total CMS Twig Adapter provides access to all CMS data and functionality through the global `cms` variable in Twig templates.
 
 ## Configuration & Environment

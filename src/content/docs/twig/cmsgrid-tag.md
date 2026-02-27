@@ -1,7 +1,7 @@
 ---
 title: "CMS Grid Tag Reference"
+description: "Display Total CMS collections in customizable grid layouts using the cmsgrid Twig tag with built-in CSS classes, helper methods, and templates."
 ---
-
 The `{% cmsgrid %}` tag provides a powerful way to display collections of content in customizable grid layouts with built-in styling and helper methods.
 
 ## Syntax

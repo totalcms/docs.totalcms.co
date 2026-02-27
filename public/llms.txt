@@ -1,0 +1,42 @@
+# Total CMS
+
+> Total CMS is a modern, flat-file content management system built with PHP. It uses JSON storage instead of a traditional database, Twig for templating, and provides a comprehensive REST API and admin dashboard.
+
+Total CMS is designed for web designers and developers who want a powerful CMS without database complexity. Content is stored as JSON files, making it easy to version control, backup, and deploy. It runs on any PHP 8.2+ host with no database setup required.
+
+## Key Features
+
+- Flat-file JSON storage (no database required)
+- 13 built-in collection types (blog, image, gallery, etc.)
+- Twig templating with 50+ custom filters and functions
+- Full REST API for headless CMS usage
+- Admin dashboard with 20+ form field types
+- Image processing with watermarking
+- Multi-backend caching (APCu, Redis, Memcached, filesystem)
+- Access groups and role-based permissions
+- JumpStart data import/export system
+- Barcode and QR code generation
+- CSV/JSON import and export
+- White label admin customization (Pro edition)
+
+## Documentation
+
+- [Getting Started](https://docs.totalcms.co/getting-started/getting-started/): Introduction to Total CMS features and quick start guide
+- [Installation](https://docs.totalcms.co/getting-started/installation/): PHP 8.2+ requirements, extensions, and web server setup
+- [Configuration](https://docs.totalcms.co/advanced/configuration/): Hierarchical PHP settings for all system options
+- [Twig Overview](https://docs.totalcms.co/twig/overview/): Templating basics with variables, filters, and template inheritance
+- [REST API](https://docs.totalcms.co/api/rest-api/): Complete API reference for CRUD operations
+- [Collection Settings](https://docs.totalcms.co/collections/settings/): Configure collection behavior, display, and access control
+- [Twig Filters](https://docs.totalcms.co/twig/filters/): 50+ filters for text, color, array, date, and markdown processing
+- [Twig Functions](https://docs.totalcms.co/twig/functions/): Form helpers, math, string utilities, hashing, and media embedding
+- [CMS Adapter](https://docs.totalcms.co/twig/totalcms/): The `cms` global variable reference for collections, objects, and images
+- [Collection Filtering](https://docs.totalcms.co/twig/collection-filtering/): Filter and sort with comparison operators, date ranges, and ordering
+- [Forms](https://docs.totalcms.co/twig/forms/): Build forms with premade forms, custom builders, and deck forms
+- [Access Groups](https://docs.totalcms.co/auth/access-groups/): Role-based CRUD permissions for collections and admin access
+- [Data Model](https://docs.totalcms.co/advanced/data-model/): 13 collection types, 16 property types, and JSON object storage
+- [Deployment](https://docs.totalcms.co/advanced/deployment/): Git workflows, cache clearing, and CI/CD integration
+- [Security](https://docs.totalcms.co/advanced/security/): HTTPS, HTML/SVG sanitization, upload restrictions, and headers
+
+## Optional
+
+- [Full documentation for LLMs](https://docs.totalcms.co/llms-full.txt)

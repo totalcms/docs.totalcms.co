@@ -1,7 +1,7 @@
 ---
 title: "Twig Barcode Integration"
+description: "Generate barcodes in Total CMS Twig templates with 16+ formats including Code 128, EAN-13, UPC-A, QR, and DataMatrix with SVG output and styling."
 ---
-
 Total CMS provides comprehensive barcode generation capabilities through Twig templates using the tecnickcom/tc-lib-barcode library, supporting 16+ different barcode formats for various use cases.
 
 ## Overview

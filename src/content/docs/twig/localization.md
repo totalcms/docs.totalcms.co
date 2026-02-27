@@ -1,7 +1,7 @@
 ---
 title: "Localization & Internationalization"
+description: "Localize dates, numbers, currencies, and relative time in Total CMS Twig templates with support for 25+ languages and locale-aware formatting."
 ---
-
 Total CMS provides comprehensive support for localizing dates, numbers, currencies, and relative time strings. This guide covers the supported languages and how to use localization features in your Twig templates.
 
 ## Setting the Default Locale

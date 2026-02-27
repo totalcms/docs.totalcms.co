@@ -1,7 +1,7 @@
 ---
 title: "Code"
+description: "Configure the CodeMirror-powered code editor field in Total CMS with syntax highlighting modes, HTML sanitization, and embed code support."
 ---
-
 The code field provides a syntax-highlighted code editor powered by CodeMirror. It supports multiple programming languages and can be customized with various settings.
 
 ```json

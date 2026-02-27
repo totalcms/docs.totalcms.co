@@ -17,6 +17,9 @@ pnpm-debug.log*
 .env
 .env.production
 
+# generated AI files
+public/llms-full.txt
+
 # macOS-specific files
 .DS_Store
 *.log

@@ -1,7 +1,7 @@
 ---
 title: "Object Linking"
+description: "Generate SEO-friendly URLs for Total CMS collection objects using URL templates, canonical URLs, and automatic redirect handling."
 ---
-
 This document covers how to create and manage URLs for collection objects in Total CMS, including the powerful URL templating system for creating SEO-friendly, human-readable URLs.
 
 ## Overview

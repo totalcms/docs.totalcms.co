@@ -1,7 +1,7 @@
 ---
 title: "Twig Conditionals"
+description: "Master Twig conditional statements in Total CMS for comparisons, existence checks, array and string tests, date logic, and CMS-specific conditions."
 ---
-
 Complete guide to conditional statements in Total CMS Twig templates for controlling template flow based on dynamic data.
 
 ## Overview

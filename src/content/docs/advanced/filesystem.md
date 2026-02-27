@@ -1,7 +1,7 @@
 ---
 title: "Filesystem"
+description: "Explore the Total CMS filesystem structure including tcms-data directory, collection JSON files, object assets, indexes, and custom schema storage."
 ---
-
 By default all data for Total CMS is stored in
 a folder called `tcms-data` in DOCUMENT_ROOT.
 The location of this folder can be customized via the Total CMS configuration.

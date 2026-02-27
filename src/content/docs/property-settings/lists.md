@@ -1,7 +1,7 @@
 ---
 title: "Lists"
+description: "Configure list field settings in Total CMS including remove buttons, duplicate item control, and item management options for tags and categories."
 ---
-
 ```json
 {
   "removeItemButton"      : true,

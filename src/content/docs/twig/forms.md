@@ -1,7 +1,7 @@
 ---
 title: "Total CMS Forms Documentation"
+description: "Build forms in Total CMS Twig templates using the cms.form object with premade forms, custom form builders, deck forms, and date default patterns."
 ---
-
 Total CMS provides a comprehensive form building system accessible through the `cms.form` object in Twig templates. All form methods are available through the TotalFormFactory class.
 
 ## Accessing Form Methods

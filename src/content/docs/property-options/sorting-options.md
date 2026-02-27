@@ -1,7 +1,7 @@
 ---
 title: "Sorting Options"
+description: "Sort form field options alphabetically or in custom order using the sortOptions setting in Total CMS schema property definitions."
 ---
-
 You can sort the options in all form inputs that support options or datalist with the following setting:
 
 ```json

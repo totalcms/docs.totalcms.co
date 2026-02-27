@@ -1,7 +1,7 @@
 ---
 title: "JumpStart"
+description: "Bootstrap new Total CMS projects with JumpStart data import and export for collections, schemas, objects, and Faker-based factory test data."
 ---
-
 JumpStart is Total CMS's data import/export system that allows you to quickly set up new projects with
 predefined content structures, collections, schemas, and sample data. Think of it as a blueprint for your
 CMS that can be shared, modified, and reused across different projects.

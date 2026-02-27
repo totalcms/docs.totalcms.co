@@ -1,7 +1,7 @@
 ---
 title: "Schema Validation"
+description: "Validate Total CMS schema data with JSON Schema keywords for strings, numbers, arrays, enums, unique constraints, and regex patterns."
 ---
-
 This document covers JSON Schema validation keywords that can be used in the **Extra Schema Definitions** field when setting up properties in a schema.
 
 ## Overview

@@ -1,7 +1,7 @@
 ---
 title: "Relational Options"
+description: "Link form field options to another Total CMS collection with multi-field labels, include and exclude filtering for relational data."
 ---
-
 The default value of the options is always the ID of the object. This is useful to
 list all of the objects from another collection.
 

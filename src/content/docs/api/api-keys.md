@@ -1,7 +1,7 @@
 ---
 title: "API Keys"
+description: "Create and manage token-based API keys for Total CMS REST API authentication with scoped method and path permissions and usage tracking."
 ---
-
 API keys provide secure, token-based authentication for accessing Total CMS's REST API without requiring user session authentication. They are ideal for headless CMS implementations, mobile applications, third-party integrations, and automated workflows.
 
 ## When to Use API Keys

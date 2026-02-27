@@ -1,7 +1,7 @@
 ---
 title: "Total CMS Security Guide"
+description: "Secure your Total CMS installation with tcms-data folder protection, HTTPS setup, HTML and SVG sanitization, upload restrictions, and security headers."
 ---
-
 This guide provides essential security recommendations for protecting your Total CMS installation and data.
 
 ## Table of Contents

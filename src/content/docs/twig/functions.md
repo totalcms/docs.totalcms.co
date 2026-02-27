@@ -1,7 +1,7 @@
 ---
 title: "Twig Functions Reference"
+description: "Complete reference for Total CMS Twig functions including form helpers, math operations, string utilities, hashing, media embedding, and access control."
 ---
-
 Total CMS provides powerful custom Twig functions for form handling, string manipulation, media embedding, and more. This reference includes practical usage examples for each function.
 
 ## Form and UI Functions

@@ -1,7 +1,7 @@
 ---
 title: "All Field Settings"
+description: "Universal settings for all Total CMS field types including hidden fields and conditional visibility with comparison operators."
 ---
-
 These settings can be applied to **any field type**. They control universal behaviors like hiding fields and conditional visibility.
 
 ## Hide Field

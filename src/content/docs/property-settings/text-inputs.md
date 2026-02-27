@@ -1,7 +1,7 @@
 ---
 title: "Text & Textarea"
+description: "Configure text and textarea fields in Total CMS with maxlength, minlength, pattern validation, readonly, disabled, rows, and HTML sanitization settings."
 ---
-
 ## Text Input Settings (text, url, tel, phone, etc.)
 
 The following can be used on text fields to limit the number of characters.

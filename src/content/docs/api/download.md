@@ -1,7 +1,7 @@
 ---
 title: "Downloading Files"
+description: "Download files and images from Total CMS collections with download tracking, password protection, and streaming support."
 ---
-
 Total CMS provides several methods for downloading files and exporting content from your collections. This guide covers all available download options.
 
 ## File Downloads

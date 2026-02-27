@@ -1,7 +1,7 @@
 ---
 title: "Image & Gallery"
+description: "Configure image and gallery upload fields in Total CMS with validation rules, location stripping, and image or text watermark settings."
 ---
-
 ## Upload Validation
 
 The following JSON is sample settings that you can use for image and file validation rules

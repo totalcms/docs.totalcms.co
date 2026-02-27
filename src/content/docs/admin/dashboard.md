@@ -1,7 +1,7 @@
 ---
 title: "Admin Dashboard Overview"
+description: "Navigate the Total CMS admin dashboard to manage collections, edit content, configure settings, and use the built-in form builder."
 ---
-
 The Total CMS Admin Dashboard is your central hub for managing all content, users, and system settings. This guide will help you navigate and utilize the dashboard effectively.
 
 (This primarily serves as an outline for future docs...)

@@ -1,7 +1,7 @@
 ---
 title: "Factory Twig Extension"
+description: "Generate realistic test data in Total CMS Twig templates using Faker-based factory functions for names, addresses, text, dates, and more."
 ---
-
 <https://fakerphp.github.io/formatters/>
 
 ### Text

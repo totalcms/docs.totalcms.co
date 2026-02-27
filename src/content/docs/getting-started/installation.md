@@ -1,7 +1,7 @@
 ---
 title: "Installation & System Requirements"
+description: "Install Total CMS with PHP 8.2+ requirements, required extensions, web server configuration for Apache and Nginx, and troubleshooting tips."
 ---
-
 This guide covers the system requirements and installation process for Total CMS.
 
 ## System Requirements

@@ -1,7 +1,7 @@
 ---
 title: "Twig QR Code Integration"
+description: "Generate QR codes in Total CMS Twig templates for URLs, vCard contacts, WiFi credentials, calendar events, GPS locations, and SMS or email links."
 ---
-
 Total CMS provides comprehensive QR code generation capabilities through Twig templates using the bacon/bacon-qr-code library, supporting various data types including URLs, contact information, WiFi credentials, and more.
 
 ## Overview

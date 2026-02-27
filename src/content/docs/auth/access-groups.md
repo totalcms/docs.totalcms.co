@@ -1,7 +1,7 @@
 ---
 title: "Access Groups"
+description: "Configure access groups in Total CMS to control CRUD permissions for collections, restrict admin dashboard access, and manage user roles."
 ---
-
 Access groups provide fine-grained permission control for Total CMS, allowing you to restrict what users can access and modify in both the admin dashboard and via the REST API.
 
 ## Overview

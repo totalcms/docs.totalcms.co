@@ -1,7 +1,7 @@
 ---
 title: "Twig Filters Reference"
+description: "Complete reference for Total CMS Twig filters including text processing, color manipulation, array handling, date formatting, and markdown conversion."
 ---
-
 Total CMS extends Twig with powerful custom filters for text processing, color manipulation, array handling, and more. This reference includes usage examples for each filter.
 
 ## Text Filters
