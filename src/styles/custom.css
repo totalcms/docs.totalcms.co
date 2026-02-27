@@ -1,0 +1,26 @@
+/* Total CMS Documentation - Custom Styles */
+
+:root {
+	--sl-color-accent-low: #1a3a5c;
+	--sl-color-accent: #2563eb;
+	--sl-color-accent-high: #93bbfc;
+	--sl-color-white: #ffffff;
+	--sl-color-gray-1: #eceef2;
+	--sl-color-gray-2: #c0c2c7;
+	--sl-color-gray-3: #888b96;
+	--sl-color-gray-4: #545861;
+	--sl-color-gray-5: #353841;
+	--sl-color-gray-6: #24272f;
+	--sl-color-black: #17181c;
+}
+
+:root[data-theme='light'] {
+	--sl-color-accent-low: #d6e4f7;
+	--sl-color-accent: #2563eb;
+	--sl-color-accent-high: #172e54;
+}
+
+/* Logo sizing */
+.site-title img {
+	height: 2rem;
+}

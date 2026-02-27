@@ -1,0 +1,36 @@
+---
+title: Total CMS Documentation
+description: Comprehensive documentation for Total CMS - a modern, flat-file content management system.
+template: splash
+hero:
+  tagline: A modern, flat-file content management system built with PHP. No database required.
+  image:
+    file: ../../assets/totalcms.svg
+  actions:
+    - text: Get Started
+      link: /getting-started/getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: Installation
+      link: /getting-started/installation/
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Quick Links
+
+<CardGrid stagger>
+  <Card title="Getting Started" icon="rocket">
+    New to Total CMS? Start here with our [getting started guide](/getting-started/getting-started/) and [installation instructions](/getting-started/installation/).
+  </Card>
+  <Card title="Twig Templates" icon="document">
+    Master the templating system with [Twig overview](/twig/overview/), [filters](/twig/filters/), and [functions](/twig/functions/).
+  </Card>
+  <Card title="REST API" icon="setting">
+    Integrate with the [REST API](/api/rest-api/), manage [API keys](/api/api-keys/), and use the [PHP API](/api/php-api/).
+  </Card>
+  <Card title="Collections" icon="list-format">
+    Learn about [collection settings](/collections/settings/), [data views](/collections/data-views/), and [filtering](/twig/collection-filtering/).
+  </Card>
+</CardGrid>
