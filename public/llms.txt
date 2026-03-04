@@ -21,21 +21,107 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 
 ## Documentation
 
+### Start Here
 - [Getting Started](https://docs.totalcms.co/getting-started/): Introduction to Total CMS features and quick start guide
 - [Installation](https://docs.totalcms.co/installation/): PHP 8.2+ requirements, extensions, and web server setup
-- [Configuration](https://docs.totalcms.co/advanced/configuration/): Hierarchical PHP settings for all system options
-- [Twig Overview](https://docs.totalcms.co/twig/overview/): Templating basics with variables, filters, and template inheritance
-- [REST API](https://docs.totalcms.co/api/rest-api/): Complete API reference for CRUD operations
+
+### Dashboard
+- [Overview](https://docs.totalcms.co/admin/dashboard/): Admin dashboard overview
+- [White Label](https://docs.totalcms.co/admin/whitelabel/): Customize the admin interface branding
+
+### Collections
 - [Collection Settings](https://docs.totalcms.co/collections/settings/): Configure collection behavior, display, and access control
-- [Twig Filters](https://docs.totalcms.co/twig/filters/): 50+ filters for text, color, array, date, and markdown processing
-- [Twig Functions](https://docs.totalcms.co/twig/functions/): Form helpers, math, string utilities, hashing, and media embedding
-- [CMS Adapter](https://docs.totalcms.co/twig/totalcms/): The `cms` global variable reference for collections, objects, and images
+- [Form Settings](https://docs.totalcms.co/collections/form-settings/): Configure collection form fields and layout
+- [Form Grid Layout](https://docs.totalcms.co/collections/formgrid/): Arrange form fields in a grid layout
+- [Importing Data](https://docs.totalcms.co/collections/import/): Import data from CSV and JSON files
+- [Exporting Data](https://docs.totalcms.co/collections/export/): Export collection data to CSV and JSON
+- [Sitemap Builder](https://docs.totalcms.co/advanced/sitemap-builder/): Generate XML sitemaps from collections
+- [Data Views](https://docs.totalcms.co/collections/data-views/): Create custom filtered views of collection data
+- [Load More](https://docs.totalcms.co/collections/load-more/): Paginate collection listings with load more
+
+### Property Settings
+- [All Fields](https://docs.totalcms.co/property-settings/all-fields/): Common settings shared by all property types
+- [Code](https://docs.totalcms.co/property-settings/code-editor/): Code editor property with syntax highlighting
+- [Date](https://docs.totalcms.co/property-settings/date/): Date and datetime property settings
+- [Deck](https://docs.totalcms.co/property-settings/deck/): Deck property for repeatable content blocks
+- [File & Depot](https://docs.totalcms.co/property-settings/file-depot/): File upload and depot (multi-file) properties
+- [ID](https://docs.totalcms.co/property-settings/id/): Auto-generated unique identifier property
+- [Image & Gallery](https://docs.totalcms.co/property-settings/image-gallery/): Image upload and gallery properties with processing
+- [Lists](https://docs.totalcms.co/property-settings/lists/): List property for ordered items
+- [Number & Range](https://docs.totalcms.co/property-settings/number-range/): Numeric and range slider properties
+- [Password](https://docs.totalcms.co/property-settings/password/): Secure password property with hashing
+- [Price](https://docs.totalcms.co/property-settings/price/): Currency/price property settings
+- [Radio & Multicheckbox](https://docs.totalcms.co/property-settings/radio-multicheckbox/): Radio buttons and multi-checkbox properties
+- [Select](https://docs.totalcms.co/property-settings/select/): Select and multiselect dropdown properties
+- [Styled Text](https://docs.totalcms.co/property-settings/styled-text/): Rich text editor property
+- [SVG](https://docs.totalcms.co/property-settings/svg/): SVG upload and display property
+- [Text & Textarea](https://docs.totalcms.co/property-settings/text-inputs/): Text input and textarea properties
+
+### Property Options
+- [Static Options](https://docs.totalcms.co/property-options/static-options/): Hardcoded option lists for select/radio fields
+- [Property Options](https://docs.totalcms.co/property-options/property-options/): Dynamic options from other properties
+- [Relational Options](https://docs.totalcms.co/property-options/relational-options/): Options from related collections
+- [Sorting Options](https://docs.totalcms.co/property-options/sorting-options/): Configure option sort order
+- [Access Group Options](https://docs.totalcms.co/property-options/access-group-options/): Options filtered by access groups
+
+### Schemas
+- [Schema Validation](https://docs.totalcms.co/schemas/validation/): Validate collection data with JSON schemas
+
+### Twig Language
+- [Overview](https://docs.totalcms.co/twig/overview/): Templating basics with variables, filters, and template inheritance
+- [Filters](https://docs.totalcms.co/twig/filters/): 50+ filters for text, color, array, date, and markdown processing
+- [Functions](https://docs.totalcms.co/twig/functions/): Form helpers, math, string utilities, hashing, and media embedding
+- [Variables](https://docs.totalcms.co/twig/variables/): Global variables available in Twig templates
+- [Conditionals](https://docs.totalcms.co/twig/conditionals/): Conditional logic and control flow in templates
+- [Markdown](https://docs.totalcms.co/twig/markdown/): Markdown rendering in Twig templates
+- [Factory](https://docs.totalcms.co/twig/factory/): Factory pattern for dynamic template generation
+- [Templates](https://docs.totalcms.co/twig/templates/): Template inheritance and reuse
+
+### CMS Content
+- [CMS Content](https://docs.totalcms.co/twig/totalcms/): The `cms` global variable reference for collections, objects, and images
+- [Collections](https://docs.totalcms.co/twig/collections/): Working with collections in Twig templates
 - [Collection Filtering](https://docs.totalcms.co/twig/collection-filtering/): Filter and sort with comparison operators, date ranges, and ordering
+- [Data](https://docs.totalcms.co/twig/data/): Accessing and manipulating CMS data in templates
+- [Media](https://docs.totalcms.co/twig/media/): Working with images, files, and media in templates
+- [Render](https://docs.totalcms.co/twig/render/): Rendering content and templates
+- [CMS Grid Tag](https://docs.totalcms.co/twig/cmsgrid-tag/): Grid layout tag for collection listings
+- [Object Linking](https://docs.totalcms.co/twig/object-linking/): Link between collection objects
+- [Locale](https://docs.totalcms.co/twig/locale/): Locale settings and formatting
+- [Localization](https://docs.totalcms.co/twig/localization/): Multi-language content support
+- [Views](https://docs.totalcms.co/twig/views/): Custom views for rendering content
+- [QR Codes](https://docs.totalcms.co/twig/qrcodes/): Generate QR codes in templates
+- [Bar Codes](https://docs.totalcms.co/twig/barcodes/): Generate barcodes in templates
 - [Forms](https://docs.totalcms.co/twig/forms/): Build forms with premade forms, custom builders, and deck forms
+
+### CMS Admin
+- [Admin](https://docs.totalcms.co/twig/admin/): Admin template functions and variables
+- [Auth](https://docs.totalcms.co/twig/auth/): Authentication helpers in Twig templates
+- [Edition](https://docs.totalcms.co/twig/edition/): Edition detection and feature gating
+- [Schemas](https://docs.totalcms.co/twig/schemas/): Schema helpers in Twig templates
+
+### Authentication
+- [Authentication](https://docs.totalcms.co/auth/auth/): Page lock and authentication system
 - [Access Groups](https://docs.totalcms.co/auth/access-groups/): Role-based CRUD permissions for collections and admin access
-- [Data Model](https://docs.totalcms.co/advanced/data-model/): 13 collection types, 16 property types, and JSON object storage
-- [Deployment](https://docs.totalcms.co/advanced/deployment/): Git workflows, cache clearing, and CI/CD integration
+- [Password Reset](https://docs.totalcms.co/auth/password-reset/): Password reset flow configuration
+
+### API
+- [REST API](https://docs.totalcms.co/api/rest-api/): Complete API reference for CRUD operations
+- [API Keys](https://docs.totalcms.co/api/api-keys/): API key management and authentication
+- [Index Filter](https://docs.totalcms.co/api/index-filter/): Filter API index responses
+- [PHP API](https://docs.totalcms.co/api/php-api/): PHP API for server-side integrations
+- [Download](https://docs.totalcms.co/api/download/): File download API endpoints
+
+### Behind the Scenes
+- [Search](https://docs.totalcms.co/advanced/search/): Full-text search configuration
+- [JumpStart](https://docs.totalcms.co/advanced/jumpstart/): Data import/export and site bootstrapping
+- [Migration from v1](https://docs.totalcms.co/advanced/migration-total-cms-one/): Migrate from Total CMS v1
 - [Security](https://docs.totalcms.co/advanced/security/): HTTPS, HTML/SVG sanitization, upload restrictions, and headers
+- [Configuration](https://docs.totalcms.co/advanced/configuration/): Hierarchical PHP settings for all system options
+- [Server Sizing](https://docs.totalcms.co/advanced/server-sizing/): Server requirements and sizing recommendations
+- [Deployment](https://docs.totalcms.co/advanced/deployment/): Git workflows, cache clearing, and CI/CD integration
+- [Filesystem](https://docs.totalcms.co/advanced/filesystem/): File storage structure and organization
+- [Licenses](https://docs.totalcms.co/advanced/licenses/): License management and editions
+- [Data Model](https://docs.totalcms.co/advanced/data-model/): 13 collection types, 16 property types, and JSON object storage
 
 ## Optional
 

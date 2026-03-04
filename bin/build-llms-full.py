@@ -8,18 +8,20 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS_DIR = os.path.join(PROJECT_ROOT, "src", "content", "docs")
 OUT_FILE = os.path.join(PROJECT_ROOT, "public", "llms-full.txt")
 
-# Section ordering
+# Section ordering: (section_name, directory OR None for root-level files, [optional file list])
 SECTIONS = [
-    ("Getting Started", "getting-started"),
-    ("Admin", "admin"),
-    ("Authentication", "auth"),
-    ("Collections", "collections"),
-    ("Property Settings", "property-settings"),
-    ("Property Options", "property-options"),
-    ("Twig Templates", "twig"),
-    ("API", "api"),
-    ("Schemas", "schemas"),
-    ("Advanced", "advanced"),
+    ("Start Here", None, ["getting-started.md", "installation.md"]),
+    ("Dashboard", "admin", None),
+    ("Collections", "collections", None),
+    ("Property Settings", "property-settings", None),
+    ("Property Options", "property-options", None),
+    ("Schemas", "schemas", None),
+    ("Twig Language", "twig", ["overview.md", "filters.md", "functions.md", "variables.md", "conditionals.md", "markdown.md", "factory.md", "templates.md"]),
+    ("CMS Content", "twig", ["totalcms.md", "collections.md", "collection-filtering.md", "data.md", "media.md", "render.md", "cmsgrid-tag.md", "object-linking.md", "locale.md", "localization.md", "views.md", "qrcodes.md", "barcodes.md", "forms.md"]),
+    ("CMS Admin", "twig", ["admin.md", "auth.md", "edition.md", "schemas.md"]),
+    ("Authentication", "auth", None),
+    ("API", "api", None),
+    ("Behind the Scenes", "advanced", None),
 ]
 
 def extract_frontmatter_and_content(filepath):
@@ -53,12 +55,20 @@ This document contains the complete Total CMS documentation for LLM consumption.
 with open(OUT_FILE, 'w') as out:
     out.write(header)
 
-    for section_name, section_dir in SECTIONS:
-        section_path = os.path.join(DOCS_DIR, section_dir)
+    for section_name, section_dir, file_list in SECTIONS:
+        if section_dir:
+            section_path = os.path.join(DOCS_DIR, section_dir)
+        else:
+            section_path = DOCS_DIR
+
         if not os.path.isdir(section_path):
             continue
 
-        files = sorted([f for f in os.listdir(section_path) if f.endswith('.md')])
+        if file_list:
+            files = [f for f in file_list if os.path.isfile(os.path.join(section_path, f))]
+        else:
+            files = sorted([f for f in os.listdir(section_path) if f.endswith('.md')])
+
         if not files:
             continue
 
