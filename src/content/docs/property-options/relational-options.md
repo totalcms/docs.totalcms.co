@@ -1,6 +1,6 @@
 ---
 title: "Relational Options"
-description: "Link form field options to another Total CMS collection with multi-field labels, include and exclude filtering for relational data."
+description: "Link form field options to another Total CMS collection or DataView with multi-field labels, include and exclude filtering for relational data."
 ---
 The default value of the options is always the ID of the object. This is useful to
 list all of the objects from another collection.
@@ -14,6 +14,22 @@ list all of the objects from another collection.
   }
 }
 ```
+
+## Using a DataView
+
+Instead of referencing a collection directly, you can populate options from a [DataView](/docs/dataviews). Use the `view` key instead of `collection`. The `view` and `collection` settings are mutually exclusive.
+
+```json
+{
+  "relationalOptions" : {
+  	"view"  : "my-dataview",
+  	"label" : "title",
+  	"value" : "id"
+  }
+}
+```
+
+All other settings (`label`, `value`, `join`, `include`, `exclude`) work the same way with DataView-backed options.
 
 ## Multiple Fields in Label
 

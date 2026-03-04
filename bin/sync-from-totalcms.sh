@@ -20,6 +20,12 @@ fi
 
 echo "Syncing docs from $SRC to $DEST"
 
+# Remove existing synced docs so deleted/renamed files don't linger.
+# Preserve index.md (homepage maintained separately).
+find "$DEST" -name '*.md' ! -name 'index.md' -type f -delete
+# Clean up any empty directories left behind
+find "$DEST" -type d -empty -delete 2>/dev/null || true
+
 process_file() {
     local src_file="$1"
     local rel_path="${src_file#$SRC/}"
