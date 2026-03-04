@@ -21,8 +21,8 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 
 ## Documentation
 
-- [Getting Started](https://docs.totalcms.co/getting-started/getting-started/): Introduction to Total CMS features and quick start guide
-- [Installation](https://docs.totalcms.co/getting-started/installation/): PHP 8.2+ requirements, extensions, and web server setup
+- [Getting Started](https://docs.totalcms.co/getting-started/): Introduction to Total CMS features and quick start guide
+- [Installation](https://docs.totalcms.co/installation/): PHP 8.2+ requirements, extensions, and web server setup
 - [Configuration](https://docs.totalcms.co/advanced/configuration/): Hierarchical PHP settings for all system options
 - [Twig Overview](https://docs.totalcms.co/twig/overview/): Templating basics with variables, filters, and template inheritance
 - [REST API](https://docs.totalcms.co/api/rest-api/): Complete API reference for CRUD operations
