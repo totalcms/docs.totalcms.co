@@ -4,8 +4,9 @@
 import os
 import re
 
-DOCS_DIR = "/Users/joeworkman/Websites/docs.totalcms.co/src/content/docs"
-OUT_FILE = "/Users/joeworkman/Websites/docs.totalcms.co/public/llms-full.txt"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DOCS_DIR = os.path.join(PROJECT_ROOT, "src", "content", "docs")
+OUT_FILE = os.path.join(PROJECT_ROOT, "public", "llms-full.txt")
 
 # Section ordering
 SECTIONS = [
