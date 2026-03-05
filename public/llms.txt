@@ -37,7 +37,6 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Exporting Data](https://docs.totalcms.co/collections/export/): Export collection data to CSV and JSON
 - [Sitemap Builder](https://docs.totalcms.co/advanced/sitemap-builder/): Generate XML sitemaps from collections
 - [Data Views](https://docs.totalcms.co/collections/data-views/): Create custom filtered views of collection data
-- [Load More](https://docs.totalcms.co/collections/load-more/): Paginate collection listings with load more
 
 ### Property Settings
 - [All Fields](https://docs.totalcms.co/property-settings/all-fields/): Common settings shared by all property types
@@ -92,6 +91,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [QR Codes](https://docs.totalcms.co/twig/qrcodes/): Generate QR codes in templates
 - [Bar Codes](https://docs.totalcms.co/twig/barcodes/): Generate barcodes in templates
 - [Forms](https://docs.totalcms.co/twig/forms/): Build forms with premade forms, custom builders, and deck forms
+- [Load More](https://docs.totalcms.co/twig/load-more/): Paginate collection listings with load more
 
 ### CMS Admin
 - [Admin](https://docs.totalcms.co/twig/admin/): Admin template functions and variables

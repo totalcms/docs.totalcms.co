@@ -42,7 +42,6 @@ export default defineConfig({
 						{ label: 'Exporting Data', slug: 'collections/export' },
 						{ label: 'Sitemap Builder', slug: 'advanced/sitemap-builder' },
 						{ label: 'Data Views', slug: 'collections/data-views' },
-						{ label: 'Load More', slug: 'collections/load-more' },
 					],
 				},
 				{
@@ -112,6 +111,7 @@ export default defineConfig({
 						{ label: 'QR Codes', slug: 'twig/qrcodes' },
 						{ label: 'Bar Codes', slug: 'twig/barcodes' },
 						{ label: 'Forms', slug: 'twig/forms' },
+						{ label: 'Load More', slug: 'twig/load-more' },
 					],
 				},
 				{
