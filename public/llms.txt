@@ -90,7 +90,6 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Views](https://docs.totalcms.co/twig/views/): Custom views for rendering content
 - [QR Codes](https://docs.totalcms.co/twig/qrcodes/): Generate QR codes in templates
 - [Bar Codes](https://docs.totalcms.co/twig/barcodes/): Generate barcodes in templates
-- [Forms](https://docs.totalcms.co/twig/forms/): Build forms with premade forms, custom builders, and deck forms
 - [Load More](https://docs.totalcms.co/twig/load-more/): Paginate collection listings with load more
 
 ### CMS Admin
@@ -98,6 +97,15 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Auth](https://docs.totalcms.co/twig/auth/): Authentication helpers in Twig templates
 - [Edition](https://docs.totalcms.co/twig/edition/): Edition detection and feature gating
 - [Schemas](https://docs.totalcms.co/twig/schemas/): Schema helpers in Twig templates
+- [Forms Overview](https://docs.totalcms.co/twig/forms/overview/): Accessing form methods, field arguments, and premade forms
+- [Form Builder](https://docs.totalcms.co/twig/forms/builder/): Custom forms with the form builder and simple forms
+- [Deck Forms](https://docs.totalcms.co/twig/forms/deck/): Create and edit deck property items
+- [Form Options](https://docs.totalcms.co/twig/forms/options/): General options, behavior, actions, and CSS state classes
+- [Field Settings](https://docs.totalcms.co/twig/forms/fields/): Image validation, date defaults, and ID auto-generation
+- [Select & List Options](https://docs.totalcms.co/twig/forms/select-options/): Static, grouped, dynamic, and relational options
+- [Validation Patterns](https://docs.totalcms.co/twig/forms/patterns/): Built-in validation patterns for form fields
+- [Report Form](https://docs.totalcms.co/twig/forms/report/): Export collection data as CSV or JSON reports
+- [Specialized Forms](https://docs.totalcms.co/twig/forms/specialized/): Schema, collection, import, job queue, and factory forms
 
 ### Authentication
 - [Authentication](https://docs.totalcms.co/auth/auth/): Page lock and authentication system
