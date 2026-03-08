@@ -37,6 +37,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Collection Settings', slug: 'collections/settings' },
 						{ label: 'Form Settings', slug: 'collections/form-settings' },
+						{ label: 'Pushover Notifications', slug: 'notifications/pushover' },
 						{ label: 'Form Grid Layout', slug: 'collections/formgrid' },
 						{ label: 'Importing Data', slug: 'collections/import' },
 						{ label: 'Exporting Data', slug: 'collections/export' },
@@ -104,13 +105,13 @@ export default defineConfig({
 						{ label: 'Media', slug: 'twig/media' },
 						{ label: 'Render', slug: 'twig/render' },
 						{ label: 'CMS Grid Tag', slug: 'twig/cmsgrid-tag' },
+						{ label: 'Load More', slug: 'twig/load-more' },
 						{ label: 'Object Linking', slug: 'twig/object-linking' },
 						{ label: 'Locale', slug: 'twig/locale' },
 						{ label: 'Localization', slug: 'twig/localization' },
 						{ label: 'Views', slug: 'twig/views' },
 						{ label: 'QR Codes', slug: 'twig/qrcodes' },
 						{ label: 'Bar Codes', slug: 'twig/barcodes' },
-						{ label: 'Load More', slug: 'twig/load-more' },
 					],
 				},
 				{
