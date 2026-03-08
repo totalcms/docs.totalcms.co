@@ -32,6 +32,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 ### Collections
 - [Collection Settings](https://docs.totalcms.co/collections/settings/): Configure collection behavior, display, and access control
 - [Form Settings](https://docs.totalcms.co/collections/form-settings/): Configure collection form fields and layout
+- [Pushover Notifications](https://docs.totalcms.co/notifications/pushover/): Configure Pushover push notifications for form actions with image attachments and delivery groups
 - [Form Grid Layout](https://docs.totalcms.co/collections/formgrid/): Arrange form fields in a grid layout
 - [Importing Data](https://docs.totalcms.co/collections/import/): Import data from CSV and JSON files
 - [Exporting Data](https://docs.totalcms.co/collections/export/): Export collection data to CSV and JSON
@@ -84,13 +85,13 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Media](https://docs.totalcms.co/twig/media/): Working with images, files, and media in templates
 - [Render](https://docs.totalcms.co/twig/render/): Rendering content and templates
 - [CMS Grid Tag](https://docs.totalcms.co/twig/cmsgrid-tag/): Grid layout tag for collection listings
+- [Load More](https://docs.totalcms.co/twig/load-more/): Paginate collection listings with load more
 - [Object Linking](https://docs.totalcms.co/twig/object-linking/): Link between collection objects
 - [Locale](https://docs.totalcms.co/twig/locale/): Locale settings and formatting
 - [Localization](https://docs.totalcms.co/twig/localization/): Multi-language content support
 - [Views](https://docs.totalcms.co/twig/views/): Custom views for rendering content
 - [QR Codes](https://docs.totalcms.co/twig/qrcodes/): Generate QR codes in templates
 - [Bar Codes](https://docs.totalcms.co/twig/barcodes/): Generate barcodes in templates
-- [Load More](https://docs.totalcms.co/twig/load-more/): Paginate collection listings with load more
 
 ### CMS Admin
 - [Admin](https://docs.totalcms.co/twig/admin/): Admin template functions and variables
