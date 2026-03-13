@@ -104,6 +104,7 @@ export default defineConfig({
 						{ label: 'Data', slug: 'twig/data' },
 						{ label: 'Media', slug: 'twig/media' },
 						{ label: 'Render', slug: 'twig/render' },
+						{ label: 'ImageWorks', slug: 'twig/imageworks' },
 						{ label: 'CMS Grid Tag', slug: 'twig/cmsgrid-tag' },
 						{ label: 'Load More', slug: 'twig/load-more' },
 						{ label: 'Object Linking', slug: 'twig/object-linking' },

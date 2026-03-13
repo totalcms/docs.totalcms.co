@@ -84,6 +84,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Data](https://docs.totalcms.co/twig/data/): Accessing and manipulating CMS data in templates
 - [Media](https://docs.totalcms.co/twig/media/): Working with images, files, and media in templates
 - [Render](https://docs.totalcms.co/twig/render/): Rendering content and templates
+- [ImageWorks](https://docs.totalcms.co/twig/imageworks/): Transform images on-the-fly
 - [CMS Grid Tag](https://docs.totalcms.co/twig/cmsgrid-tag/): Grid layout tag for collection listings
 - [Load More](https://docs.totalcms.co/twig/load-more/): Paginate collection listings with load more
 - [Object Linking](https://docs.totalcms.co/twig/object-linking/): Link between collection objects
