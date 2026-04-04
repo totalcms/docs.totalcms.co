@@ -93,6 +93,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Views](https://docs.totalcms.co/twig/views/): Custom views for rendering content
 - [QR Codes](https://docs.totalcms.co/twig/qrcodes/): Generate QR codes in templates
 - [Bar Codes](https://docs.totalcms.co/twig/barcodes/): Generate barcodes in templates
+- [Utilities](https://docs.totalcms.co/twig/utils/): URL-based filtering helpers for query parameter conversion to include, exclude, sort, and search options
 
 ### CMS Admin
 - [Admin](https://docs.totalcms.co/twig/admin/): Admin template functions and variables
@@ -132,6 +133,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Filesystem](https://docs.totalcms.co/advanced/filesystem/): File storage structure and organization
 - [Licenses](https://docs.totalcms.co/advanced/licenses/): License management and editions
 - [Data Model](https://docs.totalcms.co/advanced/data-model/): 13 collection types, 16 property types, and JSON object storage
+- [Nginx Configuration](https://docs.totalcms.co/advanced/nginx/): Configure Nginx for URL rewriting, PHP-FPM, and tcms-data protection
 
 ## Optional
 

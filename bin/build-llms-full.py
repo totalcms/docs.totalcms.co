@@ -17,7 +17,7 @@ SECTIONS = [
     ("Property Options", "property-options", None),
     ("Schemas", "schemas", None),
     ("Twig Language", "twig", ["overview.md", "filters.md", "functions.md", "variables.md", "conditionals.md", "markdown.md", "factory.md", "templates.md"]),
-    ("CMS Content", "twig", ["totalcms.md", "collections.md", "collection-filtering.md", "data.md", "media.md", "render.md", "cmsgrid-tag.md", "object-linking.md", "locale.md", "localization.md", "views.md", "qrcodes.md", "barcodes.md", "load-more.md"]),
+    ("CMS Content", "twig", ["totalcms.md", "collections.md", "collection-filtering.md", "data.md", "media.md", "render.md", "imageworks.md", "cmsgrid-tag.md", "object-linking.md", "locale.md", "localization.md", "views.md", "qrcodes.md", "barcodes.md", "load-more.md", "utils.md"]),
     ("CMS Admin", "twig", ["admin.md", "auth.md", "edition.md", "schemas.md", "forms/overview.md", "forms/builder.md", "forms/deck.md", "forms/options.md", "forms/fields.md", "forms/select-options.md", "forms/patterns.md", "forms/report.md", "forms/specialized.md"]),
     ("Authentication", "auth", None),
     ("API", "api", None),

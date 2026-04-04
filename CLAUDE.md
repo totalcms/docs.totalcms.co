@@ -19,7 +19,7 @@ Total CMS is a modern, flat-file PHP content management system. This site serves
 - `src/assets/` - Images and logos (totalcms.svg)
 - `src/styles/custom.css` - Custom CSS overrides
 - `astro.config.mjs` - Starlight configuration including sidebar navigation
-- `build.sh` - Build script (syncs docs from totalcms repo + builds site)
+- `bin/build.sh` - Build script (syncs docs from totalcms repo + builds site)
 - `bin/sync-from-totalcms.sh` - Syncs markdown from the main Total CMS repo
 
 ## Documentation Source
@@ -37,14 +37,14 @@ The canonical source for documentation content is the main Total CMS repo at `/U
 npm run dev
 
 # Sync docs from totalcms repo and build
-./build.sh
+bin/build.sh
 
 # Sync from a custom path
-./build.sh /path/to/totalcms
+bin/build.sh /path/to/totalcms
 
 # Build only (no sync, for server deploys)
 # Just runs when totalcms repo path doesn't exist at default location
-./build.sh
+bin/build.sh
 ```
 
 ## Sidebar Configuration
@@ -53,4 +53,4 @@ The sidebar is manually configured in `astro.config.mjs`. When adding new docume
 
 ## Deployment
 
-The site is deployed via a GitHub webhook. On push, the server pulls changes and runs `./build.sh`. The web server document root points to `./dist/`.
+The site is deployed via a GitHub webhook. On push, the server pulls changes and runs `bin/build.sh`. The web server document root points to `./dist/`.

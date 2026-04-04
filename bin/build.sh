@@ -2,13 +2,10 @@
 # Total CMS Documentation - Build Script
 #
 # Usage:
-#   ./build.sh                          # Build only (for server deploys)
-#   ./build.sh /path/to/totalcms        # Sync docs from totalcms repo, then build
+#   bin/build.sh                          # Build only (for server deploys)
+#   bin/build.sh /path/to/totalcms        # Sync docs from totalcms repo, then build
 
 set -e
-
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-cd "$SCRIPT_DIR"
 
 TOTALCMS_REPO="${1:-/Users/joeworkman/Developer/totalcms}"
 TOTALCMS_DOCS="$TOTALCMS_REPO/resources/docs"

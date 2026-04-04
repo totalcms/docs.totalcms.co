@@ -12,7 +12,7 @@ npm run dev
 ## Building for Production
 
 ```bash
-./build.sh
+bin/build.sh
 ```
 
 The built site outputs to `./dist/`. Point your web server document root there.
