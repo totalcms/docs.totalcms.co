@@ -135,6 +135,27 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Data Model](https://docs.totalcms.co/advanced/data-model/): 13 collection types, 16 property types, and JSON object storage
 - [Nginx Configuration](https://docs.totalcms.co/advanced/nginx/): Configure Nginx for URL rewriting, PHP-FPM, and tcms-data protection
 
+## AI Integration
+
+Total CMS provides an MCP (Model Context Protocol) server for AI coding agents. Configure it once and get accurate Total CMS answers in Claude Code, Cursor, Windsurf, or any MCP-compatible tool.
+
+- [Using Total CMS with AI](https://docs.totalcms.co/advanced/ai-integration/): MCP server setup, configuration, and available tools
+
+**MCP Server:** `https://mcp.totalcms.co/`
+
+Add to your AI tool's MCP config:
+```json
+{
+  "mcpServers": {
+    "totalcms-docs": {
+      "url": "https://mcp.totalcms.co/"
+    }
+  }
+}
+```
+
+Available tools: `docs_search`, `docs_twig_function`, `docs_twig_filter`, `docs_field_type`, `docs_api_endpoint`, `docs_schema_config`
+
 ## Optional
 
 - [Full documentation for LLMs](https://docs.totalcms.co/llms-full.txt)
