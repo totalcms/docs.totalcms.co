@@ -123,6 +123,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Download](https://docs.totalcms.co/api/download/): File download API endpoints
 
 ### Behind the Scenes
+- [CLI Commands](https://docs.totalcms.co/advanced/cli/): Command-line interface for schemas, collections, objects, sync, JumpStart, and cache management
 - [Search](https://docs.totalcms.co/advanced/search/): Full-text search configuration
 - [JumpStart](https://docs.totalcms.co/advanced/jumpstart/): Data import/export and site bootstrapping
 - [Migration from v1](https://docs.totalcms.co/advanced/migration-total-cms-one/): Migrate from Total CMS v1

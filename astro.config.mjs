@@ -155,6 +155,7 @@ export default defineConfig({
 					label: 'Behind the Scenes',
 					items: [
 						{ label: 'AI Integration', slug: 'advanced/ai-integration' },
+						{ label: 'CLI', slug: 'advanced/cli' },
 						{ label: 'Configuration', slug: 'advanced/configuration' },
 						{ label: 'Data Model', slug: 'advanced/data-model' },
 						{ label: 'Deployment', slug: 'advanced/deployment' },
