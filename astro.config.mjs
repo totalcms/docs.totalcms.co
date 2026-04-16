@@ -12,8 +12,11 @@ export default defineConfig({
 				src: './src/assets/totalcms.svg',
 			},
 			social: [
-				{ icon: 'github', label: 'GitHub', href: 'https://github.com/nickyoung87/total-cms' },
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/totalcms/cms' },
 			],
+			components: {
+				PageTitle: './src/components/PageTitle.astro',
+			},
 			customCss: [
 				'./src/styles/custom.css',
 			],

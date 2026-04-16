@@ -1,0 +1,41 @@
+---
+const entry = Astro.locals.starlightRoute.entry;
+const data = entry.data as Record<string, unknown>;
+const title = data.title as string;
+const since = typeof data.since === 'string' ? data.since : undefined;
+---
+
+<h1 id="_top">
+	{title}
+	{since && <span class="since-badge">Since {since}</span>}
+</h1>
+
+<style>
+	@layer starlight.core {
+		h1 {
+			margin-top: 1rem;
+			font-size: var(--sl-text-h1);
+			line-height: var(--sl-line-height-headings);
+			font-weight: 600;
+			color: var(--sl-color-white);
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+			flex-wrap: wrap;
+		}
+	}
+
+	.since-badge {
+		display: inline-block;
+		font-size: 0.75rem;
+		font-weight: 500;
+		line-height: 1;
+		padding: 0.25rem 0.5rem;
+		border-radius: 0.25rem;
+		background-color: var(--sl-color-blue-low);
+		color: var(--sl-color-blue-high);
+		border: 1px solid var(--sl-color-blue);
+		vertical-align: middle;
+		white-space: nowrap;
+	}
+</style>

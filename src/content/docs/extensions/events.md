@@ -1,6 +1,7 @@
 ---
 title: "Extension Events"
 description: "Reference for all content events that extensions can subscribe to in Total CMS."
+since: "3.3.0"
 ---
 Extensions can subscribe to events fired by Total CMS after core operations complete. Events are synchronous and fire after the operation succeeds. If a listener throws an exception, it is caught and logged without affecting the core operation or other listeners.
 

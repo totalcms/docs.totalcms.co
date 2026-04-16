@@ -1,6 +1,7 @@
 ---
 title: "Extension Schemas"
 description: "How extensions can provide collection schemas in Total CMS, including read-only and installable approaches."
+since: "3.3.0"
 ---
 Extensions can provide collection schemas in two ways: read-only schemas that live inside the extension, and installable schemas that are copied into the user's data directory.
 
