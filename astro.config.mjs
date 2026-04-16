@@ -152,6 +152,16 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Extensions',
+					items: [
+						{ label: 'Overview', slug: 'extensions/overview' },
+						{ label: 'Manifest', slug: 'extensions/manifest' },
+						{ label: 'Extension Points', slug: 'extensions/extension-points' },
+						{ label: 'Events', slug: 'extensions/events' },
+						{ label: 'Schemas', slug: 'extensions/schemas' },
+					],
+				},
+				{
 					label: 'Behind the Scenes',
 					items: [
 						{ label: 'AI Integration', slug: 'advanced/ai-integration' },
