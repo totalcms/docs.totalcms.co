@@ -18,6 +18,10 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - Barcode and QR code generation
 - CSV/JSON import and export
 - White label admin customization (Pro edition)
+- CLI tool for schema, collection, and cache management (Since 3.3.0)
+- Extension system for third-party functionality (Since 3.3.0)
+- One-click updates with rollback and maintenance mode (Since 3.3.0)
+- Push/pull sync between development and production (Since 3.3.0)
 
 ## Documentation
 
@@ -122,6 +126,13 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [PHP API](https://docs.totalcms.co/api/php-api/): PHP API for server-side integrations
 - [Download](https://docs.totalcms.co/api/download/): File download API endpoints
 
+### Extensions (Since 3.3.0)
+- [Extensions Overview](https://docs.totalcms.co/extensions/overview/): Getting started with the extension system, directory structure, and quick example
+- [Manifest Reference](https://docs.totalcms.co/extensions/manifest/): Complete extension.json manifest field reference
+- [Extension Points](https://docs.totalcms.co/extensions/extension-points/): All 12 extension points: Twig, CLI, routes, events, schemas, widgets, and more
+- [Events](https://docs.totalcms.co/extensions/events/): Content event reference with payload schemas and listener isolation
+- [Schemas](https://docs.totalcms.co/extensions/schemas/): Read-only and installable schemas from extensions (Pro+ only)
+
 ### Behind the Scenes
 - [CLI Commands](https://docs.totalcms.co/advanced/cli/): Command-line interface for schemas, collections, objects, sync, JumpStart, and cache management
 - [Search](https://docs.totalcms.co/advanced/search/): Full-text search configuration
@@ -157,7 +168,7 @@ Add to your AI tool's MCP config:
 }
 ```
 
-Available tools: `docs_search`, `docs_twig_function`, `docs_twig_filter`, `docs_field_type`, `docs_api_endpoint`, `docs_schema_config`
+Available tools: `docs_search`, `docs_twig_function`, `docs_twig_filter`, `docs_field_type`, `docs_api_endpoint`, `docs_schema_config`, `docs_cli_command`, `docs_extension`
 
 ## Optional
 
