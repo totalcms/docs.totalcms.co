@@ -1,6 +1,7 @@
 ---
 title: "Sync"
 description: "Push and pull schemas and templates between local development and production Total CMS instances using the CLI or admin dashboard."
+since: "3.3.0"
 ---
 Sync lets you push schemas and templates from a local development instance to a production server, or pull them from production to your local environment. This enables a proper development workflow where you build and test locally, then deploy structural changes to production without touching content or media.
 
