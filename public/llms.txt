@@ -130,6 +130,8 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Security](https://docs.totalcms.co/advanced/security/): HTTPS, HTML/SVG sanitization, upload restrictions, and headers
 - [Configuration](https://docs.totalcms.co/advanced/configuration/): Hierarchical PHP settings for all system options
 - [Server Sizing](https://docs.totalcms.co/advanced/server-sizing/): Server requirements and sizing recommendations
+- [Sync](https://docs.totalcms.co/advanced/sync/): Push and pull schemas and templates between development and production
+- [Updates](https://docs.totalcms.co/advanced/updates/): One-click updates, CLI commands, rollback, and maintenance mode
 - [Deployment](https://docs.totalcms.co/advanced/deployment/): Git workflows, cache clearing, and CI/CD integration
 - [Filesystem](https://docs.totalcms.co/advanced/filesystem/): File storage structure and organization
 - [Licenses](https://docs.totalcms.co/advanced/licenses/): License management and editions

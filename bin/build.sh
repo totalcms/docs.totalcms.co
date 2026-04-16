@@ -7,7 +7,7 @@
 
 set -e
 
-TOTALCMS_REPO="${1:-/Users/joeworkman/Developer/totalcms}"
+TOTALCMS_REPO="${1:-}"
 TOTALCMS_DOCS="$TOTALCMS_REPO/resources/docs"
 if [ -d "$TOTALCMS_DOCS" ]; then
     echo "==> Syncing docs from $TOTALCMS_DOCS..."

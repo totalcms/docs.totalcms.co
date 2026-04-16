@@ -167,6 +167,8 @@ export default defineConfig({
 						{ label: 'Search', slug: 'advanced/search' },
 						{ label: 'Security', slug: 'advanced/security' },
 						{ label: 'Server Sizing', slug: 'advanced/server-sizing' },
+						{ label: 'Sync', slug: 'advanced/sync' },
+						{ label: 'Updates', slug: 'advanced/updates' },
 					],
 				},
 			],

@@ -24,7 +24,7 @@ Total CMS is a modern, flat-file PHP content management system. This site serves
 
 ## Documentation Source
 
-The canonical source for documentation content is the main Total CMS repo at `/Users/joeworkman/Developer/totalcms/resources/docs/`. The sync script processes these files by:
+The canonical source for documentation content is the main Total CMS repo at `resources/docs/` (in the `totalcms/cms` repo). The sync script processes these files by:
 
 1. Extracting the H1 title into Starlight frontmatter
 2. Removing the duplicate H1 (Starlight renders it from frontmatter)

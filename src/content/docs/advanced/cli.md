@@ -2,9 +2,6 @@
 title: "CLI Commands"
 description: "Complete reference for the Total CMS CLI tool (tcms). Manage schemas, collections, objects, cache, jobs, sync, and JumpStart from the command line."
 ---
-
-# CLI Commands
-
 The `tcms` CLI tool is the command-line interface to Total CMS. It exposes core CMS services as composable terminal commands, designed for both AI coding agents and human developers.
 
 ## Running the CLI
@@ -420,3 +417,60 @@ tcms jobs:process --json
 ```bash
 * * * * * php /path/to/resources/bin/tcms jobs:process
 ```
+
+---
+
+## Update Commands
+
+### `update:check`
+
+Check for available updates from the license server.
+
+```bash
+tcms update:check
+tcms update:check --json
+```
+
+**JSON output:**
+```json
+{
+    "current": "3.2.2",
+    "available": true,
+    "version": "3.3.0",
+    "releaseDate": "2026-04-10",
+    "severity": "minor",
+    "changelog": "New features and improvements",
+    "downloadUrl": "/version/download/3.3.0"
+}
+```
+
+### `update:apply`
+
+Download and apply an available update. The site enters maintenance mode during the swap.
+
+```bash
+tcms update:apply
+tcms update:apply --force
+tcms update:apply --json
+```
+
+| Option | Description |
+|--------|-------------|
+| `--force` | Skip confirmation prompt |
+
+The previous version is backed up automatically for rollback.
+
+### `update:rollback`
+
+Roll back to the previous version after a failed or unwanted update.
+
+```bash
+tcms update:rollback
+tcms update:rollback --force
+```
+
+| Option | Description |
+|--------|-------------|
+| `--force` | Skip confirmation prompt |
+
+Restores the backup directory created during the most recent update.
