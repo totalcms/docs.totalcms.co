@@ -1,6 +1,16 @@
 # Total CMS Documentation
 
-Public documentation site for [Total CMS](https://totalcms.co), built with [Astro Starlight](https://starlight.astro.build/).
+Source for [docs.totalcms.co](https://docs.totalcms.co), the public documentation site for [Total CMS](https://totalcms.co). Built with [Astro Starlight](https://starlight.astro.build/).
+
+## Content Source
+
+Documentation content lives in the main [totalcms/cms](https://github.com/totalcms/cms) repo at `resources/docs/`. This site syncs from that source:
+
+```bash
+bin/sync-from-totalcms.sh /path/to/totalcms/resources/docs
+```
+
+The sync extracts frontmatter, converts internal links, and copies files into `src/content/docs/`.
 
 ## Development
 
@@ -12,17 +22,13 @@ npm run dev
 ## Building for Production
 
 ```bash
-bin/build.sh
+bin/build.sh /path/to/totalcms
 ```
 
 The built site outputs to `./dist/`. Point your web server document root there.
 
-## Syncing Docs from Total CMS
+## Links
 
-Documentation source files live in the main Total CMS repo at `resources/docs/`. To sync them into this site:
-
-```bash
-bin/sync-from-totalcms.sh /path/to/totalcms/resources/docs
-```
-
-This is also automated via the GitHub Action in `.github/workflows/sync-docs.yml` (runs in the totalcms repo on push to main).
+- [docs.totalcms.co](https://docs.totalcms.co)
+- [Total CMS](https://totalcms.co)
+- [totalcms/cms](https://github.com/totalcms/cms)
