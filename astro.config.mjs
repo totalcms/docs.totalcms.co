@@ -41,7 +41,6 @@ export default defineConfig({
 						{ label: 'Collection Settings', slug: 'collections/settings' },
 						{ label: 'Form Settings', slug: 'collections/form-settings' },
 						{ label: 'Pushover Notifications', slug: 'notifications/pushover' },
-						{ label: 'Form Grid Layout', slug: 'collections/formgrid' },
 						{ label: 'Importing Data', slug: 'collections/import' },
 						{ label: 'Exporting Data', slug: 'collections/export' },
 						{ label: 'Sitemap Builder', slug: 'advanced/sitemap-builder' },
@@ -82,6 +81,8 @@ export default defineConfig({
 				{
 					label: 'Schemas',
 					items: [
+						{ label: 'Schema Reference', slug: 'schemas/reference' },
+						{ label: 'Form Grid Layout', slug: 'schemas/formgrid' },
 						{ label: 'Schema Validation', slug: 'schemas/validation' },
 					],
 				},

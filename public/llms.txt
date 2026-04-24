@@ -37,7 +37,6 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Collection Settings](https://docs.totalcms.co/collections/settings/): Configure collection behavior, display, and access control
 - [Form Settings](https://docs.totalcms.co/collections/form-settings/): Configure collection form fields and layout
 - [Pushover Notifications](https://docs.totalcms.co/notifications/pushover/): Configure Pushover push notifications for form actions with image attachments and delivery groups
-- [Form Grid Layout](https://docs.totalcms.co/collections/formgrid/): Arrange form fields in a grid layout
 - [Importing Data](https://docs.totalcms.co/collections/import/): Import data from CSV and JSON files
 - [Exporting Data](https://docs.totalcms.co/collections/export/): Export collection data to CSV and JSON
 - [Sitemap Builder](https://docs.totalcms.co/advanced/sitemap-builder/): Generate XML sitemaps from collections
@@ -69,6 +68,8 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Access Group Options](https://docs.totalcms.co/property-options/access-group-options/): Options filtered by access groups
 
 ### Schemas
+- [Schema Reference](https://docs.totalcms.co/schemas/reference/): Schema settings including inheritance, required fields, indexing, and form grid layout
+- [Form Grid Layout](https://docs.totalcms.co/schemas/formgrid/): Arrange form fields in a grid layout using CSS Grid syntax
 - [Schema Validation](https://docs.totalcms.co/schemas/validation/): Validate collection data with JSON schemas
 
 ### Twig Language
