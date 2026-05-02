@@ -81,6 +81,20 @@ $context->addEventListener('collection.created', function (array $payload): void
 });
 ```
 
+### `collection.updated`
+
+Fired after a collection's settings are updated.
+
+| Key | Type | Description |
+|---|---|---|
+| `collection` | `string` | Collection ID |
+
+```php
+$context->addEventListener('collection.updated', function (array $payload): void {
+    // e.g., react to collection configuration changes
+});
+```
+
 ### `collection.deleted`
 
 Fired after a collection is deleted.
@@ -92,6 +106,30 @@ Fired after a collection is deleted.
 ```php
 $context->addEventListener('collection.deleted', function (array $payload): void {
     // e.g., clean up extension data related to this collection
+});
+```
+
+### `import.completed`
+
+Fired after a batch import (CSV, JSON, or URL) finishes processing.
+
+| Key | Type | Description |
+|---|---|---|
+| `collection` | `string` | Collection ID |
+| `count` | `int` | Number of objects imported |
+| `created` | `string[]` | IDs of newly created objects |
+| `updated` | `string[]` | IDs of updated objects |
+
+```php
+$context->addEventListener('import.completed', function (array $payload): void {
+    $collection = $payload['collection'];
+    $count = $payload['count'];
+    // e.g., send a notification that import is done
+
+    // Act on specific updated objects
+    foreach ($payload['updated'] as $id) {
+        // e.g., send an email to updated members
+    }
 });
 ```
 
@@ -167,6 +205,48 @@ Fired after an extension is disabled.
 |---|---|---|
 | `id` | `string` | Extension ID (e.g. `vendor/name`) |
 
+### `devmode.enabled`
+
+Fired after development mode is enabled.
+
+| Key | Type | Description |
+|---|---|---|
+| `duration` | `int` | Duration in seconds |
+
+```php
+$context->addEventListener('devmode.enabled', function (array $payload): void {
+    // e.g., enable verbose logging in your extension
+});
+```
+
+### `devmode.disabled`
+
+Fired after development mode is disabled.
+
+The payload array is empty.
+
+```php
+$context->addEventListener('devmode.disabled', function (array $payload): void {
+    // e.g., disable debug features in your extension
+});
+```
+
+### `cache.cleared`
+
+Fired after all caches are cleared.
+
+| Key | Type | Description |
+|---|---|---|
+| `success` | `bool` | Whether all caches cleared successfully |
+
+The payload also includes per-service results (e.g. `filesystem`, `redis`, `apcu`).
+
+```php
+$context->addEventListener('cache.cleared', function (array $payload): void {
+    // e.g., clear your extension's own cache
+});
+```
+
 ## Listener Isolation
 
 Each listener is wrapped in a try/catch. If your listener throws:
@@ -190,3 +270,45 @@ $context->addEventListener('object.created', $listenerB, priority: 20);
 ```
 
 If two listeners have the same priority, they execute in the order they were registered.
+
+## Sending Notifications from Event Listeners
+
+Extensions can use events to trigger notifications automatically when content changes. The built-in `PushoverService` and `EmailService` are available via the DI container in the `boot()` phase.
+
+### Pushover Notification on Object Created
+
+```php
+use TotalCMS\Domain\Notification\Service\PushoverService;
+
+public function boot(ExtensionContext $context): void
+{
+    $pushover = $context->get(PushoverService::class);
+
+    $context->addEventListener('object.created', function (array $payload) use ($pushover): void {
+        $pushover->send(
+            message: "New {$payload['collection']} object: {$payload['id']}",
+            title: 'Content Created',
+        );
+    });
+}
+```
+
+### Email Notification on Import Completed
+
+```php
+use TotalCMS\Domain\Mailer\Service\EmailService;
+
+public function boot(ExtensionContext $context): void
+{
+    $mailer = $context->get(EmailService::class);
+
+    $context->addEventListener('import.completed', function (array $payload) use ($mailer): void {
+        $mailer->sendEmail('import-notification', [
+            'collection' => $payload['collection'],
+            'count'      => $payload['count'],
+        ]);
+    });
+}
+```
+
+These listeners run after the core operation completes. If sending fails, the exception is caught and logged without affecting the content operation.

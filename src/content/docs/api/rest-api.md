@@ -6,7 +6,7 @@ Total CMS provides a RESTful API for accessing content and schemas. This documen
 
 ## API Overview
 
-- **Base URL**: Your site's root URL (e.g., `https://yoursite.com`)
+- **Base URL**: Your site's API root (e.g., `https://yoursite.com/api`)
 - **Content Type**: `application/json`
 - **Authentication**: API keys (Pro edition) or session-based
 
@@ -24,12 +24,12 @@ API keys provide secure, token-based authentication ideal for headless CMS imple
 ```bash
 curl -H "X-API-Key: tcms_1234567890abcdef1234567890abcdef" \
      -H "Content-Type: application/json" \
-     https://yoursite.com/collections/blog
+     https://yoursite.com/api/collections/blog
 ```
 
 **Using query parameter:**
 ```bash
-curl "https://yoursite.com/collections/blog?api_key=tcms_1234567890abcdef1234567890abcdef"
+curl "https://yoursite.com/api/collections/blog?api_key=tcms_1234567890abcdef1234567890abcdef"
 ```
 
 **Key Features:**
@@ -49,7 +49,7 @@ For admin panel and same-origin requests using cookies:
 
 ```javascript
 // Include CSRF token for session-based requests
-fetch('/collections/blog', {
+fetch('/api/collections/blog', {
     headers: {
         'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
         'Content-Type': 'application/json'
@@ -73,7 +73,7 @@ fetch('/collections/blog', {
 ### Get All Collections
 
 ```http
-GET /collections
+GET /api/collections
 ```
 
 **Response:**
@@ -99,7 +99,7 @@ GET /collections
 ### Get Collection Objects
 
 ```http
-GET /collections/{collection}
+GET /api/collections/{collection}
 ```
 
 **Query Parameters:**
@@ -114,19 +114,19 @@ GET /collections/{collection}
 
 ```bash
 # Get all blog posts
-curl https://yoursite.com/collections/blog
+curl https://yoursite.com/api/collections/blog
 
 # Get published posts only
-curl "https://yoursite.com/collections/blog?filter[status]=published"
+curl "https://yoursite.com/api/collections/blog?filter[status]=published"
 
 # Get latest 10 posts
-curl "https://yoursite.com/collections/blog?limit=10&sort=date&order=desc"
+curl "https://yoursite.com/api/collections/blog?limit=10&sort=date&order=desc"
 
 # Search posts
-curl "https://yoursite.com/collections/blog?search=tutorial"
+curl "https://yoursite.com/api/collections/blog?search=tutorial"
 
 # Pagination
-curl "https://yoursite.com/collections/blog?limit=20&offset=40"
+curl "https://yoursite.com/api/collections/blog?limit=20&offset=40"
 ```
 
 **Response:**
@@ -155,12 +155,12 @@ curl "https://yoursite.com/collections/blog?limit=20&offset=40"
 ### Get Single Object
 
 ```http
-GET /collections/{collection}/{id}
+GET /api/collections/{collection}/{id}
 ```
 
 **Example:**
 ```bash
-curl https://yoursite.com/collections/blog/my-first-post
+curl https://yoursite.com/api/collections/blog/my-first-post
 ```
 
 **Response:**
@@ -187,7 +187,7 @@ curl https://yoursite.com/collections/blog/my-first-post
 ### Create Object
 
 ```http
-POST /collections/{collection}
+POST /api/collections/{collection}
 ```
 
 **Request Body:**
@@ -218,7 +218,7 @@ POST /collections/{collection}
 ### Update Object
 
 ```http
-PUT /collections/{collection}/{id}
+PUT /api/collections/{collection}/{id}
 ```
 
 **Request Body:**
@@ -246,7 +246,7 @@ PUT /collections/{collection}/{id}
 ### Partial Update
 
 ```http
-PATCH /collections/{collection}/{id}
+PATCH /api/collections/{collection}/{id}
 ```
 
 Updates only specified fields:
@@ -260,7 +260,7 @@ Updates only specified fields:
 ### Delete Object
 
 ```http
-DELETE /collections/{collection}/{id}
+DELETE /api/collections/{collection}/{id}
 ```
 
 **Response (204 No Content)**
@@ -268,7 +268,7 @@ DELETE /collections/{collection}/{id}
 ### Clone Object
 
 ```http
-POST /collections/{collection}/{id}/clone
+POST /api/collections/{collection}/{id}/clone
 ```
 
 Creates a copy of an existing object. Optionally clone to a different ID or collection.
@@ -297,7 +297,7 @@ If no body is provided, the clone uses the same ID and collection as the source.
 ### Check Collection Exists
 
 ```http
-HEAD /collections/{collection}
+HEAD /api/collections/{collection}
 ```
 
 Returns `200 OK` if the collection exists, `404 Not Found` if it does not. No response body.
@@ -305,7 +305,7 @@ Returns `200 OK` if the collection exists, `404 Not Found` if it does not. No re
 ### Check Object Exists
 
 ```http
-HEAD /collections/{collection}/{id}
+HEAD /api/collections/{collection}/{id}
 ```
 
 Returns `200 OK` if the object exists, `404 Not Found` if it does not. No response body.
@@ -313,7 +313,7 @@ Returns `200 OK` if the object exists, `404 Not Found` if it does not. No respon
 ### Get Collection Schema
 
 ```http
-GET /collections/{collection}/schema
+GET /api/collections/{collection}/schema
 ```
 
 Returns the schema definition for a specific collection.
@@ -343,7 +343,7 @@ The query endpoint provides paginated access to collection objects with filterin
 ### Query Objects
 
 ```http
-GET /collections/{collection}/query
+GET /api/collections/{collection}/query
 ```
 
 **Query Parameters:**
@@ -358,13 +358,13 @@ GET /collections/{collection}/query
 **Example:**
 ```bash
 # Paginated query with sorting
-curl "https://yoursite.com/collections/blog/query?limit=10&offset=0&sort=date"
+curl "https://yoursite.com/api/collections/blog/query?limit=10&offset=0&sort=date"
 
 # Search with field filtering
-curl "https://yoursite.com/collections/blog/query?search=tutorial&include=title,date,status"
+curl "https://yoursite.com/api/collections/blog/query?search=tutorial&include=title,date,status"
 
 # Export as CSV
-curl "https://yoursite.com/collections/blog/query?format=csv&include=title,date"
+curl "https://yoursite.com/api/collections/blog/query?format=csv&include=title,date"
 ```
 
 **Response (JSON, default):**
@@ -390,7 +390,7 @@ curl "https://yoursite.com/collections/blog/query?format=csv&include=title,date"
 ### Get Collection Index
 
 ```http
-GET /collections/{collection}/index
+GET /api/collections/{collection}/index
 ```
 
 Returns the full collection index. Supports filtering and sorting.
@@ -403,7 +403,7 @@ Returns the full collection index. Supports filtering and sorting.
 ### Rebuild Collection Index
 
 ```http
-PUT /collections/{collection}/index
+PUT /api/collections/{collection}/index
 ```
 
 Rebuilds the collection index from scratch. No request body required. Returns the rebuilt index.
@@ -415,7 +415,7 @@ Update, patch, or delete individual properties on an object without sending the 
 ### Update Property
 
 ```http
-PUT /collections/{collection}/{id}/{property}
+PUT /api/collections/{collection}/{id}/{property}
 ```
 
 Replaces the entire property value (PUT semantics).
@@ -430,7 +430,7 @@ Replaces the entire property value (PUT semantics).
 ### Patch Property
 
 ```http
-PATCH /collections/{collection}/{id}/{property}
+PATCH /api/collections/{collection}/{id}/{property}
 ```
 
 Merges into the existing property value (PATCH semantics). Useful for updating individual fields within a complex property.
@@ -447,7 +447,7 @@ Merges into the existing property value (PATCH semantics). Useful for updating i
 ### Delete Property
 
 ```http
-DELETE /collections/{collection}/{id}/{property}
+DELETE /api/collections/{collection}/{id}/{property}
 ```
 
 Removes the property from the object entirely.
@@ -457,8 +457,8 @@ Removes the property from the object entirely.
 ### Increment Property
 
 ```http
-POST /collections/{collection}/{id}/{property}/increment
-POST /collections/{collection}/{id}/{property}/increment/{amount}
+POST /api/collections/{collection}/{id}/{property}/increment
+POST /api/collections/{collection}/{id}/{property}/increment/{amount}
 ```
 
 Increments a numeric property value. Defaults to incrementing by 1.
@@ -466,10 +466,10 @@ Increments a numeric property value. Defaults to incrementing by 1.
 **Examples:**
 ```bash
 # Increment view count by 1
-curl -X POST https://yoursite.com/collections/blog/my-post/views/increment
+curl -X POST https://yoursite.com/api/collections/blog/my-post/views/increment
 
 # Increment by 5
-curl -X POST https://yoursite.com/collections/blog/my-post/views/increment/5
+curl -X POST https://yoursite.com/api/collections/blog/my-post/views/increment/5
 ```
 
 **Response (200 OK):** The updated property value.
@@ -479,8 +479,8 @@ curl -X POST https://yoursite.com/collections/blog/my-post/views/increment/5
 ### Decrement Property
 
 ```http
-POST /collections/{collection}/{id}/{property}/decrement
-POST /collections/{collection}/{id}/{property}/decrement/{amount}
+POST /api/collections/{collection}/{id}/{property}/decrement
+POST /api/collections/{collection}/{id}/{property}/decrement/{amount}
 ```
 
 Decrements a numeric property value. Defaults to decrementing by 1.
@@ -492,7 +492,7 @@ Update metadata associated with individual files or items within a property (e.g
 ### Update Property Metadata
 
 ```http
-PUT /collections/{collection}/{id}/{property}/{name}
+PUT /api/collections/{collection}/{id}/{property}/{name}
 ```
 
 Replaces the metadata for a specific item within a property.
@@ -511,7 +511,7 @@ Replaces the metadata for a specific item within a property.
 ### Patch Property Metadata
 
 ```http
-PATCH /collections/{collection}/{id}/{property}/{name}
+PATCH /api/collections/{collection}/{id}/{property}/{name}
 ```
 
 Merges into existing metadata for a specific item within a property.
@@ -528,7 +528,7 @@ CRUD operations for items within a deck (repeatable sections) property. Deck is 
 ### Create Deck Item
 
 ```http
-POST /collections/{collection}/{id}/{property}/deck
+POST /api/collections/{collection}/{id}/{property}/deck
 ```
 
 **Request Body:**
@@ -548,7 +548,7 @@ The `id` field is optional if the schema supports auto-generation.
 ### Get Deck Item
 
 ```http
-GET /collections/{collection}/{id}/{property}/deck/{itemId}
+GET /api/collections/{collection}/{id}/{property}/deck/{itemId}
 ```
 
 **Response (200 OK):**
@@ -566,7 +566,7 @@ GET /collections/{collection}/{id}/{property}/deck/{itemId}
 ### Update Deck Item
 
 ```http
-PUT /collections/{collection}/{id}/{property}/deck/{itemId}
+PUT /api/collections/{collection}/{id}/{property}/deck/{itemId}
 ```
 
 Replaces the deck item entirely.
@@ -585,7 +585,7 @@ Replaces the deck item entirely.
 ### Delete Deck Item
 
 ```http
-DELETE /collections/{collection}/{id}/{property}/deck/{itemId}
+DELETE /api/collections/{collection}/{id}/{property}/deck/{itemId}
 ```
 
 **Response (200 OK):** The updated parent object with the deck item removed.
@@ -682,7 +682,7 @@ If any objects are skipped due to data errors, the response wraps the data:
 ### Get All Schemas
 
 ```http
-GET /schemas
+GET /api/schemas
 ```
 
 **Response:**
@@ -702,7 +702,7 @@ GET /schemas
 ### Get Schema Definition
 
 ```http
-GET /schemas/{collection}
+GET /api/schemas/{collection}
 ```
 
 **Response:**
@@ -1045,7 +1045,7 @@ The API supports Cross-Origin Resource Sharing (CORS) for browser-based requests
 
 ```javascript
 // Example browser request
-fetch('https://yoursite.com/collections/blog', {
+fetch('https://yoursite.com/api/collections/blog', {
     method: 'GET',
     headers: {
         'X-API-Key': 'tcms_your_api_key_here',

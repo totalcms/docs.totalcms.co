@@ -40,7 +40,6 @@ A minimal extension that adds a Twig function:
     "id": "acme/hello",
     "name": "Hello Extension",
     "version": "1.0.0",
-    "permissions": ["twig:functions"],
     "entrypoint": "Extension.php",
     "license": "MIT"
 }

@@ -32,7 +32,7 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-**Permission:** `twig:functions`
+**Capability:** `twig:functions`
 
 Usage in templates:
 ```twig
@@ -61,7 +61,7 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-**Permission:** `twig:filters`
+**Capability:** `twig:filters`
 
 Usage in templates:
 ```twig
@@ -79,7 +79,7 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-**Permission:** `twig:globals`
+**Capability:** `twig:globals`
 
 Usage in templates:
 ```twig
@@ -113,7 +113,7 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-**Permission:** `cli:commands`
+**Capability:** `cli:commands`
 
 Usage:
 ```bash
@@ -140,7 +140,7 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-**Permission:** `routes:api`
+**Capability:** `routes:api`
 
 The routes above are accessible at:
 - `/ext/acme/seo-pro/status`
@@ -162,7 +162,7 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-**Permission:** `routes:admin`
+**Capability:** `routes:admin`
 
 The routes above are accessible at:
 - `/admin/ext/acme/seo-pro/dashboard`
@@ -184,7 +184,7 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-**Permission:** `routes:public`
+**Capability:** `routes:public`
 
 The routes above are accessible at:
 - `/ext/acme/seo-pro/webhook`
@@ -209,7 +209,7 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-**Permission:** `admin:nav`
+**Capability:** `admin:nav`
 
 The `priority` field controls ordering (lower numbers appear first). The `permission` field controls visibility (`admin` = admin users only).
 
@@ -232,7 +232,7 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-**Permission:** `admin:widgets`
+**Capability:** `admin:widgets`
 
 The template path is relative to the extension's `templates/` directory. Position is `main` or `sidebar`.
 
@@ -243,20 +243,24 @@ Register new field types for use in collection schemas.
 ```php
 public function register(ExtensionContext $context): void
 {
-    $context->addFieldType('colorpicker', Acme\Fields\ColorPickerField::class);
+    $context->addFieldType('colorpicker', Acme\Fields\ColorPickerField::class, 'color');
 }
 ```
 
-**Permission:** `fields:register`
+**Capability:** `fields`
 
-The class must extend `TotalCMS\Domain\Admin\FormField\FormField`. Once registered, the field type can be used in schemas:
+The class must extend `TotalCMS\Domain\Admin\FormField\FormField`. The third
+argument declares the default schema property type used when an author leaves
+the property's `type` blank — should be one of `SchemaData::PROPERTY_TYPES`
+(e.g. `string`, `color`, `array`). Defaults to `string` if omitted.
+
+Once registered, the field type can be used in schemas:
 
 ```json
 {
     "properties": {
         "accentColor": {
-            "type": "colorpicker",
-            "label": "Accent Color"
+            "field": "colorpicker"
         }
     }
 }
@@ -276,7 +280,7 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-**Permission:** `events:listen`
+**Capability:** `events:listen`
 
 ## Container Definitions
 
@@ -292,7 +296,7 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-**Permission:** `container:definitions`
+**Capability:** `container`
 
 ## Admin Assets
 
@@ -306,7 +310,7 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-**Permission:** `admin:assets`
+**Capability:** `admin:assets`
 
 The path is relative to the extension's `assets/` directory. For example, the CSS file above would be at `tcms-data/extensions/acme/seo-pro/assets/styles/admin.css`.
 
@@ -322,7 +326,7 @@ public function boot(ExtensionContext $context): void
 }
 ```
 
-**Permission:** `settings:read`
+Settings access is not a separate capability — `$context->setting()` and `$context->settings()` are always available regardless of permission state.
 
 Define a `settings_schema` in your manifest to enable a settings form in the admin UI. Settings are managed by admins through the extension settings page in the dashboard.
 
@@ -339,3 +343,29 @@ public function boot(ExtensionContext $context): void
 ```
 
 Only use `$context->get()` in `boot()`, never in `register()`. The container is not fully built during registration.
+
+## Logging
+
+Extensions can write to the shared `extensions.log` file (`tcms-data/logs/extensions.log`) using the same logger Total CMS uses internally. Get it from the context with `$context->logger()` — it returns a `Psr\Log\LoggerInterface`.
+
+```php
+public function register(ExtensionContext $context): void
+{
+    $logger = $context->logger();
+
+    $context->addEventListener('object.created', function (array $payload) use ($logger): void {
+        $logger->info('[acme/starter] object.created', $payload);
+    });
+}
+
+public function boot(ExtensionContext $context): void
+{
+    $context->logger()->debug('[acme/starter] booted');
+}
+```
+
+PSR-3 levels are available: `debug`, `info`, `notice`, `warning`, `error`, `critical`, `alert`, `emergency`. Pass a context array as the second argument for structured fields — Monolog appends them to the formatted line.
+
+Logger access is not a separate capability — `$context->logger()` is always available, in both `register()` and `boot()`.
+
+Prefix log messages with your extension id (e.g. `[acme/starter]`) so multi-extension logs stay readable. All extensions share the `extensions` channel and the same rotating log file.
