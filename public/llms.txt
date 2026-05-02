@@ -180,7 +180,7 @@ Add to your AI tool's MCP config:
 }
 ```
 
-Available tools: `docs_search`, `docs_twig_function`, `docs_twig_filter`, `docs_field_type`, `docs_api_endpoint`, `docs_schema_config`, `docs_cli_command`, `docs_extension`
+Available tools: `docs_search`, `docs_twig_function`, `docs_twig_filter`, `docs_field_type`, `docs_api_endpoint`, `docs_schema_config`, `docs_cli_command`, `docs_extension`, `docs_builder`
 
 ## Optional
 
