@@ -20,6 +20,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - White label admin customization (Pro edition)
 - CLI tool for schema, collection, and cache management (Since 3.3.0)
 - Extension system for third-party functionality (Since 3.3.0)
+- Site Builder for building complete sites with Twig templates and starter scaffolds (Since 3.3.0)
 - One-click updates with rollback and maintenance mode (Since 3.3.0)
 - Push/pull sync between development and production (Since 3.3.0)
 
@@ -44,6 +45,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 
 ### Property Settings
 - [All Fields](https://docs.totalcms.co/property-settings/all-fields/): Common settings shared by all property types
+- [Card](https://docs.totalcms.co/property-settings/card/): Single-instance nested object that renders another schema as inline sub-fields via schemaref
 - [Code](https://docs.totalcms.co/property-settings/code-editor/): Code editor property with syntax highlighting
 - [Date](https://docs.totalcms.co/property-settings/date/): Date and datetime property settings
 - [Deck](https://docs.totalcms.co/property-settings/deck/): Deck property for repeatable content blocks
@@ -55,6 +57,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Password](https://docs.totalcms.co/property-settings/password/): Secure password property with hashing
 - [Price](https://docs.totalcms.co/property-settings/price/): Currency/price property settings
 - [Radio & Multicheckbox](https://docs.totalcms.co/property-settings/radio-multicheckbox/): Radio buttons and multi-checkbox properties
+- [Secret](https://docs.totalcms.co/property-settings/secret/): Masked text input for plaintext-stored sensitive values like API keys and tokens
 - [Select](https://docs.totalcms.co/property-settings/select/): Select and multiselect dropdown properties
 - [Styled Text](https://docs.totalcms.co/property-settings/styled-text/): Rich text editor property
 - [SVG](https://docs.totalcms.co/property-settings/svg/): SVG upload and display property
@@ -126,6 +129,14 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Index Filter](https://docs.totalcms.co/api/index-filter/): Filter API index responses
 - [PHP API](https://docs.totalcms.co/api/php-api/): PHP API for server-side integrations
 - [Download](https://docs.totalcms.co/api/download/): File download API endpoints
+
+### Site Builder (Since 3.3.0)
+- [Overview](https://docs.totalcms.co/builder/overview/): Build complete websites within Total CMS using Twig templates, page routes, and automatic URL routing
+- [Frontend Assets](https://docs.totalcms.co/builder/frontend/): Set up Vite (or any build tool) to compile CSS and JavaScript for builder sites
+- [Twig Reference](https://docs.totalcms.co/twig/builder/): The `cms.builder` namespace for navigation helpers and asset management
+- [CLI Commands](https://docs.totalcms.co/builder/cli/): Scaffold sites from starter templates
+- [Admin UI](https://docs.totalcms.co/builder/admin/): Manage builder templates, preview pages, and configure page routing from the admin
+- [Starter Templates](https://docs.totalcms.co/builder/starters/): Bundled starter templates for business, blog, portfolio, and minimal sites
 
 ### Extensions (Since 3.3.0)
 - [Extensions Overview](https://docs.totalcms.co/extensions/overview/): Getting started with the extension system, directory structure, and quick example

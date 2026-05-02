@@ -51,6 +51,7 @@ export default defineConfig({
 					label: 'Property Settings',
 					items: [
 						{ label: 'All Fields', slug: 'property-settings/all-fields' },
+						{ label: 'Card', slug: 'property-settings/card' },
 						{ label: 'Code', slug: 'property-settings/code-editor' },
 						{ label: 'Date', slug: 'property-settings/date' },
 						{ label: 'Deck', slug: 'property-settings/deck' },
@@ -62,6 +63,7 @@ export default defineConfig({
 						{ label: 'Password', slug: 'property-settings/password' },
 						{ label: 'Price', slug: 'property-settings/price' },
 						{ label: 'Radio & Multicheckbox', slug: 'property-settings/radio-multicheckbox' },
+						{ label: 'Secret', slug: 'property-settings/secret' },
 						{ label: 'Select', slug: 'property-settings/select' },
 						{ label: 'Styled Text', slug: 'property-settings/styled-text' },
 						{ label: 'SVG', slug: 'property-settings/svg' },
@@ -117,6 +119,7 @@ export default defineConfig({
 						{ label: 'Views', slug: 'twig/views' },
 						{ label: 'QR Codes', slug: 'twig/qrcodes' },
 						{ label: 'Bar Codes', slug: 'twig/barcodes' },
+						{ label: 'Utilities', slug: 'twig/utils' },
 					],
 				},
 				{
@@ -153,6 +156,17 @@ export default defineConfig({
 						{ label: 'Index Filter', slug: 'api/index-filter' },
 						{ label: 'PHP API', slug: 'api/php-api' },
 						{ label: 'Download', slug: 'api/download' },
+					],
+				},
+				{
+					label: 'Site Builder',
+					items: [
+						{ label: 'Overview', slug: 'builder/overview' },
+						{ label: 'Frontend Assets', slug: 'builder/frontend' },
+						{ label: 'Twig Reference', slug: 'twig/builder' },
+						{ label: 'CLI Commands', slug: 'builder/cli' },
+						{ label: 'Admin UI', slug: 'builder/admin' },
+						{ label: 'Starter Templates', slug: 'builder/starters' },
 					],
 				},
 				{
