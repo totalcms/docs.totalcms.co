@@ -1,7 +1,7 @@
 ---
 title: "Extension Points"
 description: "All the ways extensions can add functionality to Total CMS: Twig functions, CLI commands, routes, admin pages, field types, events, and more."
-since: "3.3.0"
+since: "3.5.0"
 ---
 Extensions interact with Total CMS through the `ExtensionContext` object passed to `register()` and `boot()`. This page covers every available extension point.
 
@@ -298,21 +298,110 @@ public function register(ExtensionContext $context): void
 
 **Capability:** `container`
 
-## Admin Assets
+## Page Middleware
 
-Load custom CSS or JavaScript files in the admin interface.
+Register middleware that builder pages can opt into via their `middleware` field. Useful for auth gates, rate limits, geo redirects, A/B splits, or anything else that needs to run before a page renders. The middleware can short-circuit (return a response — auth redirect, 429, etc.) or pass through (return null) and let the page render.
+
+```php
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use TotalCMS\Domain\Builder\Data\PageData;
+use TotalCMS\Domain\Builder\PageMiddleware\PageMiddlewareInterface;
+
+class GeoRedirect implements PageMiddlewareInterface
+{
+    public function __construct(private readonly GeoIPService $geo) {}
+
+    public function handle(ServerRequestInterface $request, PageData $page): ?ResponseInterface
+    {
+        if ($this->geo->countryFor($request) === 'EU') {
+            return (new \Nyholm\Psr7\Factory\Psr17Factory())
+                ->createResponse(302)
+                ->withHeader('Location', '/eu' . $request->getUri()->getPath());
+        }
+
+        return null;
+    }
+}
+```
 
 ```php
 public function register(ExtensionContext $context): void
 {
-    $context->addAdminAsset('css', 'styles/admin.css');
-    $context->addAdminAsset('js', 'scripts/admin.js');
+    $context->addContainerDefinition(GeoRedirect::class, fn ($c) => new GeoRedirect(
+        $c->get(GeoIPService::class),
+    ));
+    $context->addPageMiddleware('geo-redirect', GeoRedirect::class);
 }
 ```
 
-**Capability:** `admin:assets`
+Once registered, `geo-redirect` shows up in the page form's middleware multiselect. Admins choose which pages use it; the runner invokes it in the order listed on each page.
 
-The path is relative to the extension's `assets/` directory. For example, the CSS file above would be at `tcms-data/extensions/acme/seo-pro/assets/styles/admin.css`.
+**Naming**: lowercase letters, digits, hyphens (e.g. `geo-redirect`, `staff-only`, `rate-limit`). Names are stable contract — once shipped, a rename will break sites that have it in their page records.
+
+**Failure modes**:
+- An unknown name in a page's middleware list (typo, uninstalled extension) is logged and silently skipped.
+- A middleware that throws causes the runner to return a 500 — fail-closed for security.
+
+**Capability:** `page-middleware`
+
+See the [Page Middleware section in the Builder overview](/builder/overview#page-middleware/) for the user-facing perspective.
+
+## Assets (CSS / JS)
+
+Extensions can register CSS or JavaScript files for the **admin interface** and/or **public pages**. Each surface has its own registration method and capability:
+
+```php
+public function register(ExtensionContext $context): void
+{
+    // Admin interface only
+    $context->addAdminAsset('css', 'styles/admin.css');
+    $context->addAdminAsset('js', 'scripts/admin.js');
+
+    // Public pages only
+    $context->addFrontendAsset('css', 'styles/widget.css');
+    $context->addFrontendAsset('js', 'scripts/widget.js');
+}
+```
+
+**Capabilities:** `admin:assets`, `frontend:assets`
+
+Paths are relative to the extension's `assets/` directory. For example, the CSS file above would resolve to `tcms-data/extensions/acme/seo-pro/assets/styles/admin.css` and be served from `/ext/acme/seo-pro/assets/styles/admin.css` with an `mtime`-based cache-busting query string.
+
+### Optional parameters
+
+Both methods accept the same set of options:
+
+```php
+$context->addFrontendAsset(
+    type: 'js',
+    path: 'scripts/widget.js',
+    position: 'body',   // 'head' | 'body' | null — null uses the default
+    module: true,       // load as <script type="module"> (default true)
+    preload: true,      // emit a <link rel="modulepreload"> hint in the head
+    version: null,      // override the cache-bust query string (default: file mtime)
+);
+```
+
+Defaults: CSS goes in the head, JS goes in the body, module scripts emit `type="module"`, no preload, mtime-based cache busting.
+
+### Where they render
+
+Extension assets are merged with Total CMS core assets and emitted by these Twig helpers in your templates:
+
+| Surface | Helper | Typical placement |
+|---|---|---|
+| Public pages | `{{ cms.assetsHead() }}` | inside `<head>` |
+| Public pages | `{{ cms.assetsBody() }}` | just before `</body>` |
+| Admin pages  | `{{ cms.adminAssetsHead() }}` | inside `<head>` (already wired by core admin templates) |
+| Admin pages  | `{{ cms.adminAssetsBody() }}` | just before `</body>` (already wired) |
+
+For the admin interface there's nothing to do — core admin templates already call the helpers. For public pages, your theme template needs to call `cms.assetsHead()` / `cms.assetsBody()` for extension frontend assets to render.
+
+Within each helper, output ordering is:
+1. Stylesheets first.
+2. Preload hints (`<link rel="preload">` / `<link rel="modulepreload">`) — always emitted in the head regardless of the asset's own `position`.
+3. Script tags last.
 
 ## Settings
 

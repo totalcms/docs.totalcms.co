@@ -28,6 +28,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 
 ### Start Here
 - [Getting Started](https://docs.totalcms.co/getting-started/): Introduction to Total CMS features and quick start guide
+- [Requirements](https://docs.totalcms.co/requirements/): Server, PHP, and browser requirements including required and recommended PHP extensions and supported web servers
 - [Installation](https://docs.totalcms.co/installation/): PHP 8.2+ requirements, extensions, and web server setup
 
 ### Dashboard
@@ -144,6 +145,11 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Extension Points](https://docs.totalcms.co/extensions/extension-points/): All 12 extension points: Twig, CLI, routes, events, schemas, widgets, and more
 - [Events](https://docs.totalcms.co/extensions/events/): Content event reference with payload schemas and listener isolation
 - [Schemas](https://docs.totalcms.co/extensions/schemas/): Read-only and installable schemas from extensions (Pro+ only)
+
+### Bundled Extensions (Since 3.5.0)
+- [Bundled Extensions Overview](https://docs.totalcms.co/extensions/bundled/): Extensions that ship with Total CMS — installed by default, managed through the same UI as user-installed extensions, but cannot be removed
+- [A/B Split](https://docs.totalcms.co/extensions/bundled/ab-split/): Render an alternate page template at the same URL for a percentage of visitors for A/B testing layout, copy, or CTA variations
+- [Geo Redirect](https://docs.totalcms.co/extensions/bundled/geo-redirect/): Redirect visitors based on their country using CDN-injected headers (Cloudflare, Vercel, generic) for compliance redirects and regional landing pages
 
 ### Behind the Scenes
 - [CLI Commands](https://docs.totalcms.co/advanced/cli/): Command-line interface for schemas, collections, objects, sync, JumpStart, and cache management

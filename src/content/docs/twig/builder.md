@@ -1,7 +1,7 @@
 ---
 title: "Twig Builder Reference"
 description: "Reference for the cms.builder namespace providing navigation helpers and asset management for Site Builder pages."
-since: "3.3.0"
+since: "3.5.0"
 ---
 The builder adapter provides navigation helpers and asset management for Site Builder sites. Navigation functions automatically filter out draft pages and pages with `nav` set to false, and sort results by the `sort` field (ascending). Asset functions handle path resolution and cache busting.
 

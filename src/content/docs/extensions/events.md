@@ -1,7 +1,7 @@
 ---
 title: "Extension Events"
 description: "Reference for all content events that extensions can subscribe to in Total CMS."
-since: "3.3.0"
+since: "3.5.0"
 ---
 Extensions can subscribe to events fired by Total CMS after core operations complete. Events are synchronous and fire after the operation succeeds. If a listener throws an exception, it is caught and logged without affecting the core operation or other listeners.
 
@@ -158,6 +158,22 @@ Fired after a schema is deleted.
 ```php
 $context->addEventListener('schema.deleted', function (array $payload): void {
     // e.g., remove cached data for this schema
+});
+```
+
+### `template.saved`
+
+Fired after a Builder template (`.twig` file) is written via `TemplateSaver`. Powers the Builder live-reload feature internally — extensions can listen too, e.g., to re-warm a template cache or trigger a downstream rebuild.
+
+| Key | Type | Description |
+|---|---|---|
+| `id` | `string` | Template id without folder prefix (e.g., `about`, `partials/header`) |
+| `folder` | `string\|null` | Optional sub-folder (`pages`, `layouts`, etc.) or `null` for root |
+| `path` | `string` | Full path including folder (e.g., `pages/about`) |
+
+```php
+$context->addEventListener('template.saved', function (array $payload): void {
+    // e.g., flush a template-derived cache key
 });
 ```
 

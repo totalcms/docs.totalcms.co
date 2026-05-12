@@ -25,6 +25,7 @@ export default defineConfig({
 					label: 'Start Here',
 					items: [
 						{ label: 'Getting Started', slug: 'getting-started' },
+						{ label: 'Requirements', slug: 'requirements' },
 						{ label: 'Installation', slug: 'installation' },
 					],
 				},
@@ -177,6 +178,14 @@ export default defineConfig({
 						{ label: 'Extension Points', slug: 'extensions/extension-points' },
 						{ label: 'Events', slug: 'extensions/events' },
 						{ label: 'Schemas', slug: 'extensions/schemas' },
+						{
+							label: 'Bundled Extensions',
+							items: [
+								{ label: 'Overview', slug: 'extensions/bundled' },
+								{ label: 'A/B Split', slug: 'extensions/bundled/ab-split' },
+								{ label: 'Geo Redirect', slug: 'extensions/bundled/geo-redirect' },
+							],
+						},
 					],
 				},
 				{

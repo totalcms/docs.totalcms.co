@@ -1,7 +1,7 @@
 ---
 title: "Extension Manifest Reference"
 description: "Complete reference for the extension.json manifest file that every Total CMS extension requires."
-since: "3.3.0"
+since: "3.5.0"
 ---
 Every extension requires an `extension.json` manifest file in its root directory. This file declares the extension's identity, requirements, and capabilities.
 
@@ -15,7 +15,7 @@ Every extension requires an `extension.json` manifest file in its root directory
     "version": "1.2.0",
     "icon": "icon.svg",
     "requires": {
-        "totalcms": ">=3.3.0",
+        "totalcms": ">=3.5.0",
         "php": ">=8.2",
         "extensions": {
             "acme/analytics": ">=1.0.0"
@@ -76,7 +76,7 @@ Version constraints for Total CMS, PHP, and other extensions.
 
 ```json
 "requires": {
-    "totalcms": ">=3.3.0",
+    "totalcms": ">=3.5.0",
     "php": ">=8.2",
     "extensions": {
         "acme/analytics": ">=1.0.0"
@@ -188,6 +188,7 @@ When an extension is enabled, the system runs a trial registration to discover w
 | `admin:nav` | `$context->addAdminNavItem(...)` | Items in the admin sidebar |
 | `admin:widgets` | `$context->addDashboardWidget(...)` | Dashboard widgets |
 | `admin:assets` | `$context->addAdminAsset(...)` | CSS/JS loaded in the admin |
+| `frontend:assets` | `$context->addFrontendAsset(...)` | CSS/JS loaded on public pages |
 | `events:listen` | `$context->addEventListener(...)` | Content event subscribers |
 | `fields` | `$context->addFieldType(...)` | Custom field types |
 | `schemas` | `schemas/` directory exists in the extension | Read-only schemas (Pro+ only) |

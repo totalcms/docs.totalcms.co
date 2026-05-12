@@ -1,7 +1,7 @@
 ---
 title: "Frontend Assets"
 description: "Set up Vite (or any build tool) to compile CSS and JavaScript for your Site Builder site."
-since: "3.3.0"
+since: "3.5.0"
 ---
 T3 doesn't own your CSS or JavaScript build pipeline. You choose the tools, write the source files, and output the compiled assets to a public directory. T3's asset functions (`cms.builder.css()`, `cms.builder.js()`, etc.) handle loading them into your templates with automatic cache busting.
 

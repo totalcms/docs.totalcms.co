@@ -1,7 +1,7 @@
 ---
 title: "Extensions Overview"
 description: "Learn how to extend Total CMS with custom functionality using the extension system. Add Twig functions, CLI commands, admin pages, custom schemas, and more."
-since: "3.3.0"
+since: "3.5.0"
 ---
 The Total CMS extension system lets you add custom functionality without modifying core files. Extensions can add Twig functions and filters, CLI commands, admin pages, REST API endpoints, custom field types, event listeners, dashboard widgets, and schemas.
 
@@ -29,6 +29,8 @@ tcms-data/extensions/
             templates/          # Twig templates
             assets/             # CSS, JS, images
 ```
+
+Total CMS also ships **bundled extensions** in `resources/extensions/` — included with every install but disabled by default. They appear in the admin alongside user-installed extensions but cannot be removed (only disabled). See [Bundled Extensions](/extensions/bundled/).
 
 ## Quick Example
 

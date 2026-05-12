@@ -1,7 +1,7 @@
 ---
 title: "CLI Commands"
 description: "Complete reference for the Total CMS CLI tool (tcms). Manage schemas, collections, objects, cache, jobs, sync, and JumpStart from the command line."
-since: "3.3.0"
+since: "3.5.0"
 ---
 The `tcms` CLI tool is the command-line interface to Total CMS. It exposes core CMS services as composable terminal commands, designed for both AI coding agents and human developers.
 
@@ -437,11 +437,11 @@ tcms update:check --json
 {
     "current": "3.2.2",
     "available": true,
-    "version": "3.3.0",
+    "version": "3.5.0",
     "releaseDate": "2026-04-10",
     "severity": "minor",
     "changelog": "New features and improvements",
-    "downloadUrl": "/version/download/3.3.0"
+    "downloadUrl": "/version/download/3.5.0"
 }
 ```
 
