@@ -10,7 +10,7 @@ OUT_FILE = os.path.join(PROJECT_ROOT, "public", "llms-full.txt")
 
 # Section ordering: (section_name, directory OR None for root-level files, [optional file list])
 SECTIONS = [
-    ("Start Here", None, ["getting-started.md", "installation.md"]),
+    ("Start Here", None, ["getting-started.md", "requirements.md", "installation.md"]),
     ("Dashboard", "admin", None),
     ("Collections", "collections", None),
     ("Property Settings", "property-settings", None),
@@ -21,6 +21,8 @@ SECTIONS = [
     ("CMS Admin", "twig", ["admin.md", "auth.md", "edition.md", "schemas.md", "forms/overview.md", "forms/builder.md", "forms/deck.md", "forms/options.md", "forms/fields.md", "forms/select-options.md", "forms/patterns.md", "forms/report.md", "forms/specialized.md"]),
     ("Authentication", "auth", None),
     ("API", "api", None),
+    ("Site Builder", "builder", ["overview.md", "frontend.md", "cli.md", "admin.md", "starters.md"]),
+    ("Extensions", "extensions", ["overview.md", "manifest.md", "extension-points.md", "events.md", "schemas.md", "bundled.md", "bundled/ab-split.md", "bundled/geo-redirect.md"]),
     ("Behind the Scenes", "advanced", None),
 ]
 
