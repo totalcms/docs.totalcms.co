@@ -591,7 +591,7 @@ Resolution tries the path as-is, then with `.html`, then `/index.html`. Path tra
 ## See Also
 
 - [Frontend Assets](/site-builder/frontend/) — Vite setup, CSS/JS compilation, and build tool configuration
-- [Builder Twig Reference](/twig/builder/) — `nav()`, `subnav()`, `navTree()`, `css()`, `js()`, `asset()`, `preload()`
+- [Builder Twig Reference](/site-builder/twig/) — `nav()`, `subnav()`, `navTree()`, `css()`, `js()`, `asset()`, `preload()`
 - [Builder CLI Commands](/site-builder/cli/) — `builder:init`, `builder:routes`, `builder:history`
 - [Builder Admin UI](/site-builder/admin/) — page management, drag-drop reorder, preview pane, snapshot history
 - [Starter Templates](/site-builder/starters/)

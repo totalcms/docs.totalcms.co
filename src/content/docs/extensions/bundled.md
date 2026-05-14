@@ -18,8 +18,8 @@ This keeps core lean for sites that don't need a particular feature, while still
 
 | Extension | Description | Docs |
 |-----------|-------------|------|
-| `totalcms/ab-split` | Render an alternate page template at the same URL for a percentage of visitors (A/B testing). | [A/B Split →](/extensions/bundled/ab-split/) |
-| `totalcms/geo-redirect` | Redirect visitors based on their country. Reads from CDN-injected headers (Cloudflare, Vercel, generic). Useful for compliance redirects and regional landing pages. | [Geo Redirect →](/extensions/bundled/geo-redirect/) |
+| `totalcms/ab-split` | Render an alternate page template at the same URL for a percentage of visitors (A/B testing). | [A/B Split →](/extensions/ab-split/) |
+| `totalcms/geo-redirect` | Redirect visitors based on their country. Reads from CDN-injected headers (Cloudflare, Vercel, generic). Useful for compliance redirects and regional landing pages. | [Geo Redirect →](/extensions/geo-redirect/) |
 
 ## How to enable / disable
 
