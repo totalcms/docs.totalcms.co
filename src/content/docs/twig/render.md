@@ -163,7 +163,7 @@ Generate a hidden template element with gallery data for programmatic lightbox i
 }) }}
 ```
 
-Filtering uses the same syntax as [Index Filtering](/api/index-filter/), including [wildcard patterns](#wildcard-patterns) for flexible string matching.
+Filtering uses the same syntax as [Index Filtering](/apis/index-filter/), including [wildcard patterns](#wildcard-patterns) for flexible string matching.
 
 For complete launcher usage with trigger methods and opening at specific images, see [totalcms.md](/twig/totalcms/).
 

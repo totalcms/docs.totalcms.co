@@ -332,6 +332,6 @@ Templates don't change between development and production — the asset function
 
 ## See Also
 
-- [Site Builder Overview](/builder/overview/)
-- [Builder Admin UI](/builder/admin/)
+- [Site Builder Overview](/site-builder/overview/)
+- [Builder Admin UI](/site-builder/admin/)
 - [Collection Objects](/twig/collections/)

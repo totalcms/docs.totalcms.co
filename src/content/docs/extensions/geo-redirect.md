@@ -3,7 +3,7 @@ title: "Geo Redirect (Bundled Extension)"
 description: "Redirect visitors based on their country. Reads the country from CDN-injected headers and 302s to a configured URL — useful for compliance redirects, regional landing pages, and sending visitors to localized URLs."
 since: "3.5.0"
 ---
-`totalcms/geo-redirect` — bundled with Total CMS. Adds a `geo-redirect` [page feature](/builder/overview#page-features-middleware/) that 302s visitors based on their country. The country is read from CDN-injected request headers (Cloudflare, Vercel, generic), so there's no IP database to maintain — your reverse proxy already knows where the visitor is.
+`totalcms/geo-redirect` — bundled with Total CMS. Adds a `geo-redirect` [page feature](/site-builder/overview#page-features-middleware/) that 302s visitors based on their country. The country is read from CDN-injected request headers (Cloudflare, Vercel, generic), so there's no IP database to maintain — your reverse proxy already knows where the visitor is.
 
 ## Use cases
 
@@ -155,6 +155,6 @@ Source: `resources/extensions/totalcms/geo-redirect/`
 
 ## See also
 
-- [Page Features (Builder)](/builder/overview#page-features-middleware/) — the middleware framework this plugs into
+- [Page Features (Builder)](/site-builder/overview#page-features-middleware/) — the middleware framework this plugs into
 - [Bundled Extensions](/extensions/bundled/) — concept and list of all bundled extensions
 - [A/B Split](/extensions/bundled/ab-split/) — sibling bundled extension for variant testing

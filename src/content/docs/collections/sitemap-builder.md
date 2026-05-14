@@ -94,7 +94,7 @@ This preserves backward compatibility with workflows that built sitemap URLs by 
 
 The `include` and `exclude` settings — whether saved on the collection or passed as URL parameters — control which objects appear in the sitemap.
 
-> **📖 See [Index Filter Documentation](/api/index-filter/) for complete filtering syntax and examples.**
+> **📖 See [Index Filter Documentation](/apis/index-filter/) for complete filtering syntax and examples.**
 
 ### Quick Examples
 
@@ -119,7 +119,7 @@ The `include` and `exclude` settings — whether saved on the collection or pass
 - **Shorthand**: `?include=featured` — Defaults to `featured:true`
 - **Multiple**: Use commas to separate multiple filters
 
-For complete filtering documentation including boolean/string handling, multi-criteria, precedence, and PHP usage examples, see the [Index Filter Documentation](/api/index-filter/).
+For complete filtering documentation including boolean/string handling, multi-criteria, precedence, and PHP usage examples, see the [Index Filter Documentation](/apis/index-filter/).
 
 ## Backward Compatibility
 

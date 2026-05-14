@@ -635,5 +635,5 @@ A fully configured collection metadata file:
 
 - [Collection Form Settings](/collections/form-settings/) - Detailed form customization
 - [Collection Filtering](/twig/collection-filtering/) - Filtering and sorting collections
-- [Field Settings](/property-settings/styled-text/) - Schema field configuration
+- [Field Settings](/fields/styled-text/) - Schema field configuration
 - [Twig Filters Reference](/twig/filters/) - All available Twig filters

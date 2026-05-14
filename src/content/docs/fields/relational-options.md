@@ -33,7 +33,7 @@ All other settings (`label`, `format`, `value`, `include`, `exclude`, `sort`) wo
 
 ## Custom Label Format
 
-Use the `format` setting to build labels from multiple fields with arbitrary surrounding text. Wrap each field reference in `${ }` — anything outside the placeholders is rendered literally. This matches the same template syntax used by [`deckItemLabel`](/property-settings/deck/) and [`autogen`](/property-settings/id/).
+Use the `format` setting to build labels from multiple fields with arbitrary surrounding text. Wrap each field reference in `${ }` — anything outside the placeholders is rendered literally. This matches the same template syntax used by [`deckItemLabel`](/fields/deck/) and [`autogen`](/fields/id/).
 
 ```json
 {
@@ -75,7 +75,7 @@ Produces labels like `John Doe <john@example.com>`.
 
 You can filter which objects appear in relational dropdowns using `include` and `exclude` filters. This is useful for showing only published content, excluding drafts, or filtering by any object property.
 
-> **See [Index Filter Documentation](/api/index-filter/) for complete filtering syntax and examples.**
+> **See [Index Filter Documentation](/apis/index-filter/) for complete filtering syntax and examples.**
 
 **Basic filtering:**
 ```json
@@ -202,4 +202,4 @@ Multiple filters are comma-separated: `"exclude": "draft:true,private:true"`
 
 ## Orphaned Values
 
-Relational options are always strict — if a stored value references an object that has since been deleted (or filtered out by `include`/`exclude`), the orphaned ID is silently dropped from the rendered options rather than shown as a raw, label-less entry. This is the opposite default to [`propertyOptions`](/property-options/property-options/), which rescues stored values by default; the `mergeStoredValues` toggle does not apply here.
+Relational options are always strict — if a stored value references an object that has since been deleted (or filtered out by `include`/`exclude`), the orphaned ID is silently dropped from the rendered options rather than shown as a raw, label-less entry. This is the opposite default to [`propertyOptions`](/fields/property-options/), which rescues stored values by default; the `mergeStoredValues` toggle does not apply here.

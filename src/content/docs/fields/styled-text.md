@@ -216,7 +216,7 @@ Configure uploads within the editor. Each upload type has its own rules setting 
 ```
 
 - **imagePreset** - Apply a named image preset to uploaded images
-- **imageUploadRules** - Validation rules for image uploads (same format as [Image Validation](/property-settings/image-gallery/) rules)
+- **imageUploadRules** - Validation rules for image uploads (same format as [Image Validation](/fields/image-gallery/) rules)
 - **mediaUploadRules** - Validation rules for video and audio uploads
 - **fileUploadRules** - Validation rules for file link uploads
 

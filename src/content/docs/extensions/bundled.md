@@ -65,4 +65,4 @@ If you're shipping a fork of T3 and want to add your own bundled extensions, dro
 
 - [Extensions Overview](/extensions/overview/)
 - [Extension Points](/extensions/extension-points/) — the full extension API including `addPageMiddleware()` for shipping page features
-- [Page Features (Builder)](/builder/overview#page-features-middleware/) — user-facing perspective on the middleware system
+- [Page Features (Builder)](/site-builder/overview#page-features-middleware/) — user-facing perspective on the middleware system

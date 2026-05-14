@@ -405,7 +405,7 @@ The order file is reconciled against the page list on every read:
 - Pages that exist but aren't in the order file are appended at the root
 - If a parent page is deleted, its children are spliced into the parent's spot so grandchildren keep their structure
 
-You don't edit `.order.json` directly — use the admin's drag-drop reorder mode (see [Builder Admin UI](/builder/admin#reordering-pages/)). The file is created automatically on first read, migrating from any legacy `parent`/`sort` fields if present.
+You don't edit `.order.json` directly — use the admin's drag-drop reorder mode (see [Builder Admin UI](/site-builder/admin#reordering-pages/)). The file is created automatically on first read, migrating from any legacy `parent`/`sort` fields if present.
 
 ## Navigation
 
@@ -590,8 +590,8 @@ Resolution tries the path as-is, then with `.html`, then `/index.html`. Path tra
 
 ## See Also
 
-- [Frontend Assets](/builder/frontend/) — Vite setup, CSS/JS compilation, and build tool configuration
+- [Frontend Assets](/site-builder/frontend/) — Vite setup, CSS/JS compilation, and build tool configuration
 - [Builder Twig Reference](/twig/builder/) — `nav()`, `subnav()`, `navTree()`, `css()`, `js()`, `asset()`, `preload()`
-- [Builder CLI Commands](/builder/cli/) — `builder:init`, `builder:routes`, `builder:history`
-- [Builder Admin UI](/builder/admin/) — page management, drag-drop reorder, preview pane, snapshot history
-- [Starter Templates](/builder/starters/)
+- [Builder CLI Commands](/site-builder/cli/) — `builder:init`, `builder:routes`, `builder:history`
+- [Builder Admin UI](/site-builder/admin/) — page management, drag-drop reorder, preview pane, snapshot history
+- [Starter Templates](/site-builder/starters/)

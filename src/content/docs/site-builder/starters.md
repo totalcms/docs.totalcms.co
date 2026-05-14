@@ -166,7 +166,7 @@ Dynamic navigation using the builder nav function:
 
 `cms.builder.nav()` returns top-level pages that are published (not draft) and have navigation enabled (`nav: true`), in the order defined by the order file (`.order.json`). Your nav updates automatically when you add, remove, or reorder pages in the admin.
 
-See [Navigation](/builder/overview#navigation/) for `subnav()` and `navTree()` functions.
+See [Navigation](/site-builder/overview#navigation/) for `subnav()` and `navTree()` functions.
 
 ### Footer (`partials/footer.twig`)
 
@@ -186,7 +186,7 @@ The helper resolves the path against your configured assets directory and append
 This setup is intentional: it works immediately without any build step *and* shows you exactly the pattern you'd use for any other CSS, JS, font, or image asset. When you outgrow plain CSS, swap it for one of:
 
 - Sass/SCSS compiled by your build tool
-- [Vite](/builder/frontend/) (run `tcms builder:frontend` to scaffold it)
+- [Vite](/site-builder/frontend/) (run `tcms builder:frontend` to scaffold it)
 - Tailwind CSS
 - Any other pipeline that emits CSS files
 
@@ -223,7 +223,7 @@ Or after the fact (idempotent):
 tcms builder:frontend
 ```
 
-Both install the same Vite scaffold to `<projectRoot>/frontend/`. See [`builder:frontend`](/builder/cli#builderfrontend/) for the full reference.
+Both install the same Vite scaffold to `<projectRoot>/frontend/`. See [`builder:frontend`](/site-builder/cli#builderfrontend/) for the full reference.
 
 ## Customizing After Scaffolding
 
@@ -232,7 +232,7 @@ After running `builder:init`, you own all the template files. Common next steps:
 1. **Edit the stylesheet** — open `public/assets/style.css` and tweak as needed. The layout already loads it via `{{ cms.builder.css('style.css') }}`.
 2. **Edit page templates** — replace placeholder content with `cms.*` calls to your collections
 3. **Add more pages** — create new page objects in the admin under **Site Builder**
-4. **Reorder pages** — use the admin's drag-drop reorder mode to set the navigation order (see [Reordering Pages](/builder/admin#reordering-pages/))
+4. **Reorder pages** — use the admin's drag-drop reorder mode to set the navigation order (see [Reordering Pages](/site-builder/admin#reordering-pages/))
 5. **Create partials** — extract repeated patterns into `partials/` templates
 
 No build or generate step is needed — the page router serves your routes from the live collection.
@@ -255,7 +255,7 @@ The manifest describes the starter for the picker UI — name, description, vers
 
 ### `jumpstart.json`
 
-The starter's pages and any seed content live in `jumpstart.json`, in the standard [JumpStart](/cli/jumpstart/) format. List the page records first, in the order you want them to appear in the navigation:
+The starter's pages and any seed content live in `jumpstart.json`, in the standard [JumpStart](/operations/jumpstart/) format. List the page records first, in the order you want them to appear in the navigation:
 
 ```json
 {
@@ -305,6 +305,6 @@ Files are copied directly to `tcms-data/builder/{category}/`. Page templates use
 
 ## See Also
 
-- [Site Builder Overview](/builder/overview/)
-- [Builder CLI Commands](/builder/cli/)
-- [Builder Admin UI](/builder/admin/)
+- [Site Builder Overview](/site-builder/overview/)
+- [Builder CLI Commands](/site-builder/cli/)
+- [Builder Admin UI](/site-builder/admin/)

@@ -18,7 +18,7 @@ Total CMS provides a RESTful API for accessing content and schemas. This documen
 
 Total CMS supports two authentication methods for API access: **API Keys** (recommended for external applications, Pro edition required) and **Session Authentication** (for same-origin admin panel requests).
 
-> **📖 For comprehensive API key documentation, see [API Keys Guide](/api/api-keys/)**
+> **📖 For comprehensive API key documentation, see [API Keys Guide](/apis/api-keys/)**
 
 ### API Key Authentication (Pro Edition)
 
@@ -45,7 +45,7 @@ curl "https://yoursite.com/api/collections/blog?api_key=tcms_1234567890abcdef123
 **Creating API Keys:**
 Navigate to **Utilities** → **API Keys** in the admin interface, or visit `/admin/utils/api-keys`.
 
-For detailed information on scopes, permissions, and best practices, see the [API Keys documentation](/api/api-keys/).
+For detailed information on scopes, permissions, and best practices, see the [API Keys documentation](/apis/api-keys/).
 
 ### Session Authentication
 

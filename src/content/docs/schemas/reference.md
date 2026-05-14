@@ -84,7 +84,7 @@ The property definitions that make up this schema. Each key is a property name, 
 }
 ```
 
-See [Schema Validation](/schemas/validation/) for validation options and [Field Settings](/property-settings/all-fields/) for field configuration.
+See [Schema Validation](/schemas/validation/) for validation options and [Field Settings](/fields/all-fields/) for field configuration.
 
 
 

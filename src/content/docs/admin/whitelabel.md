@@ -510,5 +510,5 @@ Example usage:
 
 ## See Also
 
-- [Builder Overview](/builder/overview/)
-- [Builder Admin UI](/builder/admin/)
+- [Builder Overview](/site-builder/overview/)
+- [Builder Admin UI](/site-builder/admin/)
