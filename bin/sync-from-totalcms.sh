@@ -113,8 +113,15 @@ find "$SRC" -type d -name images | sort | while read -r imagedir; do
     echo "  $rel_dir/ ($count files)"
 done
 
-# Regenerate Starlight sidebar from menu.php so the public site nav matches the in-admin viewer.
+# Regenerate Starlight sidebar + llms files from menu.php so everything stays in lockstep with the
+# in-admin viewer. These walk the source menu, not the synced content, so run them after the .md
+# files are in place but they only depend on $SRC.
+BIN="$(cd "$(dirname "$0")" && pwd)"
 echo "Regenerating sidebar..."
-php "$(cd "$(dirname "$0")" && pwd)/build-sidebar.php" "$SRC"
+php "$BIN/build-sidebar.php" "$SRC"
+echo "Regenerating llms.txt..."
+php "$BIN/build-llms.php" "$SRC"
+echo "Regenerating llms-full.txt..."
+php "$BIN/build-llms-full.php" "$SRC"
 
 echo "Sync complete!"

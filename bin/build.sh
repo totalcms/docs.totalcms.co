@@ -20,9 +20,6 @@ fi
 echo "==> Installing dependencies..."
 npm ci --production=false
 
-echo "==> Generating llms-full.txt..."
-python3 bin/build-llms-full.py
-
 echo "==> Building documentation site..."
 npx astro build
 
