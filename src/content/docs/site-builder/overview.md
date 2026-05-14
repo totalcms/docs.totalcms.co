@@ -2,6 +2,11 @@
 title: "Site Builder"
 description: "Build complete websites within Total CMS using Twig templates, page routes, and automatic URL routing — no external tools required."
 since: "3.5.0"
+related:
+  - site-builder/cli
+  - site-builder/starters
+  - site-builder/frontend
+  - site-builder/twig
 ---
 The Site Builder lets you build a complete frontend website within Total CMS. Pages are defined as collection objects with URL routes and templates, and a middleware-based router handles all URL matching and rendering automatically.
 

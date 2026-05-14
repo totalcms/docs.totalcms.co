@@ -1,0 +1,546 @@
+[
+    {
+        "label": "Get Started",
+        "items": [
+            {
+                "label": "Welcome",
+                "slug": "get-started/welcome"
+            },
+            {
+                "label": "Requirements",
+                "slug": "get-started/requirements"
+            },
+            {
+                "label": "Installation",
+                "slug": "get-started/installation"
+            },
+            {
+                "label": "Your First Site",
+                "slug": "get-started/your-first-site"
+            }
+        ]
+    },
+    {
+        "label": "Collections",
+        "items": [
+            {
+                "label": "Collection Settings",
+                "slug": "collections/settings"
+            },
+            {
+                "label": "Form Settings",
+                "slug": "collections/form-settings"
+            },
+            {
+                "label": "Data Views",
+                "slug": "collections/data-views"
+            },
+            {
+                "label": "Importing Data",
+                "slug": "collections/import"
+            },
+            {
+                "label": "Exporting Data",
+                "slug": "collections/export"
+            },
+            {
+                "label": "Sitemap Builder",
+                "slug": "collections/sitemap-builder"
+            }
+        ]
+    },
+    {
+        "label": "Schemas",
+        "items": [
+            {
+                "label": "Schema Reference",
+                "slug": "schemas/reference"
+            },
+            {
+                "label": "Schema Validation",
+                "slug": "schemas/validation"
+            },
+            {
+                "label": "Form Grid Layout",
+                "slug": "schemas/formgrid"
+            },
+            {
+                "label": "Schemas in Twig",
+                "slug": "schemas/twig"
+            }
+        ]
+    },
+    {
+        "label": "Fields",
+        "items": [
+            {
+                "label": "Field Types",
+                "items": [
+                    {
+                        "label": "All Fields",
+                        "slug": "fields/all-fields"
+                    },
+                    {
+                        "label": "Card",
+                        "slug": "fields/card"
+                    },
+                    {
+                        "label": "Code Editor",
+                        "slug": "fields/code-editor"
+                    },
+                    {
+                        "label": "Date",
+                        "slug": "fields/date"
+                    },
+                    {
+                        "label": "Deck",
+                        "slug": "fields/deck"
+                    },
+                    {
+                        "label": "File & Depot",
+                        "slug": "fields/file-depot"
+                    },
+                    {
+                        "label": "ID",
+                        "slug": "fields/id"
+                    },
+                    {
+                        "label": "Image & Gallery",
+                        "slug": "fields/image-gallery"
+                    },
+                    {
+                        "label": "Lists",
+                        "slug": "fields/lists"
+                    },
+                    {
+                        "label": "Number & Range",
+                        "slug": "fields/number-range"
+                    },
+                    {
+                        "label": "Password",
+                        "slug": "fields/password"
+                    },
+                    {
+                        "label": "Price",
+                        "slug": "fields/price"
+                    },
+                    {
+                        "label": "Radio & Multicheckbox",
+                        "slug": "fields/radio-multicheckbox"
+                    },
+                    {
+                        "label": "Secret",
+                        "slug": "fields/secret"
+                    },
+                    {
+                        "label": "Select",
+                        "slug": "fields/select"
+                    },
+                    {
+                        "label": "Styled Text",
+                        "slug": "fields/styled-text"
+                    },
+                    {
+                        "label": "SVG",
+                        "slug": "fields/svg"
+                    },
+                    {
+                        "label": "Text Inputs",
+                        "slug": "fields/text-inputs"
+                    }
+                ]
+            },
+            {
+                "label": "Field Options",
+                "items": [
+                    {
+                        "label": "Static Options",
+                        "slug": "fields/static-options"
+                    },
+                    {
+                        "label": "Property Options",
+                        "slug": "fields/property-options"
+                    },
+                    {
+                        "label": "Relational Options",
+                        "slug": "fields/relational-options"
+                    },
+                    {
+                        "label": "Sorting Options",
+                        "slug": "fields/sorting-options"
+                    },
+                    {
+                        "label": "Access Group Options",
+                        "slug": "fields/access-group-options"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "label": "Site Builder",
+        "items": [
+            {
+                "label": "Site Builder Overview",
+                "slug": "site-builder/overview"
+            },
+            {
+                "label": "Builder CLI",
+                "slug": "site-builder/cli"
+            },
+            {
+                "label": "Builder Admin UI",
+                "slug": "site-builder/admin"
+            },
+            {
+                "label": "Starter Templates",
+                "slug": "site-builder/starters"
+            },
+            {
+                "label": "Frontend Assets",
+                "slug": "site-builder/frontend"
+            },
+            {
+                "label": "Builder Twig Reference",
+                "slug": "site-builder/twig"
+            }
+        ]
+    },
+    {
+        "label": "Twig",
+        "items": [
+            {
+                "label": "Twig Basics",
+                "items": [
+                    {
+                        "label": "Twig Overview",
+                        "slug": "twig/overview"
+                    },
+                    {
+                        "label": "CMS Variables",
+                        "slug": "twig/variables"
+                    },
+                    {
+                        "label": "CMS Content",
+                        "slug": "twig/totalcms"
+                    },
+                    {
+                        "label": "Data",
+                        "slug": "twig/data"
+                    },
+                    {
+                        "label": "Render",
+                        "slug": "twig/render"
+                    },
+                    {
+                        "label": "Templates",
+                        "slug": "twig/templates"
+                    },
+                    {
+                        "label": "Conditionals",
+                        "slug": "twig/conditionals"
+                    },
+                    {
+                        "label": "Markdown",
+                        "slug": "twig/markdown"
+                    },
+                    {
+                        "label": "Factory",
+                        "slug": "twig/factory"
+                    },
+                    {
+                        "label": "Collections",
+                        "slug": "twig/collections"
+                    },
+                    {
+                        "label": "Collection Filtering",
+                        "slug": "twig/collection-filtering"
+                    },
+                    {
+                        "label": "Object Linking",
+                        "slug": "twig/object-linking"
+                    },
+                    {
+                        "label": "Views",
+                        "slug": "twig/views"
+                    },
+                    {
+                        "label": "CMS Grid Tag",
+                        "slug": "twig/cmsgrid-tag"
+                    },
+                    {
+                        "label": "Load More",
+                        "slug": "twig/load-more"
+                    }
+                ]
+            },
+            {
+                "label": "Filters & Functions",
+                "items": [
+                    {
+                        "label": "Twig Filters",
+                        "slug": "twig/filters"
+                    },
+                    {
+                        "label": "Twig Functions",
+                        "slug": "twig/functions"
+                    },
+                    {
+                        "label": "Utilities",
+                        "slug": "twig/utils"
+                    },
+                    {
+                        "label": "Edition Helpers",
+                        "slug": "twig/edition"
+                    },
+                    {
+                        "label": "Barcodes",
+                        "slug": "twig/barcodes"
+                    },
+                    {
+                        "label": "QR Codes",
+                        "slug": "twig/qrcodes"
+                    }
+                ]
+            },
+            {
+                "label": "Media",
+                "items": [
+                    {
+                        "label": "Media",
+                        "slug": "twig/media"
+                    },
+                    {
+                        "label": "ImageWorks",
+                        "slug": "twig/imageworks"
+                    }
+                ]
+            },
+            {
+                "label": "Internationalization",
+                "items": [
+                    {
+                        "label": "Locale",
+                        "slug": "twig/locale"
+                    },
+                    {
+                        "label": "Localization",
+                        "slug": "twig/localization"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "label": "Forms",
+        "items": [
+            {
+                "label": "Forms Overview",
+                "slug": "forms/overview"
+            },
+            {
+                "label": "Form Builder",
+                "slug": "forms/builder"
+            },
+            {
+                "label": "Deck Forms",
+                "slug": "forms/deck"
+            },
+            {
+                "label": "Field Settings",
+                "slug": "forms/fields"
+            },
+            {
+                "label": "Form Options",
+                "slug": "forms/options"
+            },
+            {
+                "label": "Validation Patterns",
+                "slug": "forms/patterns"
+            },
+            {
+                "label": "Report Form",
+                "slug": "forms/report"
+            },
+            {
+                "label": "Specialized Forms",
+                "slug": "forms/specialized"
+            }
+        ]
+    },
+    {
+        "label": "Admin",
+        "items": [
+            {
+                "label": "Dashboard",
+                "slug": "admin/dashboard"
+            },
+            {
+                "label": "White Label",
+                "slug": "admin/whitelabel"
+            },
+            {
+                "label": "Admin Twig",
+                "slug": "admin/twig"
+            }
+        ]
+    },
+    {
+        "label": "Notifications",
+        "items": [
+            {
+                "label": "Mailer",
+                "slug": "notifications/mailer"
+            },
+            {
+                "label": "Pushover",
+                "slug": "notifications/pushover"
+            }
+        ]
+    },
+    {
+        "label": "Auth",
+        "items": [
+            {
+                "label": "Authentication",
+                "slug": "auth/auth"
+            },
+            {
+                "label": "Access Groups",
+                "slug": "auth/access-groups"
+            },
+            {
+                "label": "Password Reset",
+                "slug": "auth/password-reset"
+            },
+            {
+                "label": "Auth Twig",
+                "slug": "auth/twig"
+            }
+        ]
+    },
+    {
+        "label": "APIs",
+        "items": [
+            {
+                "label": "REST API",
+                "slug": "apis/rest-api"
+            },
+            {
+                "label": "PHP API",
+                "slug": "apis/php-api"
+            },
+            {
+                "label": "API Keys",
+                "slug": "apis/api-keys"
+            },
+            {
+                "label": "Index Filter",
+                "slug": "apis/index-filter"
+            }
+        ]
+    },
+    {
+        "label": "Extensions & CLI",
+        "items": [
+            {
+                "label": "Extensions Overview",
+                "slug": "extensions/overview"
+            },
+            {
+                "label": "Manifest",
+                "slug": "extensions/manifest"
+            },
+            {
+                "label": "Extension Points",
+                "slug": "extensions/extension-points"
+            },
+            {
+                "label": "Events",
+                "slug": "extensions/events"
+            },
+            {
+                "label": "Schemas",
+                "slug": "extensions/schemas"
+            },
+            {
+                "label": "CLI",
+                "slug": "extensions/cli"
+            },
+            {
+                "label": "AI Integration",
+                "slug": "extensions/ai-integration"
+            },
+            {
+                "label": "Bundled Extensions",
+                "items": [
+                    {
+                        "label": "Bundled Overview",
+                        "slug": "extensions/bundled"
+                    },
+                    {
+                        "label": "A/B Split",
+                        "slug": "extensions/ab-split"
+                    },
+                    {
+                        "label": "Geo Redirect",
+                        "slug": "extensions/geo-redirect"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "label": "Operations",
+        "items": [
+            {
+                "label": "Deployment",
+                "slug": "operations/deployment"
+            },
+            {
+                "label": "Nginx",
+                "slug": "operations/nginx"
+            },
+            {
+                "label": "Security",
+                "slug": "operations/security"
+            },
+            {
+                "label": "Server Sizing",
+                "slug": "operations/server-sizing"
+            },
+            {
+                "label": "Filesystem",
+                "slug": "operations/filesystem"
+            },
+            {
+                "label": "Sync",
+                "slug": "operations/sync"
+            },
+            {
+                "label": "Updates",
+                "slug": "operations/updates"
+            },
+            {
+                "label": "JumpStart",
+                "slug": "operations/jumpstart"
+            },
+            {
+                "label": "Search Backends",
+                "slug": "operations/search"
+            },
+            {
+                "label": "Licenses",
+                "slug": "operations/licenses"
+            },
+            {
+                "label": "Migration from v1",
+                "slug": "operations/migration-total-cms-one"
+            },
+            {
+                "label": "Configuration",
+                "slug": "operations/configuration"
+            }
+        ]
+    }
+]

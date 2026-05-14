@@ -23,6 +23,8 @@ echo "Syncing docs from $SRC to $DEST"
 # Remove existing synced docs so deleted/renamed files don't linger.
 # Preserve index.md (homepage maintained separately).
 find "$DEST" -name '*.md' ! -name 'index.md' -type f -delete
+# Drop synced image dirs so renames/removals don't linger; we'll re-copy fresh below.
+find "$DEST" -type d -name images -prune -exec rm -rf {} + 2>/dev/null || true
 # Clean up any empty directories left behind
 find "$DEST" -type d -empty -delete 2>/dev/null || true
 
@@ -80,10 +82,14 @@ process_file() {
         } > "$dest_file"
     fi
 
-    # Fix internal links: docs/path/to/file -> /path/to/file/
+    # Rewrite image refs first: docs/<section>/images/<file> -> ./images/<file>
+    # (markdown lives at <section>/<page>.md so a relative ./images path resolves correctly)
+    # Then rewrite remaining page refs: docs/<path> -> /<path>/
     if [[ "$(uname)" == "Darwin" ]]; then
+        sed -i '' -E 's|\(docs/[^/)]+/images/([^)]+)\)|(./images/\1)|g' "$dest_file"
         sed -i '' -E 's|\(docs/([^)"]+)\)|(/\1/)|g' "$dest_file"
     else
+        sed -i -E 's|\(docs/[^/)]+/images/([^)]+)\)|(./images/\1)|g' "$dest_file"
         sed -i -E 's|\(docs/([^)"]+)\)|(/\1/)|g' "$dest_file"
     fi
 
@@ -94,5 +100,21 @@ process_file() {
 find "$SRC" -name '*.md' -type f | sort | while read -r file; do
     process_file "$file"
 done
+
+# Copy co-located image directories (resources/docs/<section>/images/ -> src/content/docs/<section>/images/)
+echo "Copying images..."
+find "$SRC" -type d -name images | sort | while read -r imagedir; do
+    rel_dir="${imagedir#$SRC/}"
+    dest_dir="$DEST/$rel_dir"
+    mkdir -p "$dest_dir"
+    # Copy contents (not the dir itself) so re-runs are idempotent
+    cp -R "$imagedir"/. "$dest_dir"/
+    count=$(find "$imagedir" -type f | wc -l | tr -d ' ')
+    echo "  $rel_dir/ ($count files)"
+done
+
+# Regenerate Starlight sidebar from menu.php so the public site nav matches the in-admin viewer.
+echo "Regenerating sidebar..."
+php "$(cd "$(dirname "$0")" && pwd)/build-sidebar.php" "$SRC"
 
 echo "Sync complete!"

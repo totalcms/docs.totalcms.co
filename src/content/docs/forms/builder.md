@@ -1,6 +1,11 @@
 ---
 title: "Form Builder"
 description: "Create custom forms with the form builder, simple forms, and standalone buttons."
+related:
+  - forms/fields
+  - forms/options
+  - forms/patterns
+  - forms/specialized
 ---
 The form builder provides the most flexibility for creating custom forms.
 
