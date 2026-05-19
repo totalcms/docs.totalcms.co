@@ -91,14 +91,25 @@ Total CMS runs on any server with **PHP 8.2 or higher**. The setup wizard checks
 
 ## Quick check
 
-Run these in your terminal to see your PHP version and confirm every required extension is loaded:
+Run these in your terminal to see your PHP version and confirm every required extension is loaded.
+
+**macOS / Linux:**
 
 ```bash
 php -v
 php -r 'foreach (explode(" ", "curl exif fileinfo gd json mbstring openssl") as $e) echo (extension_loaded($e) ? "✓" : "✗") . " $e\n";'
 ```
 
-A `✗` next to anything means you'll need to install that extension before continuing. The rest of this page explains what each one is for.
+**Windows (cmd / PowerShell):**
+
+```bat
+php -v
+php -r "foreach (explode(' ', 'curl exif fileinfo gd json mbstring openssl') as $e) { echo (extension_loaded($e) ? 'OK' : 'MISSING') . \" $e\r\n\"; }"
+```
+
+Windows shells don't treat single quotes as string delimiters — only double quotes — so the quoting has to be inverted.
+
+A `✗` (or `MISSING`) next to anything means you'll need to install that extension before continuing. The rest of this page explains what each one is for.
 
 ## PHP
 
@@ -5225,6 +5236,159 @@ The system will automatically load fonts from the depot. If the font is not foun
 
 ---
 
+## Localized Text Fields
+
+Total CMS includes two field types for content that needs to ship in more than one language:
+
+- **`localizedtext`** — plain-text input, one value per configured locale.
+- **`localizedstyledtext`** — Tiptap rich-text editor, one HTML value per configured locale.
+
+Both store a JSON dict keyed by locale code (`{ "en_US": "About Us", "de": "Über uns" }`) instead of a single string. The admin form renders one labeled input per locale and templates can read either the raw dict directly or call a helper that handles fallback.
+
+> **Pro edition required.** Localized field types are used inside custom schemas, which require the Pro edition. Lite and Standard licenses can't create or edit custom schemas, so these field types are out of reach. Existing data on a site that downgrades from Pro still renders, but the schema editor is locked.
+
+## Configuring Locales
+
+Add your locale list to `config/tcms.php` (or your `tcms-data/.system/settings.json`) before adding any localized fields. Settings live under the `i18n` bucket:
+
+```php
+return [
+    'i18n' => [
+        'default'   => 'en_US',
+        'available' => [
+            ['code' => 'en_US', 'label' => 'English (US)', 'dir' => 'ltr'],
+            ['code' => 'de',    'label' => 'Deutsch',      'dir' => 'ltr'],
+            ['code' => 'ar',    'label' => 'العربية',     'dir' => 'rtl'],
+        ],
+    ],
+];
+```
+
+Each entry in `available` has:
+
+- **`code`** — mixed-case POSIX locale code (`en_US`, `pt_BR`, `zh_Hans`). Bare language codes (`de`, `fr`) are valid too. This is the same format PHP's `intl` extension, CakePHP I18n, and Total CMS's admin translations already use.
+- **`label`** — human-readable name shown on the locale tab in the admin form.
+- **`dir`** — `ltr` or `rtl`. Required. Sets the `dir` attribute on each input so right-to-left locales render correctly.
+
+The **order of the `available` array matters** — when a template calls `cms.locale.text(value, 'en')` and the dict has `en_US` and `en_GB`, the helper returns the first matching entry in the order you list them here.
+
+`i18n.default` is the field-level fallback used by `__toString()` and the helper's last fallback step. It also drives which tab is active when the admin form first renders.
+
+If `i18n.available` is empty, the field types refuse to render with a clear error message in the admin form.
+
+## Using the Fields in Schemas
+
+Pick **Localization Fields → Localized Text** (or **Localized Styled Text**) in the schema editor's field-type dropdown. The rest of the schema property options work the same way as the regular text / styled-text fields.
+
+The stored shape looks like this:
+
+```json
+{
+    "id": "about-us",
+    "title": {
+        "en_US": "About Us",
+        "de":    "Über uns",
+        "ar":    "معلومات عنا"
+    },
+    "body": {
+        "en_US": "<p>Welcome…</p>",
+        "de":    "<p>Willkommen…</p>",
+        "ar":    "<p>مرحبا…</p>"
+    }
+}
+```
+
+## Reading Localized Values in Twig
+
+### Direct array access
+
+The simplest case: just look up the locale key on the field value.
+
+```twig
+{{ post.title.de }}           {# bare-language key #}
+{{ post.title['en_US'] }}     {# region-coded key — must use bracket syntax #}
+```
+
+This is the lightest path when you know the locale exists and you don't need fallback.
+
+### The `cms.locale.*` helpers
+
+When you want a deterministic fallback chain, use the helper:
+
+```twig
+{{ cms.locale.text(post.title, 'de') }}
+{{ cms.locale.styledtext(post.body, 'de')|raw }}
+```
+
+The helper canonicalizes the requested locale (case-insensitive — `'en_us'`, `'EN_US'`, and `'En_Us'` all become `en_US`) and walks this lookup order:
+
+1. **Exact match** — `value[canonical]`
+2. **Region fall-up** — if the request was `de_DE`, fall to bare `de`
+3. **Region fall-down** — if the request was bare `en`, return the first matching `en_*` entry in your `i18n.available` order
+4. **Empty string**
+
+```twig
+{# `de_DE` falls up to `de` when only the bare code is in the dict #}
+{{ cms.locale.text({"en_US": "A", "de": "B"}, 'de_DE') }}  {# → "B" #}
+
+{# `en` falls down to the first en_* in cms.config('i18n', 'available') order #}
+{{ cms.locale.text({"en_US": "A", "en_GB": "B"}, 'en') }}  {# → "A" or "B" depending on configured order #}
+```
+
+### Rendering a per-locale stack
+
+```twig
+{% for locale in cms.config('i18n', 'available') %}
+    <section lang="{{ locale.code|replace({'_': '-'}) }}" dir="{{ locale.dir }}">
+        <h2>{{ locale.label }}</h2>
+        {{ cms.locale.styledtext(post.body, locale.code)|raw }}
+    </section>
+{% endfor %}
+```
+
+## REST API
+
+The REST API serializes localized fields as the full multi-locale dict in 3.5:
+
+```json
+{
+    "id": "about-us",
+    "data": {
+        "title": { "en_US": "About Us", "de": "Über uns" }
+    }
+}
+```
+
+The 3.6 release will add a `?locale=` parameter that resolves to a single string for the active locale, with `?expand=locales` available for clients that still want the full dict.
+
+## Migrating From the `field_en` / `field_de` Workaround
+
+If you've been splitting locales into separate fields (`title_en`, `title_de`, `body_en`, `body_de`), you can consolidate them manually:
+
+1. Configure your `i18n.available` locales in `tcms.php` (see above).
+2. Edit the schema. Replace the per-locale fields with a single localized field (same base name — e.g. `title`). Save the schema.
+3. For each existing object, edit it and copy each per-locale value into the matching locale input in the new localized field.
+4. Once the new field has the data, remove the old `title_en` / `title_de` fields from the schema.
+
+A `tcms i18n:migrate` CLI command that automates this is planned for 3.6.
+
+## What Doesn't Ship in 3.5
+
+This is the deliberate first slice. The full i18n system in 3.6 adds:
+
+- Locale-aware URL routing (`/de/about`)
+- Active-locale auto-resolution (`cms.locale.text(post.title)` with no locale arg)
+- Admin locale tabs (replacing the labeled-inputs UI)
+- `localizedslug` field type
+- `cms.locale.t()` is already available for static UI strings; locale-aware date / number / currency formatters arrive in 3.6
+- SEO helpers (hreflang, og:locale, locale-aware sitemap)
+- REST API `?locale=` parameter and `?expand=locales`
+- `tcms i18n:status`, `i18n:missing`, `i18n:export`, `i18n:import`, `i18n:migrate` CLI commands
+
+The storage shape and Twig signatures locked in 3.5 are forward-compatible with all of that — no template rewrites or data migration when you upgrade to 3.6.
+
+---
+
 ## Number and Range Fields
 
 ```json
@@ -7513,38 +7677,31 @@ It's injected before the last `</body>` in the response, so it can't be served t
 
 ## Live Reload Preview
 
-When you save a Builder template or page record, every open admin tab on a Builder page **automatically reloads** to show the new version. No manual refresh, no Vite/Node dependency, works for any page served by the Builder.
+When Dev Mode is on, any page rendered by the Builder automatically reloads in every connected browser whenever you save a Builder template or page record. No manual refresh, no Vite/Node dependency, works for any page served by the Builder — and broadcast to every visitor, not just the admin who's editing, so the developer + client demo case works out of the box.
 
-Mechanically: the admin's browser holds an EventSource connection open to `/admin/builder/events`. When `TemplateSaver` writes a file, or any record in the pages collection changes, the server bumps a "pulse" timestamp. The endpoint sees the bump and pushes a `reload` event to every connected tab, which calls `location.reload()`.
+Mechanically: the page holds an EventSource connection open to `/livereload/events`. When `TemplateSaver` writes a file, or any record in the pages collection changes, the server bumps a "pulse" timestamp. The endpoint sees the bump and pushes a `reload` event to every connected client, which calls `location.reload()`.
 
 ### What triggers a reload
 
 - Saving any Builder template (`.twig` file, including layouts/partials/macros)
 - Creating or updating any page record in the Pages collection (route changes, status changes, redirects, the `template` field, etc.)
+- Turning **Dev Mode off** — connected clients get one final reload so they end up on a page that no longer carries the live-reload script, instead of looping retries against a 403
 
 Asset rebuilds (CSS, JS) do not trigger a reload — Vite already handles that for projects that use it. If you change a CSS file in your editor, refresh manually or rely on Vite's HMR.
 
+### Why Dev Mode is the gate
+
+Twig caches its rendered output by default. Without Dev Mode, reloading the browser would just show the same stale page — the feature only does useful work when caching is bypassed. Tying it to Dev Mode also means there's a single switch (`Admin > Cache > Dev Mode`) for "I'm actively developing right now" instead of two overlapping toggles.
+
+With Dev Mode off, the script is not injected, the SSE endpoint returns 403, and the feature is fully dormant.
+
 ### Visibility rules
 
-The script is only injected when:
-
-1. The visitor has an active admin session
-2. The response is HTML (`text/html`)
-3. The Live Reload setting is enabled
-
-Visitors never see the script and never connect to the event stream.
-
-### Disabling
-
-Toggle **Admin > Settings > Builder > Live Reload Preview** off to disable. Useful when:
-
-- You're staging changes and want to review them deliberately rather than as you save
-- You're profiling or recording the front-end and don't want background EventSource connections
-- Your hosting is sensitive to long-lived HTTP connections (each open admin tab holds one for ~30 seconds before reconnecting)
+The script is injected on every Builder-rendered HTML response when Dev Mode is active. There's no admin-session gate — visitors get the script too. That's intentional: Dev Mode bypasses caching for everyone anyway, and broadcasting reloads makes the "show a client a change live" scenario work without any setup.
 
 ### How long-lived connections behave
 
-Each admin tab opens one connection that lives ~30 seconds before the server closes it; the browser's EventSource auto-reconnects immediately. This caps server worker time without affecting UX. If you're running PHP-FPM with a tight worker pool and many simultaneous admins, that's the metric to watch.
+Each tab opens one connection that lives ~30 seconds before the server closes it; the browser's EventSource auto-reconnects immediately. This caps server worker time without affecting UX. The feature is dev-mode-only, so production traffic never sees these connections.
 
 ## Settings
 
@@ -7554,7 +7711,6 @@ Builder settings are available at **Admin > Settings > Builder**:
 |---------|------|---------|-------------|
 | Pages Collection | text | `builder-pages` | The collection used for page metadata |
 | Assets Path | text | `assets` | Path under the docroot where compiled assets land (used by the Asset Browser) |
-| Live Reload Preview | toggle | on | Auto-reload open admin tabs when a template or page is saved (see above) |
 
 ## Routes
 
@@ -7565,7 +7721,7 @@ Builder settings are available at **Admin > Settings > Builder**:
 | GET | `/admin/builder/page/{id}` | Edit page form |
 | GET | `/admin/builder/{category}/{file}` | Template editor |
 | GET | `/admin/builder/new` | New template form |
-| GET | `/admin/builder/events` | Live-reload SSE stream (`text/event-stream`) |
+| GET | `/livereload/events` | Live-reload SSE stream (`text/event-stream`, dev mode only, public) |
 | POST | `/admin/builder/preview` | Render template against live context, return HTML |
 | POST | `/admin/builder/reorder` | Apply a drag-drop reorder, write the order file |
 
@@ -23238,6 +23394,204 @@ GET /api/schemas/{collection}
 }
 ```
 
+## Property Files API
+
+Save, move, delete, and manage files attached to a property on an object. These are the endpoints the admin UI uses behind every image, file, gallery, and depot field — and the ones to call from your own integrations.
+
+Files are stored under `tcms-data/{collection}/{id}/{property}/[{path}/]{filename}` and served back over the public `imageworks` / `download` / `stream` endpoints documented in [File Downloads & Streaming](#file-downloads--streaming).
+
+### Save a File to a Property
+
+Upload a file to an `image`, `file`, `gallery`, or `depot` property. The same endpoint handles three input modes:
+
+- **Direct upload** — `multipart/form-data` with the file under the property name (or, for nested fields, under the child field name — see the nested example below).
+- **Chunked upload** — Dropzone-compatible chunking via `dzchunkindex` / `dztotalchunkcount` (or `chunkindex` / `totalchunkcount`) in the form body. Intermediate chunks return `{ "status": "chunk received" }`; the final chunk assembles and saves.
+- **URL upload** — Instead of a file, POST a JSON body with the property name set to a URL. The server downloads the URL (subject to `maxDownloadSize` in `tcms.php`) and saves the result as if it had been uploaded directly.
+
+```http
+POST /api/collections/{collection}/{id}/{property}
+POST /api/collections/{collection}/{id}/{property}/{path}
+```
+
+**Behavior:**
+
+- HEIC images are auto-converted to JPEG before saving.
+- The response is the updated object (same shape as `GET /api/collections/{collection}/{id}`) so clients see the new file in context.
+- Nested-path uploads target card children, deck-item children, or depot subfolders. The form-field name in the request body must match the *last* segment of `{path}` (e.g., uploading to `…/mycard/image` puts the file under the form key `image`, not `mycard`).
+
+**Direct upload example:**
+```bash
+curl -X POST https://yoursite.com/api/collections/blog/my-post/cover \
+  -H "Authorization: Bearer tcms_1234567890abcdef1234567890abcdef" \
+  -F "cover=@./hero.jpg"
+```
+
+**URL upload example:**
+```bash
+curl -X POST https://yoursite.com/api/collections/blog/my-post/cover \
+  -H "Authorization: Bearer tcms_..." \
+  -H "Content-Type: application/json" \
+  -d '{"cover": "https://example.com/external-hero.jpg"}'
+```
+
+**Nested upload example** (image inside a card field):
+```bash
+curl -X POST https://yoursite.com/api/collections/blog/my-post/hero-card/image \
+  -H "Authorization: Bearer tcms_..." \
+  -F "image=@./photo.jpg"
+```
+
+**Response** (full object with updated file metadata):
+```json
+{
+    "data": {
+        "id": "my-post",
+        "cover": {
+            "name": "hero.jpg",
+            "size": 245760,
+            "alt": "",
+            "focalpoint": { "x": 50, "y": 50 }
+        }
+    },
+    "meta": { ... }
+}
+```
+
+**Common errors:**
+```json
+{ "error": "No file found in request for property: cover" }
+```
+```json
+{ "error": "File exceeds upload_max_filesize in php.ini" }
+```
+
+### Delete a File
+
+Remove a single file from a gallery or depot, or delete the file held by an image/file field.
+
+```http
+DELETE /api/collections/{collection}/{id}/{property}/{path}
+```
+
+`{path}` is the file's name relative to the property — `photo.jpg` for a top-level file, `2026/photo.jpg` for a depot subfolder, or the child field key for a nested property delete (e.g., `mycard/image`).
+
+**Example:**
+```bash
+curl -X DELETE https://yoursite.com/api/collections/blog/my-post/gallery/old-photo.jpg \
+  -H "Authorization: Bearer tcms_..."
+```
+
+Response is the updated object after the delete.
+
+### Move a File
+
+Move a file from one depot subfolder to another. Used by the depot field's drag-and-drop UI; the request body's `destination` is the new subfolder path.
+
+```http
+PUT /api/collections/{collection}/{id}/{property}/{name}/move
+```
+
+**Query parameters:**
+
+- **path** — Current subfolder containing the file. Omit if the file is at the root of the property.
+
+**Request body:**
+
+- **destination** — Target subfolder path.
+
+**Example:**
+```bash
+curl -X PUT "https://yoursite.com/api/collections/blog/my-post/files/report.pdf/move?path=2025" \
+  -H "Authorization: Bearer tcms_..." \
+  -H "Content-Type: application/json" \
+  -d '{"destination": "2026/january"}'
+```
+
+**Response:**
+```json
+{ "moved": true }
+```
+
+### Create a Folder
+
+Create a subfolder inside a depot property.
+
+```http
+POST /api/collections/{collection}/{id}/{property}/folder
+```
+
+**Request body:**
+
+- **path** — Folder path to create. Forward slashes create nested folders in one call.
+
+```bash
+curl -X POST https://yoursite.com/api/collections/blog/my-post/files/folder \
+  -H "Authorization: Bearer tcms_..." \
+  -H "Content-Type: application/json" \
+  -d '{"path": "2026/q1"}'
+```
+
+Response is the updated object showing the new folder structure.
+
+### Rename a Folder
+
+```http
+PUT /api/collections/{collection}/{id}/{property}/folder/rename
+```
+
+**Query parameters:**
+
+- **path** — Current folder path to rename.
+
+**Request body:**
+
+- **name** — New folder name (just the last segment, not a full path).
+
+```bash
+curl -X PUT "https://yoursite.com/api/collections/blog/my-post/files/folder/rename?path=2025/q4" \
+  -H "Authorization: Bearer tcms_..." \
+  -H "Content-Type: application/json" \
+  -d '{"name": "archived-q4"}'
+```
+
+### Clear a Property's Image Cache
+
+Force-regenerate every cached image derivative (ImageWorks output) for a property. Useful after changing image presets or watermark settings.
+
+```http
+DELETE /api/collections/{collection}/{id}/{property}/cache
+```
+
+**Response:**
+```json
+{ "deleted": 12 }
+```
+
+`deleted` is the number of cached files that were removed.
+
+### Clear Cache for One File
+
+Clear the cache for a single gallery item, or the cache that lives under a card / deck child property.
+
+```http
+DELETE /api/collections/{collection}/{id}/{property}/{path}/cache
+```
+
+The action picks the right cache to clear based on filesystem state: a gallery file name clears just that file's image derivatives; a child-property key clears the nested property's cache directory.
+
+### Tiptap / Styled-Text Embedded Uploads
+
+The styled-text (Tiptap) editor uses a separate, internal `/api/upload/*` namespace for inline image and file embeds inserted from the rich-text toolbar:
+
+```http
+POST   /api/upload/{collection}/{id}/{property}[/{path}]
+GET    /api/upload/{collection}/{id}/{property}
+GET    /api/upload/{collection}/{id}/{property}/{path}
+DELETE /api/upload/{collection}/{id}/{property}/{path}
+```
+
+These behave similarly to the property-file endpoints above but return a single `link` URL (image/audio/video/file get routed to `imageworks` / `stream` / `download` respectively) rather than the full object. They're public-facing in the sense that the URLs need to remain stable for content embedded in saved HTML, but they're not the recommended integration surface — **prefer the `/api/collections/{collection}/{id}/{property}` endpoints above for any first-party file upload work.**
+
 ## File Downloads & Streaming
 
 ### Download File (Forces Download)
@@ -29169,6 +29523,96 @@ In search, it is common that we will want to prioritize the results based on whe
 When you are setting up the search results, you will be able to define a list of properties that you would like to be prioritized. The order of this list will determine the priority. You should only define that properties that you deem special to be at the top.
 
 Adding this step does add additional processing load to generating the search. If you have a very large data set, you may want to test the performance of your search results with and without this enabled. Also try to keep the number of priority properties to a minimum.
+
+---
+
+## Supported Locales
+
+Total CMS ships a curated registry of locale codes used by:
+
+- **Default locale** (Settings → Internationalization → Default Locale) — drives PHP `intl`, CakePHP I18n, and Faker for date / number / currency formatting, the admin UI translation language, and (Pro) the default tab on localized content fields. One setting drives both runtime formatting and the content default. Operators who need the two to differ can override `$settings['locale']` at the top level in `config/tcms.php` — that wins for `$config->locale` while `i18n.default` keeps driving content defaults.
+- **Available content locales** (Settings → Internationalization → Available Content Locales) — Pro edition. List of codes that show up as tabs in `localizedtext`, `localizedtextarea`, and `localizedstyledtext` fields.
+
+All codes use the **mixed-case POSIX format** (lowercase language, uppercase region, underscore separator: `en_US`, `pt_BR`, `zh_CN`). Bare language codes (`de`, `fr`, `pt`) are also valid and stand for "any region speaking that language" — useful when a site doesn't care about regional variants.
+
+## Label conventions
+
+The **native name** column is what operators see on locale-picker tabs and in the admin form. Two patterns:
+
+- **Single-variant languages** (Czech, Japanese, Italian, Polish, etc.) get just the language name — `Čeština`, `日本語`, `Italiano`. The country is redundant when only one variant exists.
+- **Multi-variant languages** (English, German, French, Spanish, Portuguese, Arabic, Chinese) get the language name plus the ISO 3166 alpha-2 country code in parens — `English (US)`, `Português (BR)`, `Deutsch (AT)`. Keeps the localized-field tab strip compact while still distinguishing variants.
+
+The settings UI picker appends the full POSIX code in square brackets to every label so operators see the code when configuring (`English (US) [en_US]`). The English name column is for documentation reference and English-speaking integrators who don't recognize a native script.
+
+## Registry
+
+| Code | Native name (UI) | English name | Direction |
+|------|------------------|--------------|-----------|
+| `ar` | العربية | Arabic | RTL |
+| `ar_SA` | العربية (SA) | Arabic (Saudi Arabia) | RTL |
+| `bn_BD` | বাংলা | Bengali (Bangladesh) | LTR |
+| `cs_CZ` | Čeština | Czech (Czechia) | LTR |
+| `da_DK` | Dansk | Danish (Denmark) | LTR |
+| `de` | Deutsch | German | LTR |
+| `de_AT` | Deutsch (AT) | German (Austria) | LTR |
+| `de_CH` | Deutsch (CH) | German (Switzerland) | LTR |
+| `de_DE` | Deutsch (DE) | German (Germany) | LTR |
+| `el_GR` | Ελληνικά | Greek (Greece) | LTR |
+| `en` | English | English | LTR |
+| `en_AU` | English (AU) | English (Australia) | LTR |
+| `en_CA` | English (CA) | English (Canada) | LTR |
+| `en_GB` | English (GB) | English (United Kingdom) | LTR |
+| `en_SG` | English (SG) | English (Singapore) | LTR |
+| `en_US` | English (US) | English (United States) | LTR |
+| `es` | Español | Spanish | LTR |
+| `es_ES` | Español (ES) | Spanish (Spain) | LTR |
+| `es_MX` | Español (MX) | Spanish (Mexico) | LTR |
+| `fa_IR` | فارسی | Persian (Iran) | RTL |
+| `fi_FI` | Suomi | Finnish (Finland) | LTR |
+| `fr` | Français | French | LTR |
+| `fr_CA` | Français (CA) | French (Canada) | LTR |
+| `fr_FR` | Français (FR) | French (France) | LTR |
+| `he_IL` | עברית | Hebrew (Israel) | RTL |
+| `hi_IN` | हिन्दी | Hindi (India) | LTR |
+| `hu_HU` | Magyar | Hungarian (Hungary) | LTR |
+| `id_ID` | Bahasa Indonesia | Indonesian (Indonesia) | LTR |
+| `it_IT` | Italiano | Italian (Italy) | LTR |
+| `ja_JP` | 日本語 | Japanese (Japan) | LTR |
+| `jv_ID` | Basa Jawa | Javanese (Indonesia) | LTR |
+| `km_KH` | ខ្មែរ | Khmer (Cambodia) | LTR |
+| `ko_KR` | 한국어 | Korean (South Korea) | LTR |
+| `ms_MY` | Bahasa Melayu | Malay (Malaysia) | LTR |
+| `nl_NL` | Nederlands | Dutch (Netherlands) | LTR |
+| `no_NO` | Norsk | Norwegian (Norway) | LTR |
+| `pa_IN` | ਪੰਜਾਬੀ | Punjabi (India) | LTR |
+| `pl_PL` | Polski | Polish (Poland) | LTR |
+| `pt` | Português | Portuguese | LTR |
+| `pt_BR` | Português (BR) | Portuguese (Brazil) | LTR |
+| `pt_PT` | Português (PT) | Portuguese (Portugal) | LTR |
+| `ro_RO` | Română | Romanian (Romania) | LTR |
+| `ru_RU` | Русский | Russian (Russia) | LTR |
+| `sv_SE` | Svenska | Swedish (Sweden) | LTR |
+| `sw_KE` | Kiswahili | Swahili (Kenya) | LTR |
+| `ta_IN` | தமிழ் | Tamil (India) | LTR |
+| `th_TH` | ไทย | Thai (Thailand) | LTR |
+| `tl_PH` | Tagalog | Tagalog (Philippines) | LTR |
+| `tr_TR` | Türkçe | Turkish (Turkey) | LTR |
+| `uk_UA` | Українська | Ukrainian (Ukraine) | LTR |
+| `ur_PK` | اردو | Urdu (Pakistan) | RTL |
+| `vi_VN` | Tiếng Việt | Vietnamese (Vietnam) | LTR |
+| `zh_CN` | 中文 (CN) | Chinese (Mainland) | LTR |
+| `zh_TW` | 中文 (TW) | Chinese (Taiwan) | LTR |
+
+## How the registry is used
+
+| Surface | Reads from | What it shows |
+|---|---|---|
+| Settings UI dropdowns (default locale) | `LocaleRegistry::options()` | `Native name [code]` — e.g. `Deutsch (DE) [de_DE]` |
+| Settings UI list field (available content locales) | `LocaleRegistry::options()` | Same — autocomplete suggests matching codes as the operator types |
+| Localized field tabs in the admin form | `LocaleRegistry::expand()` (driven by `Config::$i18n['available']`) | Native name on the tab; `dir` propagates to inputs |
+| Twig: `cms.locale.languages()` | `LocaleRegistry::all()` | `{ "Deutsch": "de", ... }` (label → code map for custom pickers) |
+
+The registry is the **single source of truth** for what locales T3 understands. Adding a new locale anywhere means adding to the registry (`src/Domain/Locale/LocaleRegistry.php`) — every consumer picks it up automatically.
 
 ---
 

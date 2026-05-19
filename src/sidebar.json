@@ -113,6 +113,10 @@
                         "slug": "fields/lists"
                     },
                     {
+                        "label": "Localized Text",
+                        "slug": "fields/localized-text"
+                    },
+                    {
                         "label": "Number & Range",
                         "slug": "fields/number-range"
                     },
@@ -528,6 +532,10 @@
             {
                 "label": "Search Backends",
                 "slug": "operations/search"
+            },
+            {
+                "label": "Supported Locales",
+                "slug": "operations/supported-locales"
             },
             {
                 "label": "Licenses",

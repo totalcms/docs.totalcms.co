@@ -61,6 +61,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [ID](https://docs.totalcms.co/fields/id/): Auto-generate object IDs in Total CMS from field values using autogen templates with variables like uuid, date components, and custom formats.
 - [Image & Gallery](https://docs.totalcms.co/fields/image-gallery/): Configure image and gallery upload fields in Total CMS with validation rules, location stripping, and image or text watermark settings.
 - [Lists](https://docs.totalcms.co/fields/lists/): Configure list field settings in Total CMS including remove buttons, duplicate item control, and item management options for tags and categories.
+- [Localized Text](https://docs.totalcms.co/fields/localized-text/): Multi-language text and styled-text fields with one value per configured locale. Pro edition only.
 - [Number & Range](https://docs.totalcms.co/fields/number-range/): Configure number and range input fields in Total CMS with min, max, and step settings for precise numeric value control.
 - [Password](https://docs.totalcms.co/fields/password/): Set up password fields in Total CMS with automatic confirmation input, match validation, and customizable placeholder text.
 - [Price](https://docs.totalcms.co/fields/price/): Configure price fields in Total CMS with currency icon options for dollar, euro, pound, and yen with automatic decimal step handling.
@@ -176,6 +177,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Updates](https://docs.totalcms.co/operations/updates/): Keep Total CMS up to date with one-click dashboard updates, CLI commands, or manual upgrades. Includes rollback and maintenance mode details.
 - [JumpStart](https://docs.totalcms.co/operations/jumpstart/): Bootstrap new Total CMS projects with JumpStart data import and export for collections, schemas, objects, and Faker-based factory test data.
 - [Search Backends](https://docs.totalcms.co/operations/search/): Search Total CMS collections with case-insensitive queries, AND/OR logic, quoted phrases, property-specific targeting, and result prioritization.
+- [Supported Locales](https://docs.totalcms.co/operations/supported-locales/): Reference table of every locale code Total CMS recognizes — code, native-language name, English name, and writing direction. Used by the system locale setting and by content-localization (localizedtext / localizedstyledtext) field types.
 - [Licenses](https://docs.totalcms.co/operations/licenses/): Compare Total CMS Lite, Standard, and Pro license editions with per-domain pricing, feature breakdowns, free trial access, and edition simulation.
 - [Migration from v1](https://docs.totalcms.co/operations/migration-total-cms-one/): Migrate content from Total CMS v1 to v3 including blogs, galleries, images, files, depots, text, dates, and feeds with job queue processing.
 - [Configuration](https://docs.totalcms.co/operations/configuration/): Configure Total CMS with hierarchical PHP settings for security, storage, caching, email, API, logging, and environment-specific overrides.
