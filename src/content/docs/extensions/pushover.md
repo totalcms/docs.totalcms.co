@@ -1,6 +1,7 @@
 ---
-title: "Pushover Push Notifications"
-description: "Configure Pushover push notifications for Total CMS form actions and system events."
+title: "Pushover Notifications (Bundled Extension)"
+description: "Send push notifications via Pushover when forms are submitted. Supports Twig templates, image attachments, priority levels, and delivery groups."
+since: "3.5.0"
 ---
 Total CMS integrates with [Pushover](https://pushover.net) to send push notifications to your phone, tablet, or desktop when form actions are triggered. This is a **Pro edition** feature.
 
@@ -265,3 +266,9 @@ Pushover allows 10,000 messages per month on the free tier. Each successful API 
 - [Form Settings](/collections/form-settings/) - Configure form actions for collections
 - [Mailer Actions](/collections/form-settings#mailer/) - Send email notifications from form actions
 - [Webhook Actions](/collections/form-settings#webhook/) - Call external URLs from form actions
+
+## See also
+
+- [Page Features (Builder)](/site-builder/overview#page-features-middleware/) — the middleware framework for page features
+- [Bundled Extensions](/extensions/bundled/) — concept and list of all bundled extensions
+- [Extension Points](/extensions/extension-points/) — the full extension API

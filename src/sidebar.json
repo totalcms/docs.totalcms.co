@@ -395,10 +395,6 @@
             {
                 "label": "Mailer",
                 "slug": "notifications/mailer"
-            },
-            {
-                "label": "Pushover",
-                "slug": "notifications/pushover"
             }
         ]
     },
@@ -439,8 +435,33 @@
                 "slug": "apis/api-keys"
             },
             {
+                "label": "OAuth Server",
+                "slug": "apis/oauth"
+            },
+            {
                 "label": "Index Filter",
                 "slug": "apis/index-filter"
+            }
+        ]
+    },
+    {
+        "label": "MCP",
+        "items": [
+            {
+                "label": "MCP Server",
+                "slug": "mcp/server"
+            },
+            {
+                "label": "Saved-Query Tools",
+                "slug": "mcp/saved-query-tools"
+            },
+            {
+                "label": "Prompts",
+                "slug": "mcp/prompts"
+            },
+            {
+                "label": "Extending MCP",
+                "slug": "mcp/extensions"
             }
         ]
     },
@@ -454,6 +475,10 @@
             {
                 "label": "Manifest",
                 "slug": "extensions/manifest"
+            },
+            {
+                "label": "Stability & Safety",
+                "slug": "extensions/safety"
             },
             {
                 "label": "Extension Points",
@@ -487,8 +512,28 @@
                         "slug": "extensions/ab-split"
                     },
                     {
+                        "label": "Algolia Search",
+                        "slug": "extensions/algolia-search"
+                    },
+                    {
                         "label": "Geo Redirect",
                         "slug": "extensions/geo-redirect"
+                    },
+                    {
+                        "label": "Maintenance",
+                        "slug": "extensions/maintenance"
+                    },
+                    {
+                        "label": "Protect",
+                        "slug": "extensions/protect"
+                    },
+                    {
+                        "label": "Pushover",
+                        "slug": "extensions/pushover"
+                    },
+                    {
+                        "label": "Scheduled",
+                        "slug": "extensions/scheduled"
                     }
                 ]
             }
@@ -500,6 +545,10 @@
             {
                 "label": "Deployment",
                 "slug": "operations/deployment"
+            },
+            {
+                "label": "Apache",
+                "slug": "operations/apache"
             },
             {
                 "label": "Nginx",
@@ -520,6 +569,10 @@
             {
                 "label": "Sync",
                 "slug": "operations/sync"
+            },
+            {
+                "label": "Git-First Templates",
+                "slug": "operations/git-first-templates"
             },
             {
                 "label": "Updates",

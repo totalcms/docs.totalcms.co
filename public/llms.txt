@@ -139,7 +139,6 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 
 ### Notifications
 - [Mailer](https://docs.totalcms.co/notifications/mailer/): Configure and send transactional and notification emails from Total CMS.
-- [Pushover](https://docs.totalcms.co/notifications/pushover/): Configure Pushover push notifications for Total CMS form actions and system events.
 
 ### Auth
 - [Authentication](https://docs.totalcms.co/auth/auth/): Protect pages and content sections with Total CMS authentication using page locks, section locks, and user data access in Twig templates.
@@ -151,11 +150,19 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [REST API](https://docs.totalcms.co/apis/rest-api/): Complete Total CMS REST API reference for CRUD operations on collections, objects, images, files, and schemas with authentication and error handling.
 - [PHP API](https://docs.totalcms.co/apis/php-api/): Use the TotalCMS PHP class for server-side page rendering with Twig templates and CLI automation scripts with full method reference.
 - [API Keys](https://docs.totalcms.co/apis/api-keys/): Create and manage token-based API keys for Total CMS REST API authentication with scoped method and path permissions and usage tracking.
+- [OAuth Server](https://docs.totalcms.co/apis/oauth/): Connect external services and AI clients to your T3 site via OAuth 2.1
 - [Index Filter](https://docs.totalcms.co/apis/index-filter/): Filter and sort Total CMS collection indexes with include, exclude, and sort criteria for sitemaps, RSS feeds, and API endpoints using boolean, string, and array values.
+
+### MCP
+- [MCP Server](https://docs.totalcms.co/mcp/server/): Expose your Total CMS site as a Model Context Protocol server so AI agents (Claude, ChatGPT, custom integrations) can discover, query, and manage content.
+- [Saved-Query Tools](https://docs.totalcms.co/mcp/saved-query-tools/): Define parameterized AI-callable query tools for a collection using JSON — no PHP required.
+- [Prompts](https://docs.totalcms.co/mcp/prompts/): Define Twig-rendered AI prompt templates in the admin and expose them via the MCP server's prompts/list and prompts/get endpoints.
+- [Extending MCP](https://docs.totalcms.co/mcp/extensions/): Publish custom MCP tools and resources from a T3 extension — vendor-prefixed names, capability toggles, strict collision policy.
 
 ### Extensions & CLI
 - [Extensions Overview](https://docs.totalcms.co/extensions/overview/): Learn how to extend Total CMS with custom functionality using the extension system. Add Twig functions, CLI commands, admin pages, custom schemas, and more.
 - [Manifest](https://docs.totalcms.co/extensions/manifest/): Complete reference for the extension.json manifest file that every Total CMS extension requires.
+- [Stability & Safety](https://docs.totalcms.co/extensions/safety/): How Total CMS protects your site from buggy or risky extensions — crash containment, performance monitoring, the pre-enable review, and update re-consent.
 - [Extension Points](https://docs.totalcms.co/extensions/extension-points/): All the ways extensions can add functionality to Total CMS: Twig functions, CLI commands, routes, admin pages, field types, events, and more.
 - [Events](https://docs.totalcms.co/extensions/events/): Reference for all content events that extensions can subscribe to in Total CMS.
 - [Schemas](https://docs.totalcms.co/extensions/schemas/): How extensions can provide collection schemas in Total CMS, including read-only and installable approaches.
@@ -165,15 +172,22 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 #### Bundled Extensions
 - [Bundled Overview](https://docs.totalcms.co/extensions/bundled/): Bundled extensions ship with Total CMS — installed by default, managed through the same UI as user-installed extensions, but cannot be removed.
 - [A/B Split](https://docs.totalcms.co/extensions/ab-split/): Render an alternate page template at the same URL for a percentage of visitors. Useful for testing layout, copy, or CTA variations without changing the page URL.
+- [Algolia Search](https://docs.totalcms.co/extensions/algolia-search/): Pluggable search provider backed by Algolia. Routes MCP search tools (and future site-wide search consumers) through Algolia's hosted keyword + neural search instead of T3's built-in text search.
 - [Geo Redirect](https://docs.totalcms.co/extensions/geo-redirect/): Redirect visitors based on their country. Reads the country from CDN-injected headers and 302s to a configured URL — useful for compliance redirects, regional landing pages, and sending visitors to localized URLs.
+- [Maintenance](https://docs.totalcms.co/extensions/maintenance/): Per-page 503 maintenance mode. Take individual pages offline with a custom message while the rest of the site stays up. Logged-in admins bypass the gate automatically.
+- [Protect](https://docs.totalcms.co/extensions/protect/): Gate a page behind a numeric passcode. Visitors enter a code to unlock the page — the session sticks via cookie. Useful for client previews, soft launches, and draft staging URLs.
+- [Pushover](https://docs.totalcms.co/extensions/pushover/): Send push notifications via Pushover when forms are submitted. Supports Twig templates, image attachments, priority levels, and delivery groups.
+- [Scheduled](https://docs.totalcms.co/extensions/scheduled/): Time-window gating for builder pages. Only renders a page between configured start and end timestamps — useful for holiday campaigns, embargoed announcements, and time-limited sales.
 
 ### Operations
 - [Deployment](https://docs.totalcms.co/operations/deployment/): Deploy Total CMS to production with Git configuration, cache clearing scripts, CI/CD integration for GitHub Actions and GitLab, and troubleshooting.
-- [Nginx](https://docs.totalcms.co/operations/nginx/): Configure Nginx to work with Total CMS including URL rewriting, PHP-FPM setup, and security rules for protecting the tcms-data directory.
+- [Apache](https://docs.totalcms.co/operations/apache/): Apache and LiteSpeed rewrite rules for Total CMS — what ships in the box, where each .htaccess file lives, and common customizations like HTTPS redirects, caching, and compression.
+- [Nginx](https://docs.totalcms.co/operations/nginx/): Configure Nginx to work with Total CMS — front-controller routing, blocking the tcms-data directory, PHP-FPM, and snippets for the recommended docroot layout.
 - [Security](https://docs.totalcms.co/operations/security/): Secure your Total CMS installation with tcms-data folder protection, HTTPS setup, HTML and SVG sanitization, upload restrictions, and security headers.
 - [Server Sizing](https://docs.totalcms.co/operations/server-sizing/): Choose the right CPU, RAM, and storage for Total CMS with guidance on APCu cache tuning, PHP-FPM workers, Redis setup, and multi-site hosting.
 - [Filesystem](https://docs.totalcms.co/operations/filesystem/): Explore the Total CMS filesystem structure including tcms-data directory, collection JSON files, object assets, indexes, and custom schema storage.
 - [Sync](https://docs.totalcms.co/operations/sync/): Push and pull schemas and templates between local development and production Total CMS instances using the CLI or admin dashboard.
+- [Git-First Templates](https://docs.totalcms.co/operations/git-first-templates/): Source-control your Site Builder templates and deploy them with git. Create a builder/ folder at the project root and templates become version-controlled, the admin editor goes read-only, and the repo is the single source of truth.
 - [Updates](https://docs.totalcms.co/operations/updates/): Keep Total CMS up to date with one-click dashboard updates, CLI commands, or manual upgrades. Includes rollback and maintenance mode details.
 - [JumpStart](https://docs.totalcms.co/operations/jumpstart/): Bootstrap new Total CMS projects with JumpStart data import and export for collections, schemas, objects, and Faker-based factory test data.
 - [Search Backends](https://docs.totalcms.co/operations/search/): Search Total CMS collections with case-insensitive queries, AND/OR logic, quoted phrases, property-specific targeting, and result prioritization.
