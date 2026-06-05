@@ -2003,6 +2003,17 @@ Set your dependencies to match the collections used in your definition. For the 
 
 If dependencies are not set, the view will only rebuild when you manually trigger it.
 
+### View Dependencies
+
+A Data View can read another view's output with `cms.view.get('other-view')`. List those view IDs under **View Dependencies** so Total CMS knows the build order.
+
+Listing a view dependency does two things:
+
+- **Order** — this view always rebuilds *after* the views it depends on, so it never reads stale upstream output.
+- **Inheritance** — this view transitively inherits the collection dependencies of the views it lists. If `sales-summary` depends on the `orders` collection and your view lists `sales-summary` under View Dependencies, you do **not** also need to add `orders` to this view's Dependencies — a change to `orders` rebuilds `sales-summary` and then this view automatically.
+
+Cycles (two views that list each other) are detected at rebuild time and broken in a best-effort order with a logged warning; avoid them.
+
 ## Testing a View
 
 Before saving, you can test your definition using the **Test Run** button in the admin interface. This executes the template without saving the result, so you can verify the output is correct.
@@ -4434,6 +4445,40 @@ The editor also has a drag handle on the bottom edge that allows users to manual
 }
 ```
 
+## External File Storage (`external: true`)
+
+For large code blocks, you can store a code field's value in a real file on disk instead of inline in the object's JSON. Set `"external": true` in the field settings:
+
+```json
+{
+  "handler": {
+    "$ref"     : "https://www.totalcms.co/schemas/properties/code.json",
+    "label"    : "Handler",
+    "field"    : "code",
+    "settings" : {
+      "mode"     : "php",
+      "external" : true
+    }
+  }
+}
+```
+
+With this enabled, the value is written to:
+
+```
+<collection>/<id>/<property>/<property>.<ext>
+```
+
+where `<ext>` is derived from `mode` (e.g. `php`, `twig`, `js`, `css`, `html`, `json`, otherwise `txt`). For the example above, an object `widgets/alpha` stores its handler at `widgets/alpha/handler/handler.php`, and the object's `alpha.json` keeps the field blank.
+
+**Why use it:**
+
+- The value lives as a real file — clean git diffs, editable in an external IDE, no escaped strings in the JSON.
+- Everything else is transparent: the field still edits in the admin and reads in Twig as a normal string, and the value travels with **Sync** and **JumpStart** (it is inlined into the transfer payload, then re-written to disk on the receiving end).
+- The file is removed and duplicated automatically with its object.
+
+> **Requires the `code.json` `$ref` form** (as shown above), not `"type": "string"`. The `$ref` makes the field resolve to a code property, which stores the value byte-for-byte. A plain `"type": "string"` code field is treated as rich text — it is HTML-sanitized and trimmed, which corrupts source code (e.g. PHP).
+
 ## Code Fields for Embed Codes and Third-Party Widgets
 
 **IMPORTANT:** When using code fields for third-party embed codes (like TidyCal, Google Analytics, social media widgets, etc.), you **must disable HTML sanitization** to preserve scripts and data attributes.
@@ -4538,6 +4583,11 @@ The `deckItemLabel` setting controls how deck items are labeled in the admin int
 
 - **Field values:** `${fieldName}` - Any field from the deck item schema
 - **Multiple fields:** `${id} - ${title}` - Combine multiple fields with separators
+- **Nested values (dot notation):** `${field.key}` - Reach into a composite field's value:
+  - `${card.title}` - a sub-field of a `card` field
+  - `${headline.es}` - a single locale of a `localizedtext` / `localizedstyledtext` field
+  - `${card.headline.es}` - both at once (a localized sub-field inside a card)
+  - A bare `${card}` or `${headline}` (a composite value with no sub-key) resolves to nothing rather than a raw dump — point at the part you want.
 - **Dynamic values (new items only):**
   - `${uid}` - Random unique ID
   - `${uuid}` - Full UUID
@@ -4773,6 +4823,31 @@ For depot (multiple file) fields, the setting works the same way:
 - **Existing Files:** This setting only affects the default for new uploads. Existing files retain their current `protected` value.
 - **Manual Override:** Users can still manually change the `protected` flag for individual files in the file management interface, regardless of this setting.
 - **Security:** Setting to `false` makes files publicly accessible. Use with caution for sensitive content.
+
+## File Access Groups
+
+When a file is protected (`protected: true`), who may download or stream it is
+controlled by the collection's **File Access Groups** setting (the collection's
+`groups`). There are three tiers:
+
+| File Access Groups | Who can access protected files |
+|---|---|
+| *(empty)* | Anyone, including anonymous visitors — the file is effectively public |
+| `default` | **Any logged-in user** — login is required, but any group (or no group) qualifies |
+| named groups (e.g. `members`, `editors`) | Only users who belong to one of those groups |
+
+The reserved `default` group is the way to say *"must be signed in, but I don't
+care which group."* Because the groups list is non-empty, anonymous visitors are
+redirected to login (downloads) or rejected with `403` (streams) before the
+access check runs. Super admins always have access.
+
+You can combine `default` with named groups, but `default` already matches every
+authenticated user, so it broadens access to all signed-in users regardless of
+the other entries.
+
+> **Note:** File Access Groups only gate file downloads and streaming. They are
+> separate from the [access group permissions](auth/access-groups) that control
+> admin and API access to collections.
 
 ---
 
@@ -9182,7 +9257,7 @@ You can get any data passed to a page through the `$_SESSION` php variable.
 If the variable name contains a hyphen, use bracket notation instead:
 
 ```
-{{ sessionData['agent-location'] }}
+{{ sessionData['agent-lang'] }}
 ```
 
 ---
@@ -20275,6 +20350,369 @@ The report form uses the following classes for styling:
 
 
 ============================================================
+# Automations
+============================================================
+
+## Automations
+
+Automations run a block of PHP you write — the **handler** — in response to a **trigger**: a schedule (cron), an incoming webhook, or a content event such as an object being created. They live entirely in the CMS; there's no separate worker service to deploy.
+
+> Automations are a **Pro** feature.
+
+## How it works
+
+An automation is an object in the reserved `automations` collection. Each one has:
+
+- **Triggers** — one or more of `schedule`, `webhook`, or `event` (see [Triggers](triggers.md)).
+- **A handler** — the PHP that runs when a trigger fires (see [Writing Handlers](handlers.md)). The handler is stored in its own file alongside the object, so it's edited like any code field but never bloats the JSON.
+- **An optional error mailer** — a [Mailer](../notifications/mailer.md) object used to email you when the handler throws in production.
+- **A category** — groups automations in the admin sidebar (defaults to *Automations*).
+
+Manage them under **Automations** in the admin (or `tcms` on the CLI). The editor shows the handler, the trigger list, a run history, a **Run now** button, and a non-blocking advisory if the handler reaches for high-risk calls (`exec`, `shell_exec`, `eval`, …).
+
+## Scheduling: the process command
+
+Webhook and event automations fire the moment their trigger happens. **Schedules** need a heartbeat — a single command run by cron:
+
+```bash
+* * * * * cd /path/to/site && php bin/tcms automations:process
+```
+
+Each tick `automations:process`:
+
+1. Drains any queued asynchronous runs (async webhooks + event triggers).
+2. Fires every schedule whose cron expression is now due.
+
+Run it **every minute**; the command itself decides what's actually due, evaluating cron expressions in your site timezone (Settings → General). A single-flight lock keeps overlapping ticks from double-firing.
+
+## Failure handling
+
+Automations are environment-aware:
+
+- **Development / preview** — a handler exception surfaces loudly so you can debug, and the automation keeps running.
+- **Production** — the exception is contained. If an `errorMailerId` is set, you're emailed. After **5 consecutive failures** the automation is **auto-disabled** (so a broken handler can't fail — and email — forever). The admin shows a banner with a one-click **Re-enable** that clears the failure count.
+
+Every run is recorded (status, duration, return value or exception) and visible in the editor's run history.
+
+## Next steps
+
+- [Triggers](triggers.md) — schedule, webhook, and event configuration
+- [Writing Handlers](handlers.md) — the `AutomationContext` API
+- [Webhooks](webhooks.md) — authentication, sync vs. async
+- [Extension Automations](extensions.md) — ship automations from an extension
+
+---
+
+## Triggers
+
+An automation's **triggers** decide *when* its handler runs. Each automation can have one or more triggers, added as rows in the triggers deck in the editor. Every trigger has a `type` — `schedule`, `webhook`, or `event` — and the fields below depend on it.
+
+## Schedule
+
+Runs the handler on a cron schedule. Requires the [`automations:process` command](overview.md#scheduling-the-process-command) to be run by cron.
+
+| Field | Description |
+|-------|-------------|
+| `cron` | A standard 5-field cron expression, e.g. `*/15 * * * *` (every 15 minutes) or `0 3 * * *` (daily at 03:00). Evaluated in the site timezone. |
+
+The cron field offers a **dropdown of common schedules** — pick one to fill in the expression, or type your own. The editor validates the syntax as you type, and macros like `@daily` / `@hourly` are also accepted.
+
+The built-in suggestions:
+
+```
+* * * * *       Every minute
+*/15 * * * *    Every 15 minutes
+*/30 * * * *    Every 30 minutes
+15 * * * *      Hourly at :15
+0 */6 * * *     Every 6 hours
+20 5 * * *      Daily at 05:20
+0 8,17 * * *    Twice daily (8am & 5pm)
+0 2 * * 0       Sundays at 02:00
+0 8 * * 1       Mondays at 08:00
+0 9 * * 1-5     Weekdays at 09:00
+30 9 1 * *      Monthly on the 1st at 09:30
+0 0 1 1 *       Yearly on the Jan 1st at 00:00
+```
+
+These are starting points — any valid 5-field cron works.
+
+## Webhook
+
+Runs the handler when an HTTP `POST` hits the automation's endpoint:
+
+```
+POST /automations/{id}
+```
+
+| Field | Description |
+|-------|-------------|
+| `auth` | `apiKey` (key scoped to `POST /automations`), `sameOrigin` (browser form posts from this site only), or `none` (public, rate-limited per IP). See [Webhooks](webhooks.md). |
+| `sync` | When on, the request blocks and the response is the handler's return value. When off, the run is queued and the endpoint returns `202 Accepted` immediately. |
+
+Request query and body are passed to the handler as `$ctx->args`. See [Webhooks](webhooks.md) for authentication and payload details.
+
+## Event
+
+Runs the handler when a core content event fires.
+
+| Field | Description |
+|-------|-------------|
+| `event` | The event name, e.g. `object.created`, `object.updated`, `object.deleted`, `schema.saved`, `user.login`. |
+| `collection` | Optional. Restrict the trigger to one collection; leave blank to match every collection. |
+
+The event payload (`collection`, `id`, …) is available to the handler as `$ctx->event`. Event runs are queued and processed on the next `automations:process` tick, so a slow handler never blocks the write that triggered it.
+
+> During a bulk import, `object.created` / `object.updated` are suppressed in favour of `import.created` / `import.updated`. Subscribe to the `import.*` events if you specifically want to react to import-time writes.
+
+## Multiple triggers
+
+Mix trigger types freely — e.g. a report automation might run on a nightly `schedule` **and** expose a `webhook` so you can trigger it on demand. Each trigger fires the same handler; inspect `$ctx->trigger['type']` if the handler needs to behave differently per source.
+
+---
+
+## Writing Handlers
+
+A handler is a PHP file that **returns a closure**. The closure receives a single argument — an `AutomationContext` — and runs when any of the automation's triggers fire.
+
+```php
+<?php
+
+return function ($ctx) {
+    // ... your logic ...
+
+    return ['ok' => true];
+};
+```
+
+The handler is stored in its own `.php` file next to the automation object (an *external* code field), so it's edited like any code field in the admin but never bloats the collection JSON. It travels with the object through Sync and JumpStart.
+
+## The AutomationContext
+
+`$ctx` is the **only** thing a handler receives — pre-wired services plus the trigger payload. No need to reach into a container.
+
+**Objects**
+
+| Property | What it is |
+|----------|------------|
+| `$ctx->objectFetcher` | Read objects — `fetchObject($collection, $id)` |
+| `$ctx->objectSaver` | Create objects — `saveObject($collection, $data)` |
+| `$ctx->objectUpdater` | Update objects — `updateObject($collection, $id, $data)` |
+| `$ctx->objectRemover` | Delete objects — `removeObject($collection, $id)` |
+| `$ctx->objectCloner` | Duplicate an object — `cloneObject($from, $to)` |
+| `$ctx->propertyIncrementer` | Atomic counters — `incrementProperty($collection, $id, $property, $amount = 1)` / `decrementProperty(...)` |
+
+**Deck items** (cards/repeaters inside an object)
+
+| Property | What it is |
+|----------|------------|
+| `$ctx->deckItemSaver` | Add a deck item — `saveDeckItem($collection, $objectId, $property, $itemId, $itemData)` |
+| `$ctx->deckItemUpdater` | Update a deck item — `updateDeckItem(...)` |
+| `$ctx->deckItemRemover` | Remove a deck item — `removeDeckItem($collection, $objectId, $property, $itemId)` |
+| `$ctx->deckItemFetcher` | Read deck items — `fetchDeckItem(...)`, `fetchAllDeckItems($collection, $objectId, $property)` |
+
+**Querying**
+
+| Property | What it is |
+|----------|------------|
+| `$ctx->indexReader` | Read a collection index — `fetchIndex($collection)` (returns a filterable collection) |
+| `$ctx->indexSearcher` | Full-text-ish search — `search($collection, $query)`, `searchByProperty($collection, $property, $query)` |
+| `$ctx->indexQueryService` | Structured query (filter/sort/paginate) — `query($collection, $params)` |
+| `$ctx->indexBuilder` | Rebuild an index after batch writes — `buildIndex($collection)` |
+
+**Collections & schemas**
+
+| Property | What it is |
+|----------|------------|
+| `$ctx->collectionFetcher` | Inspect a collection — `fetchCollection($id)`, `collectionExists($id)` |
+| `$ctx->schemaFetcher` | Inspect a schema — `fetchSchemaForCollection($collection)`, `schemaExists($id)` |
+
+**Files & images**
+
+| Property | What it is |
+|----------|------------|
+| `$ctx->fileSaver` | Store a file into a file field — `save(...)` |
+| `$ctx->imageSaver` | Store/process an image into an image field — `save(...)` |
+
+**Import & sync**
+
+| Property | What it is |
+|----------|------------|
+| `$ctx->csvImporter` | Import a CSV — `import($collection, $file, $updateObject = false)` |
+| `$ctx->jsonImporter` | Import JSON — `import($collection, $file, $updateObject = false)` |
+| `$ctx->rssImporter` | Ingest an RSS feed — `import($feedUrl, $collection, $options = [])` |
+| `$ctx->syncService` | Push/pull to another T3 install — `push(...)`, `pull(...)` |
+
+**Mail, config & run payload**
+
+| Property | What it is |
+|----------|------------|
+| `$ctx->mailer` | Send a [Mailer](../notifications/mailer.md) email — `sendEmail($mailerId, $data)` |
+| `$ctx->config` | Core configuration |
+| `$ctx->logger` | PSR-3 logger writing to `automations.log` |
+| `$ctx->trigger` | The trigger row that fired this run (e.g. `$ctx->trigger['type']`) |
+| `$ctx->args` | Caller inputs — webhook query + body, or manual *Run now* args |
+| `$ctx->event` | Event payload (`collection`, `id`) — event triggers only |
+| `$ctx->request` | The PSR-7 request — webhook triggers only |
+
+`$ctx->request` and `$ctx->event` are `null` for schedule runs.
+
+## Example: digest email on a schedule
+
+```php
+<?php
+
+return function ($ctx) {
+    $posts = $ctx->indexReader->fetchIndex('blog')->objects
+        ->where('draft', false)
+        ->take(5);
+
+    $ctx->mailer->sendEmail('weekly-digest', ['posts' => $posts->all()]);
+    $ctx->logger->info('weekly digest sent', ['count' => $posts->count()]);
+
+    return ['sent' => $posts->count()];
+};
+```
+
+## Return values and errors
+
+- **Return value** — whatever the closure returns is recorded on the run record and, for a synchronous webhook, becomes the HTTP response body. Return arrays/scalars (JSON-encodable).
+- **Throwing** marks the run **failed**. In development the error surfaces loudly; in production it's contained, optionally emailed via the automation's error mailer, and counts toward [auto-disable](overview.md#failure-handling).
+
+## The handler advisory
+
+When you save a handler, the editor scans it for high-risk calls — `exec`, `shell_exec`, `system`, `passthru`, `proc_open`, `eval`, backticks, `base64_decode`, remote `file_get_contents`, and similar — and shows a **non-blocking** advisory listing what it found. It's a heads-up, not a block: many legitimate handlers use these. Review before relying on a handler that reaches for them.
+
+---
+
+## Webhooks
+
+A webhook trigger exposes an automation at a fixed endpoint:
+
+```
+POST /automations/{id}
+```
+
+`{id}` is the automation's id. The endpoint is `POST`-only, so it never collides with your site's pages (which are served on `GET`).
+
+## Authentication
+
+Set the trigger's `auth` field to one of:
+
+### `none` — public
+
+No credentials required. Requests are **rate-limited per IP** to blunt abuse. Use this for trusted internal callers or low-risk endpoints, and keep the handler's side effects modest.
+
+### `sameOrigin` — browser forms from this site
+
+Rate-limited like `none`, **and** the request must come from this site's own host. The browser's `Origin` header (falling back to `Referer`) must match the host the webhook was served on — otherwise the request is rejected with `403`. A request with neither header is rejected.
+
+This is the mode for a **public-facing form on your own site** that posts to an automation: your form is allowed, but another website's embedded JavaScript or form is not (a browser stamps a truthful `Origin` that page scripts cannot forge).
+
+> **It is not a substitute for a key.** `sameOrigin` is CSRF-grade: it stops *browser* requests from other origins, but a non-browser client (`curl`, a script, another server) can set any `Origin` header and bypass it. For anything sensitive, use `apiKey` or validate a shared secret in the handler.
+
+### `apiKey` — protected
+
+The request must carry a valid API key **scoped to `POST` the `/automations` endpoint** — the same method-and-path model as every other API key. Send the key in a header (never the body):
+
+```
+X-API-Key: tcms_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+or
+
+```
+Authorization: Bearer tcms_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Grant it when creating the key: in **Utilities → API Keys → New**, include **POST** in the methods, then under *Specific Endpoints* select **All Automations** (or grant all endpoints). A key that isn't scoped for `POST /automations` is rejected with `401`. See [API Keys](../apis/api-keys.md).
+
+## Synchronous vs. asynchronous
+
+The trigger's `sync` flag controls the response:
+
+| `sync` | Behaviour | Response |
+|--------|-----------|----------|
+| on | The handler runs inline and the request blocks until it finishes. | `200` with the handler's return value as JSON. |
+| off | The run is queued and processed on the next `automations:process` tick. | `202 Accepted` with `{ "status": "queued", "runId": "…" }`. |
+
+Use **sync** when the caller needs the result (e.g. a lookup). Use **async** for fire-and-forget work, or anything slow — the caller isn't kept waiting and a long handler can't tie up a web worker.
+
+## The payload
+
+The request's query string and parsed body are merged and handed to the handler as `$ctx->args`:
+
+```php
+<?php
+
+return function ($ctx) {
+    $orderId = $ctx->args['order_id'] ?? null;
+    // ...
+
+    return ['received' => $orderId];
+};
+```
+
+```bash
+curl -X POST https://example.com/automations/order-sync \
+  -H "X-API-Key: tcms_…" \
+  -H "Content-Type: application/json" \
+  -d '{"order_id": 42}'
+```
+
+The API key itself is read only from headers — it's never part of `$ctx->args`.
+
+## Server rewrite rules
+
+`POST /automations/{id}` is a root-level route. If your server needs explicit rewrite rules (e.g. a Stacks install), make sure the automations path is routed to `index.php` — see [Apache](../operations/apache.md) and [Nginx](../operations/nginx.md).
+
+---
+
+## Extension Automations
+
+Extensions can contribute automations from code, so a feature that needs a recurring job or an event reaction can ship it instead of asking the operator to author one by hand.
+
+## Registering one
+
+Call `addAutomation()` from your extension's `register()`:
+
+```php
+public function register(ExtensionContext $context): void
+{
+    $context->addAutomation(
+        id: 'prune-drafts',
+        label: 'Prune stale drafts',
+        triggers: [
+            ['type' => 'schedule', 'cron' => '0 3 * * *'],
+            // ['type' => 'event', 'event' => 'object.created', 'collection' => 'members'],
+        ],
+        handler: function (\TotalCMS\Domain\Automation\Data\AutomationContext $ctx): array {
+            $ctx->logger->info('[acme/starter] prune-drafts tick');
+            // ... work via $ctx->objectFetcher / $ctx->objectRemover ...
+
+            return ['pruned' => 0];
+        },
+    );
+}
+```
+
+The handler receives the same [`AutomationContext`](handlers.md#the-automationcontext) as a file-based automation.
+
+## How they differ from file automations
+
+- **Code, not content.** The handler is a closure held in memory, rebuilt from your extension's code each request — nothing is written to the `automations` collection.
+- **Read-only in the admin.** Operators can run or disable an extension automation, but they can't edit the closure (it lives in your code). They appear in the automations list tagged as extension-owned.
+- **Schedule + event only.** Extension automations participate in schedule and event dispatch. For HTTP, register a [public route](../extensions/extension-points.md#public-routes) instead of a webhook trigger — an extension automation's id (`vendor/name:id`) isn't a URL path.
+
+## The capability toggle
+
+Registering an automation surfaces the auto-detected **`automations`** capability for your extension. Operators can switch it off from the extension's permissions — that hides and stops dispatching all of the extension's automations without uninstalling it. It's also flagged on the pre-enable review screen, since automations run code on a schedule or content events.
+
+See [Extension Points → Automations](../extensions/extension-points.md#automations) for the reference, and the [extension starter](https://github.com/totalcms/extension-starter) for a working example.
+
+---
+
+
+============================================================
 # Admin
 ============================================================
 
@@ -27889,6 +28327,36 @@ public function register(ExtensionContext $context): void
 
 **Capability:** `events:listen`
 
+## Automations
+
+Ship a server-side [automation](../automations/overview.md) as part of your extension. Like the user-authored automations in the admin, an extension automation runs on a **schedule** or a content **event** — but its handler is the closure you register here, held in memory (never written to disk). The handler receives an `AutomationContext` with pre-injected services (`objectFetcher`, `objectSaver`, `objectUpdater`, `objectRemover`, `indexReader`, `mailer`, `config`, `logger`) plus the run payload (`trigger`, `args`, `event`).
+
+```php
+public function register(ExtensionContext $context): void
+{
+    $context->addAutomation(
+        id: 'prune-drafts',
+        label: 'Prune stale drafts',
+        triggers: [
+            ['type' => 'schedule', 'cron' => '0 3 * * *'],                 // daily at 03:00
+            // ['type' => 'event', 'event' => 'object.created', 'collection' => 'members'],
+        ],
+        handler: function (\TotalCMS\Domain\Automation\Data\AutomationContext $ctx): array {
+            $ctx->logger->info('[acme/starter] prune-drafts tick');
+            // ... do work via $ctx->objectFetcher / $ctx->objectRemover ...
+
+            return ['pruned' => 0];
+        },
+    );
+}
+```
+
+Extension automations appear in the automations admin **read-only** — operators can run or disable them (via the capability toggle) but cannot edit the closure, since it lives in your code. Returning a value records it on the run record; throwing marks the run failed.
+
+For **HTTP triggers**, register a [public route](#public-routes) rather than a `webhook` trigger — an extension automation's id (`vendor/name:id`) isn't a URL path, so webhook triggers stay reserved for user-authored automations.
+
+**Capability:** `automations`
+
 ## Container Definitions
 
 Register services in the DI container for dependency injection.
@@ -29197,6 +29665,24 @@ tcms jobs:process --json
 **Cron setup:**
 ```bash
 * * * * * php /path/to/resources/bin/tcms jobs:process
+```
+
+---
+
+### `automations:process`
+
+Fire due **scheduled** automations. Runs on its **own** cron line, parallel to `jobs:process`, so a large import backlog in the job queue never delays a time-sensitive scheduled automation. Single-flight locked, so overlapping cron ticks can't double-fire the same run.
+
+```bash
+tcms automations:process
+tcms automations:process --json
+```
+
+Webhook and event triggers do not depend on this command — webhooks fire on HTTP request and events fire when the originating write happens; their async runs are drained on the next tick.
+
+**Cron setup** (add this as a second line, alongside `jobs:process`):
+```bash
+* * * * * php /path/to/resources/bin/tcms automations:process
 ```
 
 ---
@@ -30942,6 +31428,9 @@ RewriteRule ^mcp(/.*)?$ rw_common/plugins/stacks/tcms/public/index.php [QSA,L]
 RewriteRule ^\.well-known/oauth-authorization-server$ rw_common/plugins/stacks/tcms/public/index.php [QSA,L]
 RewriteRule ^\.well-known/jwks\.json$ rw_common/plugins/stacks/tcms/public/index.php [QSA,L]
 RewriteRule ^oauth/(authorize|token|register|revoke)$ rw_common/plugins/stacks/tcms/public/index.php [QSA,L]
+
+# Automation webhooks (POST /automations/<id>)
+RewriteRule ^automations/.+$ rw_common/plugins/stacks/tcms/public/index.php [QSA,L]
 ```
 
 This preserves the host site's 404 behavior — any URL not on this list and not a real file still falls through to Apache's `ErrorDocument 404` (or the host's custom 404 page).
@@ -31150,7 +31639,7 @@ If you missed the snippets on the [Setup Wizard's Server Configuration step](#th
 
 Two things have to happen for a Total CMS site to serve correctly:
 
-1. **Front-controller routing** — Any URL that doesn't match a real file or directory under `public/` is passed to `public/index.php`. That's how `/admin`, `/api/...`, `/sitemap`, and your Site Builder pages all reach the framework.
+1. **Front-controller routing** — Any URL that doesn't match a real file or directory under `public/` is passed to `public/index.php`. That's how `/admin`, `/api/...`, `/sitemap`, automation webhooks (`POST /automations/<id>`), and your Site Builder pages all reach the framework.
 2. **Data protection** — `tcms-data/` is the flat-file store for collections, uploads, secrets, and runtime state. It must never be served directly. The simplest defense is to keep `tcms-data/` outside your docroot. If it has to live under the docroot, deny it explicitly.
 
 The two snippets below cover both concerns.
@@ -32927,7 +33416,7 @@ Adding this step does add additional processing load to generating the search. I
 
 Total CMS ships a curated registry of locale codes used by:
 
-- **Default locale** (Settings → Internationalization → Default Locale) — drives PHP `intl`, CakePHP I18n, and Faker for date / number / currency formatting, the admin UI translation language, and (Pro) the default tab on localized content fields. One setting drives both runtime formatting and the content default. Operators who need the two to differ can override `$settings['locale']` at the top level in `config/tcms.php` — that wins for `$config->locale` while `i18n.default` keeps driving content defaults.
+- **Default locale** (Settings → Internationalization → Default Locale) — drives PHP `intl`, CakePHP I18n, and Faker for date / number / currency formatting, the admin UI translation language, and (Pro) the default tab on localized content fields. This single setting is the source of truth for `$config->locale` — there is no separate formatting-locale override.
 - **Available content locales** (Settings → Internationalization → Available Content Locales) — Pro edition. List of codes that show up as tabs in `localizedtext`, `localizedtextarea`, and `localizedstyledtext` fields.
 
 All codes use the **mixed-case POSIX format** (lowercase language, uppercase region, underscore separator: `en_US`, `pt_BR`, `zh_CN`). Bare language codes (`de`, `fr`, `pt`) are also valid and stand for "any region speaking that language" — useful when a site doesn't care about regional variants.

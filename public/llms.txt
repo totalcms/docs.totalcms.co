@@ -132,6 +132,13 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Report Form](https://docs.totalcms.co/forms/report/): Export collection data as CSV or JSON reports with field selection and filtering.
 - [Specialized Forms](https://docs.totalcms.co/forms/specialized/): Schema forms, collection forms, import forms, job queue management, and factory forms.
 
+### Automations
+- [Overview](https://docs.totalcms.co/automations/overview/): Run server-side PHP on a schedule, a webhook, or a content event.
+- [Triggers](https://docs.totalcms.co/automations/triggers/): Schedule, webhook, and event triggers for automations.
+- [Writing Handlers](https://docs.totalcms.co/automations/handlers/): The PHP handler and the AutomationContext API.
+- [Webhooks](https://docs.totalcms.co/automations/webhooks/): Authenticating and calling automation webhooks.
+- [Extension Automations](https://docs.totalcms.co/automations/extensions/): Ship automations from an extension with addAutomation().
+
 ### Admin
 - [Dashboard](https://docs.totalcms.co/admin/dashboard/): Navigate the Total CMS admin dashboard to manage collections, edit content, configure settings, and use the built-in form builder.
 - [White Label](https://docs.totalcms.co/admin/whitelabel/): Customize the Total CMS admin with white label branding including custom logos, login pages, CSS variables, and localized form labels.

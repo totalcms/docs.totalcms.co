@@ -373,6 +373,31 @@
         ]
     },
     {
+        "label": "Automations",
+        "items": [
+            {
+                "label": "Overview",
+                "slug": "automations/overview"
+            },
+            {
+                "label": "Triggers",
+                "slug": "automations/triggers"
+            },
+            {
+                "label": "Writing Handlers",
+                "slug": "automations/handlers"
+            },
+            {
+                "label": "Webhooks",
+                "slug": "automations/webhooks"
+            },
+            {
+                "label": "Extension Automations",
+                "slug": "automations/extensions"
+            }
+        ]
+    },
+    {
         "label": "Admin",
         "items": [
             {
