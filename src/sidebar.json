@@ -273,6 +273,10 @@
                         "slug": "twig/cmsgrid-tag"
                     },
                     {
+                        "label": "Cache Tag",
+                        "slug": "twig/cache-tag"
+                    },
+                    {
                         "label": "Load More",
                         "slug": "twig/load-more"
                     }

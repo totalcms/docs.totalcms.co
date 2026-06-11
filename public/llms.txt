@@ -64,7 +64,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Localized Text](https://docs.totalcms.co/fields/localized-text/): Multi-language text, textarea, and styled-text fields with one value per configured locale. Pro edition only.
 - [Number & Range](https://docs.totalcms.co/fields/number-range/): Configure number and range input fields in Total CMS with min, max, and step settings for precise numeric value control.
 - [Password](https://docs.totalcms.co/fields/password/): Set up password fields in Total CMS with automatic confirmation input, match validation, and customizable placeholder text.
-- [Price](https://docs.totalcms.co/fields/price/): Configure price fields in Total CMS with currency icon options for dollar, euro, pound, and yen with automatic decimal step handling.
+- [Price](https://docs.totalcms.co/fields/price/): Locale-aware currency price field — live formatting as you type, a per-currency symbol and icon, configurable currency/decimals/locale, stored as a plain number.
 - [Radio & Multicheckbox](https://docs.totalcms.co/fields/radio-multicheckbox/): Configure radio button and multicheckbox fields in Total CMS with responsive fieldGrid and fieldColumns layout settings for multi-column option displays.
 - [Secret](https://docs.totalcms.co/fields/secret/): Mask plaintext-stored sensitive values like API keys and tokens using the secret field type, with a built-in show/hide toggle and password-manager opt-out.
 - [Select](https://docs.totalcms.co/fields/select/): Configure select and multiselect dropdown fields in Total CMS with the clearValue button setting for optional selection clearing.
@@ -104,6 +104,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Object Linking](https://docs.totalcms.co/twig/object-linking/): Generate SEO-friendly URLs for Total CMS collection objects using URL templates, canonical URLs, and automatic redirect handling.
 - [Views](https://docs.totalcms.co/twig/views/): Reference for the cms.view namespace providing access to pre-computed data views.
 - [CMS Grid Tag](https://docs.totalcms.co/twig/cmsgrid-tag/): Display Total CMS collections in customizable grid layouts using the cmsgrid Twig tag with built-in CSS classes, helper methods, and templates.
+- [Cache Tag](https://docs.totalcms.co/twig/cache-tag/): Cache a rendered block of Twig with the {% cache %} tag — TTL plus optional collection tags that auto-invalidate when content changes, backed by the Total CMS cache backends.
 - [Load More](https://docs.totalcms.co/twig/load-more/): Add HTMX-powered infinite scroll and load more buttons to Total CMS collection pages with server-side first page rendering and API pagination.
 
 #### Filters & Functions

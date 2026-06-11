@@ -15,6 +15,24 @@ To avoid collisions with core T3 functions and other extensions, always prefix y
 
 If a name collision is detected at boot time, a warning is logged to `extensions.log` and the last registered function/filter wins. Prefixing with your vendor name prevents this.
 
+## Twig rendering model
+
+Total CMS renders templates in **streaming (yield) mode** — the same mode Twig 4 uses exclusively. This is transparent to extensions, with one rule: your Twig functions and filters must **return** their output. Never `echo`, `print`, or open an output buffer (`ob_start()`) inside a function or filter — in streaming mode anything written directly to output bypasses the template stream and lands in the wrong place (or is lost entirely). Build a string and return it.
+
+```php
+// ✅ Correct — return the value; Twig places it in the stream
+new TwigFunction('acme_banner', fn (): string => '<div class="banner">…</div>');
+
+// ❌ Wrong — echo bypasses the render stream under yield mode
+new TwigFunction('acme_banner', function (): void {
+    echo '<div class="banner">…</div>';
+});
+```
+
+Extensions register Twig **functions, filters, and globals** — never custom tags or nodes — so there is nothing else to do to be yield-ready.
+
+> **Security: Twig autoescaping is OFF.** Total CMS renders content fields as trusted author HTML/Markdown, so Twig does not escape output for you. Any value your extension prints that came from outside the admin — request input, anonymous submissions, third-party APIs — must be escaped explicitly with `{{ value | e }}` (or `| e('html_attr')` inside an attribute), or wrapped in `{% autoescape 'html' %}`. A handler that prints `{{ input }}` has no automatic XSS protection. See [Template Output Escaping](operations/security#template-output-escaping-twig).
+
 ## Twig Functions
 
 Add custom functions available in all Twig templates.
@@ -148,7 +166,7 @@ The routes above are accessible at:
 
 ### Admin Routes
 
-Register routes under `/admin/ext/{vendor}/{name}/`. These routes are protected by admin authentication middleware. Templates can extend `admin-dashboard.twig` for the admin layout.
+Register routes under `/admin/ext/{vendor}/{name}/`. These routes require a logged-in dashboard user and are **super-admin only by default**. Templates can extend `admin-dashboard.twig` for the admin layout.
 
 ```php
 use Slim\Routing\RouteCollectorProxy;
@@ -158,6 +176,9 @@ public function register(ExtensionContext $context): void
     $context->addAdminRoutes(function (RouteCollectorProxy $group): void {
         $group->get('/dashboard', MyDashboardAction::class);
         $group->get('/settings', MySettingsAction::class);
+
+        // Open a page to every logged-in dashboard user (not just admins)
+        $group->get('/reports', MyReportsAction::class, permission: 'any');
     });
 }
 ```
@@ -167,6 +188,10 @@ public function register(ExtensionContext $context): void
 The routes above are accessible at:
 - `/admin/ext/acme/seo-pro/dashboard`
 - `/admin/ext/acme/seo-pro/settings`
+
+Pass `permission: 'any'` per route to open a page to non-admin dashboard users; anything else means admin-only. Set the same value on the [admin navigation item](#admin-navigation) that links to the page — the nav `permission` controls who *sees the link*, the route `permission` controls who *can load the page*.
+
+Operators have the final say over `'any'` surfaces: each access group has an **Extension Access** list (Utilities → Access Groups) that controls which extensions' nav items, widgets, and `'any'` pages its members can see and open. Groups default to all-extensions-granted; `admin` pages are unaffected (super admins only, always).
 
 ### Public Routes
 
@@ -189,6 +214,20 @@ public function register(ExtensionContext $context): void
 The routes above are accessible at:
 - `/ext/acme/seo-pro/webhook`
 - `/ext/acme/seo-pro/embed/{id}`
+
+### Route placeholders
+
+API, public, and admin routes all support Slim-style `{placeholder}` segments. A captured value is passed to the handler in its `$args` array, keyed by the placeholder name:
+
+```php
+$group->get('/embed/{id}', function ($request, $response, array $args) {
+    $id = $args['id'];   // 'abc' for /ext/acme/seo-pro/embed/abc
+    // ...
+    return $response;
+});
+```
+
+`{id}` matches a single path segment; add a regex constraint with `{id:\d+}` to restrict it (e.g. digits only). An exact static route (`/embed/list`) always wins over a placeholder route (`/embed/{id}`) on the same path, regardless of registration order.
 
 ## Admin Navigation
 
@@ -326,7 +365,9 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-**Capability:** `container`
+Register services under your own vendor namespace. Core service IDs cannot be overridden — a definition whose ID belongs to Total CMS (the `TotalCMS\` namespace or any service the core container already defines) is skipped with a warning in `extensions.log`. The rest of your extension still loads.
+
+**Capability:** `container` — always-on infrastructure: it is applied whenever the extension is enabled and never appears as a permission toggle, since your other capabilities (routes, page middleware, Twig functions) resolve against these services.
 
 ## Page Middleware
 
@@ -498,6 +539,29 @@ Settings access is not a separate capability — `$context->setting()` and `$con
 
 Define a `settings_schema` in your manifest to enable a settings form in the admin UI. Settings are managed by admins through the extension settings page in the dashboard.
 
+## File Storage
+
+When your extension needs to persist files — generated secrets, caches, state — use the storage API instead of raw file functions:
+
+```php
+public function register(ExtensionContext $context): void
+{
+    $storage = $context->storage();
+
+    $storage->write('state.json', json_encode($state));   // creates directories as needed
+    $data   = $storage->read('state.json');               // null when missing
+    $exists = $storage->exists('state.json');
+    $storage->delete('state.json');
+    $path   = $storage->path('state.json');               // absolute path, e.g. for streaming
+}
+```
+
+Files land in `tcms-data/.system/extension-data/{vendor}/{name}/` — protected behind the web server's deny rules, excluded from version control, and **safe across application updates**. Directories are created `0700` and files `0600`. Paths are relative to your extension's directory; absolute paths and `..` traversal throw.
+
+`write()` throws when the datadir isn't writable — let it propagate from `register()`/`boot()` so the failure is recorded as a visible extension error instead of a silent no-op.
+
+Prefer this over `file_put_contents()`: raw file writes in your source are flagged on the pre-enable review screen (they're unconstrained — the operator deserves a heads-up), while storage API calls are not. Storage access is not a separate capability — like settings, it is always available.
+
 ## Service Resolution (Boot Phase)
 
 During `boot()`, resolve any service from the DI container:
@@ -514,7 +578,7 @@ Only use `$context->get()` in `boot()`, never in `register()`. The container is 
 
 ## Logging
 
-Extensions can write to the shared `extensions.log` file (`tcms-data/logs/extensions.log`) using the same logger Total CMS uses internally. Get it from the context with `$context->logger()` — it returns a `Psr\Log\LoggerInterface`.
+Extensions can write to the shared `extensions.log` file (`tcms-data/.system/logs/extensions.log`) using the same logger Total CMS uses internally. Get it from the context with `$context->logger()` — it returns a `Psr\Log\LoggerInterface`.
 
 ```php
 public function register(ExtensionContext $context): void
