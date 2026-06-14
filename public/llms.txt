@@ -201,7 +201,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Search Backends](https://docs.totalcms.co/operations/search/): Search Total CMS collections with case-insensitive queries, AND/OR logic, quoted phrases, property-specific targeting, and result prioritization.
 - [Supported Locales](https://docs.totalcms.co/operations/supported-locales/): Reference table of every locale code Total CMS recognizes — code, native-language name, English name, and writing direction. Used by the system locale setting and by content-localization (localizedtext / localizedstyledtext) field types.
 - [Licenses](https://docs.totalcms.co/operations/licenses/): Compare Total CMS Lite, Standard, and Pro license editions with per-domain pricing, feature breakdowns, free trial access, and edition simulation.
-- [Migration from v1](https://docs.totalcms.co/operations/migration-total-cms-one/): Migrate content from Total CMS v1 to v3 including blogs, galleries, images, files, depots, text, dates, and feeds with job queue processing.
+- [Migrating from v1](https://docs.totalcms.co/operations/migration-total-cms-one/): Everything you need to move a Total CMS v1 site to Total CMS 3: the built-in v1 importer, what it brings over, rethinking repurposed blogs as custom schemas, and a full mapping of every v1 page macro to its Twig equivalent.
 - [Configuration](https://docs.totalcms.co/operations/configuration/): Configure Total CMS with hierarchical PHP settings for security, storage, caching, email, API, logging, and environment-specific overrides.
 
 ## AI Integration
