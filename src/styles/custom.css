@@ -12,6 +12,9 @@
 	--sl-color-gray-5: #353841;
 	--sl-color-gray-6: #24272f;
 	--sl-color-black: #17181c;
+
+	/* Wider content area (Starlight default is 45rem) */
+	--sl-content-width: 55rem;
 }
 
 :root[data-theme='light'] {
