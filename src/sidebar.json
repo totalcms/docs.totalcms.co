@@ -89,6 +89,10 @@
                         "slug": "fields/code-editor"
                     },
                     {
+                        "label": "Color",
+                        "slug": "fields/color"
+                    },
+                    {
                         "label": "Date",
                         "slug": "fields/date"
                     },
@@ -235,6 +239,10 @@
                     {
                         "label": "Render",
                         "slug": "twig/render"
+                    },
+                    {
+                        "label": "Colors",
+                        "slug": "twig/colors"
                     },
                     {
                         "label": "Templates",

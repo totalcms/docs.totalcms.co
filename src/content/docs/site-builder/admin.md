@@ -181,7 +181,7 @@ Every save captures a snapshot of the **previous** template content under `tcms-
 
 ### Restoring via CLI
 
-Use [`tcms builder:history`](/site-builder/cli#builderhistory/) to list, view, or restore snapshots:
+Use [`tcms builder:history`](/site-builder/cli#builder-history/) to list, view, or restore snapshots:
 
 ```bash
 # List versions

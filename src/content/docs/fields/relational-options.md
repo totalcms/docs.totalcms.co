@@ -17,7 +17,7 @@ list all of the objects from another collection.
 
 ## Using a DataView
 
-Instead of referencing a collection directly, you can populate options from a [DataView](/docs/dataviews). Use the `view` key instead of `collection`. The `view` and `collection` settings are mutually exclusive.
+Instead of referencing a collection directly, you can populate options from a [DataView](/collections/data-views/). Use the `view` key instead of `collection`. The `view` and `collection` settings are mutually exclusive.
 
 ```json
 {

@@ -55,6 +55,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [All Fields](https://docs.totalcms.co/fields/all-fields/): Universal settings for all Total CMS field types including autogen, calc (computed fields), hidden fields, and conditional visibility.
 - [Card](https://docs.totalcms.co/fields/card/): Group related fields into a single nested object using the card field type — a single-instance deck whose shape is defined by another schema via schemaref.
 - [Code Editor](https://docs.totalcms.co/fields/code-editor/): Configure the CodeMirror-powered code editor field in Total CMS with syntax highlighting modes, HTML sanitization, and embed code support.
+- [Color](https://docs.totalcms.co/fields/color/): Color picker field — renders the native swatch picker, accepts hex/rgb/hsl/oklch input, and stores both hex and OKLCH so templates can output any CSS color format.
 - [Date](https://docs.totalcms.co/fields/date/): Auto-populate date fields in Total CMS with onCreate and onUpdate settings for automatic timestamps when objects are created or modified.
 - [Deck](https://docs.totalcms.co/fields/deck/): Customize deck item labels in the Total CMS admin using template syntax with field references, minItems, maxItems, and modalSize settings.
 - [File & Depot](https://docs.totalcms.co/fields/file-depot/): Configure file and depot upload fields in Total CMS with size limits, file type restrictions, filename validation, and collection-based access control.
@@ -95,6 +96,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [CMS Content](https://docs.totalcms.co/twig/totalcms/): Overview of the cms global variable in Twig templates with links to per-namespace documentation.
 - [Data](https://docs.totalcms.co/twig/data/): Reference for the cms.data namespace providing access to text, code, styled text, toggles, dates, numbers, URLs, emails, SVGs, colors, images, galleries, files, and depot data.
 - [Render](https://docs.totalcms.co/twig/render/): Reference for the cms.render namespace providing HTML rendering for images, galleries, pagination, load more, depot browsers, and clone dialogs.
+- [Colors](https://docs.totalcms.co/twig/colors/): Read, output, and manipulate color-field values in Twig — emit any CSS color format (hex/rgb/hsl/oklch), set alpha, and lighten/darken/shift colors with OKLCH-based adjustment filters.
 - [Templates](https://docs.totalcms.co/twig/templates/): Create reusable Twig templates in Total CMS, organize them in folders, and use the Template Designer for seamless development-to-production sync.
 - [Conditionals](https://docs.totalcms.co/twig/conditionals/): Master Twig conditional statements in Total CMS for comparisons, existence checks, array and string tests, date logic, and CMS-specific conditions.
 - [Markdown](https://docs.totalcms.co/twig/markdown/): Convert markdown to HTML in Total CMS Twig templates using ParsedownExtra with block and inline rendering via the markdown filter.
@@ -202,7 +204,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Supported Locales](https://docs.totalcms.co/operations/supported-locales/): Reference table of every locale code Total CMS recognizes — code, native-language name, English name, and writing direction. Used by the system locale setting and by content-localization (localizedtext / localizedstyledtext) field types.
 - [Licenses](https://docs.totalcms.co/operations/licenses/): Compare Total CMS Lite, Standard, and Pro license editions with per-domain pricing, feature breakdowns, free trial access, and edition simulation.
 - [Migrating from v1](https://docs.totalcms.co/operations/migration-total-cms-one/): Everything you need to move a Total CMS v1 site to Total CMS 3: the built-in v1 importer, what it brings over, rethinking repurposed blogs as custom schemas, and a full mapping of every v1 page macro to its Twig equivalent.
-- [Configuration](https://docs.totalcms.co/operations/configuration/): Configure Total CMS with hierarchical PHP settings for security, storage, caching, email, API, logging, and environment-specific overrides.
+- [Configuration](https://docs.totalcms.co/operations/configuration/): Configure Total CMS with the config/tcms.php bootstrap file, the deep-merge override model, real settings keys, the logger path, and reading config in Twig.
 
 ## AI Integration
 

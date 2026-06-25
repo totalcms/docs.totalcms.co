@@ -533,7 +533,8 @@ There is no database. Your blog post is a file. Open `tcms-data/blog/` in your c
 {
   "id": "hello-total-cms",
   "title": "Hello, Total CMS",
-  "body": "A paragraph or two — whatever you like",
+  "summary": "A paragraph or two — whatever you like",
+  "content": "A paragraph or two — whatever you like",
   "date": "2026-05-13T14:23:00",
   "draft": false
 }
@@ -1107,7 +1108,7 @@ Override schema property attributes for this collection. Allows customizing fiel
             "label": "Headline",
             "placeholder": "Enter a compelling headline..."
         },
-        "category": {
+        "categories": {
             "options": [
                 {"label": "News", "value": "news"},
                 {"label": "Tutorial", "value": "tutorial"},
@@ -1982,10 +1983,10 @@ A view that combines team members with their department names:
 
 {% set result = [] %}
 {% for member in members %}
-    {% set result = result|append({
+    {% set result = result|merge([{
         "name": member.name,
         "department": deptMap[member.departmentId] ?? 'Unknown'
-    }) %}
+    }]) %}
 {% endfor %}
 
 {% set data = {
@@ -2005,7 +2006,7 @@ A view that builds statistics for a dashboard:
 {% set data = {
     "blog": {
         "total": posts|length,
-        "published": posts|filter(p => p.published)|length
+        "published": posts|filter(p => not p.draft)|length
     },
     "products": {
         "total": products|length,
@@ -3025,7 +3026,7 @@ Email must be unique. The value 'john@example.com' already exists in another obj
 		"id": {
 			"type": "string",
 			"label": "ID",
-			"field": "input"
+			"field": "id"
 		},
 		"email": {
 			"$ref": "https://www.totalcms.co/schemas/properties/email.json",
@@ -3485,7 +3486,7 @@ Get all accessible schemas (filtered by edition restrictions).
 
 ```twig
 {% for schema in cms.schema.list() %}
-    <p>{{ schema.id }} — {{ schema.name }}</p>
+    <p>{{ schema.id }} — {{ schema.description }}</p>
 {% endfor %}
 ```
 
@@ -3506,7 +3507,7 @@ Get all accessible custom schemas (Pro edition only).
 ```twig
 {% if cms.edition.getIsPro() %}
     {% for schema in cms.schema.custom() %}
-        <p>{{ schema.id }} — {{ schema.name }}</p>
+        <p>{{ schema.id }} — {{ schema.description }}</p>
     {% endfor %}
 {% endif %}
 ```
@@ -3520,7 +3521,7 @@ Get schemas grouped by their category.
     <h3>{{ category }}</h3>
     <ul>
         {% for schema in schemas %}
-            <li>{{ schema.name }}</li>
+            <li>{{ schema.id }}</li>
         {% endfor %}
     </ul>
 {% endfor %}
@@ -3534,12 +3535,12 @@ Get a single schema definition as an array.
 
 ```twig
 {% set schema = cms.schema.get('blog') %}
-<h2>{{ schema.name }}</h2>
+<h2>{{ schema.id }}</h2>
 <p>{{ schema.description }}</p>
 
 {# Access schema properties #}
-{% for prop in schema.properties %}
-    <p>{{ prop.name }}: {{ prop.type }}</p>
+{% for name, prop in schema.properties %}
+    <p>{{ name }}: {{ prop.type }}</p>
 {% endfor %}
 ```
 
@@ -3549,7 +3550,7 @@ Get the schema assigned to a specific collection.
 
 ```twig
 {% set schema = cms.schema.forCollection('my-blog') %}
-<p>This collection uses the {{ schema.name }} schema</p>
+<p>This collection uses the {{ schema.id }} schema</p>
 ```
 
 ## Schema Properties
@@ -4577,6 +4578,62 @@ Use the `code.json` property reference and set `htmlclean: false`:
 
 ---
 
+## Color Field
+
+The color field is a color picker. In the admin it renders the browser's native swatch picker, and it stores the chosen color in **two** formats at once — a `hex` string and an **OKLCH** breakdown — so your templates can emit whatever CSS color format you need without converting by hand.
+
+## How it works
+
+- The admin control is a native `<input type="color">` swatch picker.
+- The value is stored as an object with both representations:
+
+  ```json
+  {
+  	"hex": "#1d9a6c",
+  	"oklch": { "l": 62.8, "c": 0.108, "h": 159.2 }
+  }
+  ```
+
+- On the way in, the field normalizes whatever you give it. A picker save sends hex, but a value arriving by another route — an API post, a CSV/JSON import, or a default — may be `#1d9a6c`, `rgb(29, 154, 108)`, `hsl(159, 68%, 36%)`, or `oklch(62.8% 0.108 159.2)`. Each is converted to hex and the OKLCH values are derived from it.
+- An empty color defaults to black (`#000000`).
+
+## Settings
+
+All optional.
+
+| Setting | Purpose | Default |
+|---|---|---|
+| `default` | Starting color for new objects (any accepted format) | empty → `#000000` |
+| `options` | Preset swatches offered alongside the picker (see below) | none |
+
+```json
+{
+	"label": "Brand Color",
+	"help": "Pick your primary brand color.",
+	"field": "color",
+	"default": "#1d9a6c"
+}
+```
+
+## Preset swatches
+
+Give the field an `options` list to offer a set of preset colors as a datalist next to the picker — handy for keeping editors on a brand palette while still allowing a free choice:
+
+```json
+{
+	"field": "color",
+	"options": ["#1d9a6c", "#0b7285", "#5f3dc4", "#e8590c"]
+}
+```
+
+Presets follow the same rules as every other option-backed field — see [Static Options](fields/static-options) for the full syntax (including pulling values from another property or collection).
+
+## Using the value in a template
+
+Read a color with `cms.data.color('id')` (or the `cms.color('id')` shorthand) and emit it in any CSS format — hex, `rgb()`, `hsl()`, `oklch()` — or derive lighter/muted/complementary variants with the OKLCH adjustment filters. That's all covered in **[Colors in Twig](twig/colors)**.
+
+---
+
 ## Smart Date Defaults
 
 Use the following settings can be used for a date field to auto-populate it when an
@@ -4889,7 +4946,7 @@ other field values. When used on the ID field, the generated value is automatica
 slugified (lowercased, spaces replaced with hyphens, special characters removed).
 
 For using autogen on non-ID fields (text, textarea, etc.), see the
-[All Field Settings](all-fields.md) documentation.
+[All Field Settings](docs/fields/all-fields) documentation.
 
 ```json
 {
@@ -6529,7 +6586,7 @@ list all of the objects from another collection.
 
 ## Using a DataView
 
-Instead of referencing a collection directly, you can populate options from a [DataView](/docs/dataviews). Use the `view` key instead of `collection`. The `view` and `collection` settings are mutually exclusive.
+Instead of referencing a collection directly, you can populate options from a [DataView](docs/collections/data-views). Use the `view` key instead of `collection`. The `view` and `collection` settings are mutually exclusive.
 
 ```json
 {
@@ -6926,7 +6983,7 @@ Extracted URL parameters from dynamic routes:
 Use params to fetch collection data:
 
 ```twig
-{% set product = cms.data.raw('products', params.id) %}
+{% set product = cms.data.object('products', params.id) %}
 <h1>{{ product.title }}</h1>
 ```
 
@@ -6974,10 +7031,10 @@ The `data` field is **not indexed** — it's only available when the full page i
 The `image` field stores an image used for `og:image` social previews and as a hero image when the template renders one. It's a standard image-property field with shape transforms — same as any image field in T3.
 
 ```twig
-<meta property="og:image" content="{{ cms.media.imagePath(page, 'shape:1200x630') }}">
+<meta property="og:image" content="{{ cms.media.imagePath(page, {w:1200, h:630}) }}">
 
 {% if page.image.filename %}
-<img src="{{ cms.media.imagePath(page, 'shape:1920x1080') }}" alt="{{ page.title }}">
+<img src="{{ cms.media.imagePath(page, {w:1920, h:1080}) }}" alt="{{ page.title }}">
 {% endif %}
 ```
 
@@ -7143,7 +7200,7 @@ Set the blog collection's URL to `/blog` (Pretty URLs enabled) so `objectUrl()` 
 
 ```twig
 {# pages/blog-post.twig — both `page` and `params.id` available #}
-{% set post = cms.data.raw('blog', params.id) %}
+{% set post = cms.data.object('blog', params.id) %}
 
 {% if post %}
     <h1>{{ post.title }}</h1>
@@ -7405,10 +7462,10 @@ The Site Builder provides four CLI commands: scaffolding from starters, installi
 
 | Command | Purpose |
 |---------|---------|
-| [`builder:init`](#builderinit) | Scaffold a new site from a starter template |
-| [`builder:frontend`](#builderfrontend) | Install a Vite-based frontend asset pipeline |
-| [`builder:routes`](#builderroutes) | List every route the page router would serve, with conflicts flagged |
-| [`builder:history`](#builderhistory) | List, view, or restore template snapshot versions |
+| [`builder:init`](#builder-init) | Scaffold a new site from a starter template |
+| [`builder:frontend`](#builder-frontend) | Install a Vite-based frontend asset pipeline |
+| [`builder:routes`](#builder-routes) | List every route the page router would serve, with conflicts flagged |
+| [`builder:history`](#builder-history) | List, view, or restore template snapshot versions |
 
 All commands accept `--json` for machine-readable output.
 
@@ -7453,7 +7510,7 @@ If the import fails (e.g., schema validation), the scaffold itself still succeed
 
 ### `--frontend` Behavior
 
-Convenience flag for the greenfield happy path. Runs `tcms builder:frontend` immediately after the scaffold completes, installing the Vite scaffold into `<projectRoot>/frontend/`. If you don't pass `--frontend`, you can always add the pipeline later — see [`builder:frontend`](#builderfrontend).
+Convenience flag for the greenfield happy path. Runs `tcms builder:frontend` immediately after the scaffold completes, installing the Vite scaffold into `<projectRoot>/frontend/`. If you don't pass `--frontend`, you can always add the pipeline later — see [`builder:frontend`](#builder-frontend).
 
 ### `--force` Behavior
 
@@ -7848,7 +7905,7 @@ Every save captures a snapshot of the **previous** template content under `tcms-
 
 ### Restoring via CLI
 
-Use [`tcms builder:history`](docs/site-builder/cli#builderhistory) to list, view, or restore snapshots:
+Use [`tcms builder:history`](docs/site-builder/cli#builder-history) to list, view, or restore snapshots:
 
 ```bash
 # List versions
@@ -8202,7 +8259,7 @@ Or after the fact (idempotent):
 tcms builder:frontend
 ```
 
-Both install the same Vite scaffold to `<projectRoot>/frontend/`. See [`builder:frontend`](docs/site-builder/cli#builderfrontend) for the full reference.
+Both install the same Vite scaffold to `<projectRoot>/frontend/`. See [`builder:frontend`](docs/site-builder/cli#builder-frontend) for the full reference.
 
 ## Customizing After Scaffolding
 
@@ -8602,7 +8659,7 @@ Webpack works but is heavier than Vite for this use case. Use `webpack-manifest-
 
 ## Twig Builder Reference
 
-The builder adapter provides navigation helpers and asset management for Site Builder sites. Navigation functions automatically filter out draft pages and pages with `nav` set to false, and sort results by the `sort` field (ascending). Asset functions handle path resolution and cache busting.
+The builder adapter provides navigation helpers and asset management for Site Builder sites. Navigation functions automatically filter out draft pages and pages with `nav` set to false, and order results by the page order file (`tcms-data/{collection}/.order.json`). Asset functions handle path resolution and cache busting.
 
 ## Navigation
 
@@ -8621,7 +8678,7 @@ Returns a flat array of page objects from the configured pages collection, filte
 
 - `draft` is `false`
 - `nav` is `true` (or missing — defaults to `true` for backwards compatibility)
-- `parent` is empty
+- the page is a top-level page in the order file (`.order.json` — no parent)
 
 #### Custom Collection
 
@@ -8641,12 +8698,14 @@ Pass a collection ID to use a different pages collection:
 | `title` | string | Page title |
 | `route` | string | URL path (e.g., `/about`) |
 | `template` | string | Template name from `builder/pages/` |
-| `layout` | string | Layout template name |
-| `description` | string | Meta description |
 | `draft` | boolean | Always `false` (drafts are filtered out) |
 | `nav` | boolean | Always `true` (nav-hidden pages are filtered out) |
-| `sort` | number | Sort order |
-| `parent` | string | Parent page ID (always empty for `nav()` results) |
+| `status` | number | HTTP status code |
+| `sitemap` | boolean | Whether the page is included in the sitemap |
+| `changeFrequency` | string | Sitemap change-frequency hint |
+| `priority` | number | Sitemap priority |
+| `updated` | string | Last modified date |
+| `created` | string | Creation date |
 
 ### subnav()
 
@@ -8985,8 +9044,8 @@ Display variables using double curly braces:
 Control structures use curly braces with percent signs:
 
 ```twig
-{% if cms.userLoggedIn %}
-    Welcome, {{ cms.userData.name }}!
+{% if cms.auth.userLoggedIn() %}
+    Welcome, {{ cms.auth.userData().name }}!
 {% endif %}
 
 {% for item in items %}
@@ -9108,7 +9167,7 @@ Extend the base layout:
     <div class="grid">
         {% for image in gallery.images %}
             <figure>
-                <img src="{{ image.url | resize(400, 300) }}"
+                <img src="{{ cms.render.image(image.id, {w: 400, h: 300}) }}"
                      alt="{{ image.alt }}"
                      loading="lazy">
                 <figcaption>{{ image.caption }}</figcaption>
@@ -9141,7 +9200,6 @@ Total CMS adds many custom filters to Twig:
 {{ text | nl2br }}                 {# Convert newlines to <br> #}
 {{ text | truncate(100) }}         {# Truncate to 100 characters #}
 {{ text | title }}                 {# Title Case Text #}
-{{ text | slug }}                  {# convert-to-slug #}
 ```
 
 ### Date Filters
@@ -9149,7 +9207,7 @@ Total CMS adds many custom filters to Twig:
 ```twig
 {{ post.date | date('F j, Y') }}           {# January 15, 2024 #}
 {{ post.date | date('Y-m-d') }}            {# 2024-01-15 #}
-{{ post.date | time_ago }}                 {# 2 hours ago #}
+{{ post.date | dateRelative }}             {# 2 hours ago #}
 {{ post.date | date_modify('+1 day') }}    {# Add one day #}
 ```
 
@@ -10026,7 +10084,7 @@ Generate a hidden template element with gallery data for programmatic lightbox i
 }) }}
 ```
 
-Filtering uses the same syntax as [Index Filtering](docs/apis/index-filter), including [wildcard patterns](#wildcard-patterns) for flexible string matching.
+Filtering uses the same syntax as [Index Filtering](docs/apis/index-filter), including [wildcard patterns](docs/apis/index-filter#wildcard-patterns) for flexible string matching.
 
 For complete launcher usage with trigger methods and opening at specific images, see [totalcms.md](docs/twig/totalcms).
 
@@ -10223,14 +10281,111 @@ Render a clone dialog for duplicating objects in a collection. Used in the admin
 The render adapter includes a `grid` sub-object with helper methods for content grids:
 
 ```twig
-{{ cms.render.grid.date(item, 'M j, Y') }}        {# Format date with fallback #}
-{{ cms.render.grid.tags(item, '/blog/tag') }}       {# Render tag list with links #}
-{{ cms.render.grid.excerpt(item, 160) }}            {# Generate text excerpt #}
-{{ cms.render.grid.price(item) }}                   {# Format price #}
-{{ cms.render.grid.meta(item) }}                    {# Render metadata (author, date) #}
+{{ cms.render.grid.date(item.date, 'M j, Y') }}     {# Format date with fallback #}
+{{ cms.render.grid.tags(item.tags, '/blog/tag') }}  {# Render tag list with links #}
+{{ cms.render.grid.excerpt(item.summary, 160) }}    {# Generate text excerpt #}
+{{ cms.render.grid.price(item.price) }}             {# Format price #}
+{{ cms.render.grid.meta(item.author) }}             {# Render metadata (author, date) #}
 ```
 
 See [cmsgrid tag](docs/twig/cmsgrid-tag) for the `{% cmsgrid %}` template tag documentation.
+
+---
+
+## Colors in Twig
+
+A [color field](fields/color) stores its value in two forms at once — a `hex` string and an **OKLCH** breakdown (`l`, `c`, `h`). Twig gives you a small toolkit on top of that to read a color, emit it in any CSS format, and derive new colors (lighter, more muted, complementary) without leaving the template.
+
+## Reading a color
+
+Use the [`cms.data`](twig/data) adapter. It returns the stored object, so you can reach `hex` and the OKLCH parts directly:
+
+```twig
+{% set brand = cms.data.color('brand') %}
+{# cms.data.colour('brand') is a British-spelling alias #}
+
+{{ brand.hex }}        {# #1d9a6c #}
+{{ brand.oklch.l }}    {# lightness (0–100) #}
+{{ brand.oklch.c }}    {# chroma (~0–0.4) #}
+{{ brand.oklch.h }}    {# hue (0–360) #}
+```
+
+The default collection and property are both `color`; pass an options array to read elsewhere, e.g. `cms.data.color('hero', {collection: 'pages', property: 'accent'})`. `cms.color('id')` is a shorthand for the same read.
+
+## Output formats
+
+Pipe a color through a format filter to get a ready-to-use CSS value — convenient inside a `<style>` block or an inline `style` attribute. Outputs use modern, space-separated CSS color syntax.
+
+| Filter | Output |
+|---|---|
+| `\| hex` | `#1d9a6c` |
+| `\| rgb` | `rgb(29 154 108)` |
+| `\| hsl` | `hsl(159 68% 36%)` |
+| `\| oklch` | `oklch(62.800% 0.108 159.200)` |
+| `\| color` | same as `\| oklch` (CSS-ready OKLCH) |
+
+```twig
+<div style="background: {{ cms.color('brand') | color }}">…</div>
+```
+
+### Alpha / opacity
+
+`rgb`, `hsl`, `oklch`, and `color` take an optional alpha as a percentage (`0`–`100`):
+
+```twig
+{{ brand | rgb(60) }}    {# rgb(29 154 108 / 0.60) #}
+{{ brand | oklch(25) }}  {# oklch(62.800% 0.108 159.200 / 0.25) #}
+```
+
+## Adjusting colors
+
+Because the value carries OKLCH, you can derive related colors perceptually — a lighter hover state, a muted variant, the complement — and OKLCH keeps the result visually consistent in a way `lighten()`/`darken()` on RGB never managed.
+
+Each adjuster takes a **relative delta** with an explicit sign and returns a **new color** (a `{hex, oklch}` array), so you pipe the result into an output filter:
+
+| Filter | Adjusts | Example |
+|---|---|---|
+| `\| lightness(±n)` | lightness, `0–100` scale | `{{ brand \| lightness('+15') }}` |
+| `\| chroma(±n)` | chroma (saturation), small decimals | `{{ brand \| chroma('-0.04') }}` |
+| `\| hue(±n)` | hue in degrees (wraps at 360) | `{{ brand \| hue('+180') }}` |
+| `\| adjustColor(l, c, h)` | all three at once (omit/`null` to skip one) | `{{ brand \| adjustColor('+10', '+0.05', '+30') }}` |
+
+```twig
+{# Lighten the brand color by 15 and emit it as hex #}
+<a class="btn" style="--hover: {{ brand | lightness('+15') | hex }}">…</a>
+
+{# Complementary accent: rotate the hue 180° #}
+{% set accent = brand | hue('+180') %}
+<span style="color: {{ accent | color }}">…</span>
+```
+
+Deltas are relative to the current value: `lightness('+15')` adds 15 to the lightness, `chroma('-0.04')` mutes it, `hue('+180')` rotates to the opposite side of the wheel. `adjustColor` applies up to all three in one step and leaves any argument you omit untouched.
+
+## Turning a raw hex into a color
+
+The adjustment and output filters expect a color object, not a bare hex string. To use them on a literal hex (or a hex you built elsewhere), pass it through `hexToColor` first:
+
+```twig
+{{ '#336699' | hexToColor | lightness('+10') | hex }}
+```
+
+## Putting it together
+
+Generate a small set of CSS custom properties from a single brand color:
+
+```twig
+<style>
+	:root {
+		--brand:       {{ brand | color }};
+		--brand-soft:  {{ brand | lightness('+18') | color }};
+		--brand-dark:  {{ brand | lightness('-18') | color }};
+		--brand-muted: {{ brand | chroma('-0.05') | color }};
+		--brand-accent:{{ brand | hue('+180') | color }};
+	}
+</style>
+```
+
+For the field itself (admin control, storage shape, preset swatches) see the [Color field](fields/color); for the broader `cms.data` reference see [Twig Data](twig/data).
 
 ---
 
@@ -10595,7 +10750,7 @@ Check if an image property exists for an object before attempting to display it.
 
 ```twig
 {% if imageExists(post.image) %}
-    {{ cms.render.image(post.id, {collection: 'blog', property: 'image'}) }}
+    {{ cms.render.image(post.id, {}, {collection: 'blog', property: 'image'}) }}
 {% else %}
     <img src="placeholder.jpg">
 {% endif %}
@@ -10836,8 +10991,8 @@ Check which environment the site is running in.
 Check if a user is logged in.
 
 ```twig
-{% if cms.user %}
-    Welcome back, {{ cms.user.name }}!
+{% if cms.auth.userLoggedIn() %}
+    Welcome back, {{ cms.auth.userData().name }}!
 {% else %}
     <a href="/login">Login</a>
 {% endif %}
@@ -10848,7 +11003,7 @@ Check if a user is logged in.
 Check if the logged-in user has specific roles or permissions.
 
 ```twig
-{% if cms.user and "editor" in cms.user.roles %}
+{% if cms.auth.userHasAccess('editor') %}
     <a href="/admin/edit">Edit Content</a>
 {% endif %}
 ```
@@ -10997,7 +11152,7 @@ Always check if objects exist before accessing their properties to avoid errors:
 Make complex conditions more readable by using variables:
 
 ```twig
-{% set isAdmin = cms.user and "admin" in cms.user.roles %}
+{% set isAdmin = cms.auth.userHasAccess('admin') %}
 {% set isPublished = post.published and post.date <= "now"|date %}
 
 {% if isAdmin or isPublished %}
@@ -11039,7 +11194,7 @@ Always check existence before accessing files or images:
 ```twig
 {# Check if image exists #}
 {% if imageExists(post.image) %}
-    {{ cms.render.image(post.id, {property: 'hero'}) }}
+    {{ cms.render.image(post.id, {}, {property: 'hero'}) }}
 {% endif %}
 
 {# Check if file exists #}
@@ -11155,11 +11310,8 @@ Always check existence before accessing files or images:
 
 ```twig
 {# Check user permissions #}
-{% set canEdit = cms.user and (
-    "admin" in cms.user.roles or
-    "editor" in cms.user.roles or
-    cms.user.id == post.authorId
-) %}
+{% set canEdit = cms.auth.userHasAccess(['admin', 'editor'])
+    or cms.auth.userData().id == post.authorId %}
 
 {% if canEdit %}
     <a href="/edit/{{ post.id }}">Edit</a>
@@ -11931,7 +12083,7 @@ Results are plain object arrays in ranked order — the same shape `search()` re
 
 - Ranks by term coverage, not field position, and returns partial matches instead of requiring every term.
 - Does **not** support `field:value` scoped queries or explicit `and`/`or` operators — use `search()` for those.
-- Opt-in and additive; `cms.collection.search()` is unchanged. See the [relevance ranking notes](../operations/search#relevance-ranking-mcp--programmatic-search).
+- Opt-in and additive; `cms.collection.search()` is unchanged. See the [relevance ranking notes](../operations/search#relevance-ranking-mcp-programmatic-search).
 
 ## URL Generation
 
@@ -12848,9 +13000,9 @@ When multiple items have the same ordered value, the remainder rule sorts them:
 
 ```twig
 {# Dynamic filtering based on URL parameters #}
-{% set minPrice = get.min | default(0) %}
-{% set maxPrice = get.max | default(1000) %}
-{% set category = get.category | default('') %}
+{% set minPrice = getData.min | default(0) %}
+{% set maxPrice = getData.max | default(1000) %}
+{% set category = getData.category | default('') %}
 
 {% set products = cms.collection.objects('products')
     | filterCollection([
@@ -12858,7 +13010,7 @@ When multiple items have the same ordered value, the remainder rule sorts them:
         {property: "category", operator: "equal", value: category}
     ])
     | sortCollection([
-        {property: get.sort | default('price'), reverse: get.order == 'desc'}
+        {property: getData.sort | default('price'), reverse: getData.order == 'desc'}
     ]) %}
 ```
 
@@ -13227,13 +13379,7 @@ Objects with missing template data will have broken URLs. The sitemap and RSS bu
 
 Objects with valid templated URLs are automatically included in sitemaps and RSS feeds. Objects with empty URL segments (missing template data) are automatically excluded.
 
-```twig
-{# Sitemap generation handles templated URLs automatically #}
-{{ cms.sitemap('blog') }}
-
-{# RSS feed also uses templated URLs #}
-{{ cms.rssFeed('blog') }}
-```
+Total CMS generates sitemaps and RSS feeds through the user-facing builder utilities in the admin (not via Twig helpers). Templated URLs are resolved for you when those feeds are built.
 
 ## Migration from Simple URLs
 
@@ -13561,7 +13707,7 @@ Override these variables on `.cms-grid` or a custom class to customize the grid 
 
 ### Dynamic Collection Names
 ```twig
-{% set collection_type = get.type|default('blog') %}
+{% set collection_type = getData.type|default('blog') %}
 {% cmsgrid cms.collection.objects(collection_type) from collection_type with 'responsive-grid' %}
     {# Template adapts based on collection type #}
 {% endcmsgrid %}
@@ -13617,7 +13763,7 @@ Cached for 15 minutes, then re-rendered on the next request.
 ```twig
 {% cache 'latest-posts' tags=['blog'] %}
     {% for post in cms.collection.objects('blog')|slice(0, 5) %}
-        <a href="{{ cms.url(post) }}">{{ post.title }}</a>
+        <a href="{{ cms.collection.objectUrl('blog', post) }}">{{ post.title }}</a>
     {% endfor %}
 {% endcache %}
 ```
@@ -13791,7 +13937,7 @@ Without `load`, you must render the first page manually:
 ```twig
 {# Without load — manual first page + HTMX for the rest #}
 <div class="blog-feed">
-    {% for object in cms.collection.query('blog', {limit: 12, sort: '-date', include: 'published:true'}).items %}
+    {% for object in cms.collection.objects('blog')|slice(0, 12) %}
         {% include 'blog/card.twig' %}
     {% endfor %}
     {{ cms.render.loadMore('blog', {
@@ -14017,7 +14163,7 @@ If you pre-rendered items server-side, set `offset` to skip those:
 - [URL Filters Utility](docs/twig/utils) — Let visitors filter, sort, and search via URL query parameters
 - [Index Filtering](docs/apis/index-filter) — Include/exclude filter syntax
 - [Total CMS Twig Adapter](docs/twig/totalcms) — Full `cms` variable reference
-- [Pagination](docs/twig/totalcms#pagination) — Traditional page-based pagination
+- [Pagination](docs/twig/render#pagination) — Traditional page-based pagination
 
 ---
 
@@ -14732,7 +14878,7 @@ Randomly shuffles array elements.
 Returns a paginated slice of an array.
 
 ```twig
-{% set page = get.page | default(1) | int %}
+{% set page = getData.page | default(1) | int %}
 {% set perPage = 10 %}
 {% set posts = cms.collection.objects('blog') | paginate(perPage, page) %}
 
@@ -14761,7 +14907,7 @@ Removes duplicate values from an array.
 {# Get unique categories from blog posts #}
 {% set allCategories = [] %}
 {% for post in cms.collection.objects('blog') %}
-    {% set allCategories = allCategories | merge([post.category]) %}
+    {% set allCategories = allCategories | merge(post.categories) %}
 {% endfor %}
 {% set uniqueCategories = allCategories | unique %}
 
@@ -14808,7 +14954,7 @@ Calculates the sum of a numeric property across all items in a collection.
 
 {# Sum with filtering #}
 {% set completedTotal = cms.collection.objects('orders')
-    | filterCollection([{property: 'status', operator: 'eq', value: 'completed'}])
+    | filterCollection([{property: 'status', operator: 'equal', value: 'completed'}])
     | sum('amount') %}
 
 {# Real-world example: Business totals #}
@@ -15076,7 +15222,7 @@ Counts items grouped by a property value. Like `groupBy`, but returns counts ins
 
 {# Combine with other filters for insights #}
 {% set activeMembers = cms.collection.objects('members')
-    | filterCollection([{property: 'active', operator: 'eq', value: true}]) %}
+    | filterCollection([{property: 'active', operator: 'equal', value: true}]) %}
 {% set byCity = activeMembers | countBy('city') %}
 <h3>Active Members by City</h3>
 {% for city, count in byCity | ksort %}
@@ -15091,7 +15237,7 @@ These filters can be chained together for powerful data analysis:
 ```twig
 {# Get statistics for active products #}
 {% set activeProducts = cms.collection.objects('products')
-    | filterCollection([{property: 'status', operator: 'eq', value: 'active'}]) %}
+    | filterCollection([{property: 'status', operator: 'equal', value: 'active'}]) %}
 
 <div class="product-stats">
     <p>Total products: {{ activeProducts | length }}</p>
@@ -15158,8 +15304,8 @@ Converts to string.
 Converts to integer.
 
 ```twig
-{% set page = get.page | int | default(1) %}
-{% set limit = get.limit | int | default(10) %}
+{% set page = getData.page | int | default(1) %}
+{% set limit = getData.limit | int | default(10) %}
 ```
 
 #### `float(mixed $variable): float`
@@ -15632,7 +15778,7 @@ The date filters support natural language strings powered by Chronos:
     },
     {
         property: "status",
-        operator: "eq",
+        operator: "equal",
         value: "published"
     }
 ]) %}
@@ -15641,7 +15787,7 @@ The date filters support natural language strings powered by Chronos:
 {% set recentPosts = cms.collection.objects('blog') | filterCollection([
     {
         property: "date",
-        operator: "gte",
+        operator: "greatereq",
         value: "now -30 days" | date('Y-m-d')
     }
 ]) %}
@@ -15651,12 +15797,12 @@ The date filters support natural language strings powered by Chronos:
     {
         property: "price",
         operator: "between",
-        value: [get.min_price | default(0), get.max_price | default(1000)]
+        value: [getData.min_price | default(0), getData.max_price | default(1000)]
     },
     {
         property: "category",
-        operator: "in",
-        value: get.categories | default([])
+        operator: "contains",
+        value: getData.categories | default([])
     }
 ]) %}
 ```
@@ -15835,8 +15981,8 @@ Returns items that match **ALL** of the values in the array:
 ```twig
 {% set posts = cms.collection.objects('blog')
     | filterCollection([
-        {property: "status", operator: "eq", value: "published"},
-        {property: "date", operator: "lte", value: "now" | date('Y-m-d')}
+        {property: "status", operator: "equal", value: "published"},
+        {property: "date", operator: "lesseq", value: "now" | date('Y-m-d')}
     ])
     | sortCollection([
         {property: "featured", reverse: true},
@@ -16011,7 +16157,7 @@ Formats price values with currency symbols.
 {% endfor %}
 
 {# International pricing #}
-{% set currency = get.currency | default('USD') %}
+{% set currency = getData.currency | default('USD') %}
 {% for product in products %}
     <span class="price">
         {{ product.price | price(currency, 'append') }}
@@ -16642,7 +16788,7 @@ Checks if an image file exists.
     {% for image in gallery.images %}
         {% if imageExists(image) %}
             <figure>
-                <img src="{{ image.url | resize(400, 300) }}" alt="{{ image.alt }}">
+                <img src="{{ image.url }}" alt="{{ image.alt }}">
                 <figcaption>{{ image.caption }}</figcaption>
             </figure>
         {% endif %}
@@ -16854,31 +17000,28 @@ Total CMS provides comprehensive access control functions for checking user perm
 
 ```twig
 {# Collections #}
-{% if cms.canAccessCollection('blog', 'GET') %}...{% endif %}
-{% if cms.canAccessCollectionsMethod('POST') %}...{% endif %}
+{% if cms.auth.canAccessCollection('blog', 'GET') %}...{% endif %}
+{% if cms.auth.canAccessCollectionsOperation('POST') %}...{% endif %}
+
+{# Collection metadata #}
+{% if cms.auth.canAccessCollectionMeta('blog', 'GET') %}...{% endif %}
+{% if cms.auth.canAccessCollectionsMetaOperation('POST') %}...{% endif %}
 
 {# Schemas #}
-{% if cms.canAccessSchema('blog', 'GET') %}...{% endif %}
-{% if cms.canAccessSchemasMethod('POST') %}...{% endif %}
-
-{# Templates #}
-{% if cms.canAccessTemplatesMethod('GET') %}...{% endif %}
-
-{# Settings #}
-{% if cms.canAccessSetting('cache', 'GET') %}...{% endif %}
-{% if cms.canAccessSettingsMethod('POST') %}...{% endif %}
+{% if cms.auth.canAccessSchema('blog', 'GET') %}...{% endif %}
+{% if cms.auth.canAccessSchemasOperation('POST') %}...{% endif %}
 
 {# Utils #}
-{% if cms.canAccessUtil('cache-manager', 'GET') %}...{% endif %}
-{% if cms.canAccessUtilsMethod('POST') %}...{% endif %}
+{% if cms.auth.canAccessUtil('cache-manager') %}...{% endif %}
+{% if cms.auth.canAccessUtils() %}...{% endif %}
 
 {# Boolean permissions #}
-{% if cms.canAccessMailer() %}...{% endif %}
-{% if cms.canAccessPlayground() %}...{% endif %}
-{% if cms.canAccessDocs() %}...{% endif %}
+{% if cms.auth.canAccessMailer() %}...{% endif %}
+{% if cms.auth.canAccessPlayground() %}...{% endif %}
+{% if cms.auth.canAccessDocs() %}...{% endif %}
 
 {# Admin check #}
-{% if cms.isAdmin() %}...{% endif %}
+{% if cms.auth.isAdmin() %}...{% endif %}
 ```
 
 For complete documentation including practical examples, access group configuration, and best practices, see the [Access Groups Documentation](docs/auth/access-groups).
@@ -17073,23 +17216,11 @@ Build a simple search form that sets the URL parameter:
 ```twig
 {% set filters = cms.utils.urlFilters() %}
 
-{# With galleries #}
-{{ cms.render.gallery('photos', 'main', {
+{# With galleries — filter options go in the 4th argument #}
+{{ cms.render.gallery('photos', {}, {}, {
     include: filters.include,
     exclude: filters.exclude,
     sort: filters.sort
-}) }}
-
-{# With RSS feeds #}
-{{ cms.render.rssFeed('blog', {
-    include: filters.include,
-    exclude: filters.exclude
-}) }}
-
-{# With sitemaps #}
-{{ cms.render.sitemap('blog', {
-    include: filters.include,
-    exclude: filters.exclude
 }) }}
 ```
 
@@ -19260,9 +19391,9 @@ The form builder provides the most flexibility for creating custom forms.
 {% set form = cms.form.builder('mycollection') %}
 
 {# Add fields to the form #}
-{% set form = form.addField('title') %}
-{% set form = form.addField('content', {field: 'styledtext'}) %}
-{% set form = form.addField('date') %}
+{% do form.addField('title') %}
+{% do form.addField('content', {field: 'styledtext'}) %}
+{% do form.addField('date') %}
 
 {# Build and render the form #}
 {{ form.build() }}
@@ -19415,17 +19546,16 @@ The simplest way to create a deck item form:
 
 ```twig
 {# Create new deck item #}
-{{ cms.form.deck('products', productId, 'features') }}
+{{ cms.form.deck('products', 'features', {id: productId}) }}
 
 {# Edit existing deck item #}
-{{ cms.form.deck('products', productId, 'features', {itemId: 'feature-1'}) }}
+{{ cms.form.deck('products', 'features', {id: productId, itemId: 'feature-1'}) }}
 ```
 
 **Parameters:**
 - **collection** (string) - The parent collection name (e.g., 'products')
-- **id** (string) - The parent object ID (e.g., product ID)
 - **property** (string) - The deck property name (e.g., 'features')
-- **options** (object) - Optional configuration (see below)
+- **options** (object) - Optional configuration (see below). Pass the parent object ID as `options.id` (e.g., `{id: productId}`).
 
 ## Deck Form Builder
 
@@ -19433,7 +19563,7 @@ For custom layouts and advanced control:
 
 ```twig
 {# Create a deck form builder instance #}
-{% set form = cms.form.deckBuilder('products', productId, 'features') %}
+{% set form = cms.form.deckBuilder('products', 'features', {id: productId}) %}
 
 {# Build custom layout #}
 {{ form.build(
@@ -19449,7 +19579,8 @@ For custom layouts and advanced control:
 All standard form options are supported, plus deck-specific options:
 
 ```twig
-{{ cms.form.deck('products', productId, 'features', {
+{{ cms.form.deck('products', 'features', {
+	id: productId,                 # Parent object ID
 	itemId: 'feature-1',          # Deck item ID (empty for new items)
 	save: 'Save Feature',          # Custom save button text
 	delete: 'Delete Feature',      # Custom delete button text
@@ -19484,7 +19615,7 @@ Deck forms support automatic ID detection from URL parameters:
 
 ```twig
 {# Form will read ?id=product-123&itemId=feature-1 from URL #}
-{{ cms.form.deck('products', '', 'features') }}
+{{ cms.form.deck('products', 'features') }}
 ```
 
 This is useful for admin interfaces where IDs come from the URL.
@@ -19520,7 +19651,8 @@ This is useful for admin interfaces where IDs come from the URL.
 <h2>Edit Feature</h2>
 
 {# Auto-built form with custom actions #}
-{{ cms.form.deck('products', productId, 'features', {
+{{ cms.form.deck('products', 'features', {
+	id: productId,
 	itemId: featureId,
 	save: 'Save Feature',
 	delete: 'Delete Feature',
@@ -19543,7 +19675,8 @@ This is useful for admin interfaces where IDs come from the URL.
 
 ```twig
 {# Custom two-column layout for deck items #}
-{% set form = cms.form.deckBuilder('products', productId, 'features', {
+{% set form = cms.form.deckBuilder('products', 'features', {
+	id: productId,
 	itemId: featureId,
 	save: 'Save Feature'
 }) %}
@@ -19565,7 +19698,8 @@ This is useful for admin interfaces where IDs come from the URL.
 
 ```twig
 {# Portfolio collection with "projectItems" deck property #}
-{% set form = cms.form.deckBuilder('portfolio', portfolioId, 'projectItems', {
+{% set form = cms.form.deckBuilder('portfolio', 'projectItems', {
+	id: portfolioId,
 	itemId: itemId,
 	newActions: [
 		{
@@ -19877,7 +20011,7 @@ Use `addOnly: true` for forms on the public side of your website to prevent user
 
 ```twig
 {# Public form - secure against ID manipulation #}
-{{ cms.form.builder('inquiries', {
+{% set form = cms.form.builder('inquiries', {
     addOnly: true,
     newActions: [
         {
@@ -19885,7 +20019,11 @@ Use `addOnly: true` for forms on the public side of your website to prevent user
             text: 'Thanks — we\'ll be in touch.'
         }
     ]
-}).addField('name').addField('email').addField('message', {field: 'textarea'}).build() }}
+}) %}
+{% do form.addField('name') %}
+{% do form.addField('email') %}
+{% do form.addField('message', {field: 'textarea'}) %}
+{{ form.build() }}
 ```
 
 **Security Note:** When `addOnly` is enabled:
@@ -19899,7 +20037,7 @@ For user-registration forms specifically, prefer `register: true` over plain `ad
 
 ```twig
 {# Public sign-up form - creates the user and signs them in #}
-{{ cms.form.builder('members', {
+{% set form = cms.form.builder('members', {
     register: true,
     newActions: [
         {
@@ -19907,7 +20045,11 @@ For user-registration forms specifically, prefer `register: true` over plain `ad
             link: '/welcome'
         }
     ]
-}).addField('name').addField('email').addField('password', {field: 'password'}).build() }}
+}) %}
+{% do form.addField('name') %}
+{% do form.addField('email') %}
+{% do form.addField('password', {field: 'password'}) %}
+{{ form.build() }}
 ```
 
 **Behaviour:**
@@ -19941,10 +20083,10 @@ When enabled:
 3. The response JSON carries `meta.requiresVerification: true`; the form builder hides the form and reveals any element marked `data-verification-message`:
 
    ```twig
-   {{ cms.form.builder('members', {register: true})
-       .addField('email')
-       .addField('password', {field: 'password'})
-       .build() }}
+   {% set form = cms.form.builder('members', {register: true}) %}
+   {% do form.addField('email') %}
+   {% do form.addField('password', {field: 'password'}) %}
+   {{ form.build() }}
 
    <div data-verification-message hidden>
        <h3>Check your email</h3>
@@ -20167,9 +20309,12 @@ By default, Total CMS displays a full-screen status banner overlay when forms ar
 
 ```twig
 {# Disable the global status banner for this form #}
-{{ cms.form.builder('products', {
+{% set form = cms.form.builder('products', {
     class: 'no-status-banner'
-}).addField('title').addField('price').build() }}
+}) %}
+{% do form.addField('title') %}
+{% do form.addField('price') %}
+{{ form.build() }}
 ```
 
 When `no-status-banner` is set:
@@ -20241,8 +20386,8 @@ Total CMS provides built-in validation patterns that can be used in form fields:
 
 ```twig
 {{ cms.form.text('my-field', {}, {
-    pattern: patterns.email,
-    help: 'Please enter a valid email address'
+    pattern: patterns.domain,
+    help: 'Please enter a valid domain name'
 }) }}
 ```
 
@@ -20258,13 +20403,10 @@ patterns.dateTime              # Date and time format
 patterns.integer               # Whole numbers only
 patterns.decimal               # Decimal numbers
 patterns.hex                   # Hexadecimal values
-patterns.ipv4                  # IPv4 address
-patterns.ipv6                  # IPv6 address
 patterns.domain                # Domain name
 patterns.slug                  # URL-friendly slug
 patterns.uuid                  # UUID format
 patterns.macAddress            # MAC address
-patterns.creditCard            # Credit card number
 patterns.isbn                  # ISBN number
 patterns.currency              # Currency format
 patterns.latitudeLongitude     # Coordinates
@@ -20338,7 +20480,7 @@ The second parameter accepts an options object:
 
 ```twig
 {{ cms.form.report('blog', {
-    include: 'published:true',
+    include: 'draft:false',
     exclude: 'draft:true',
 }) }}
 ```
@@ -20354,9 +20496,9 @@ With datalist, users see suggestions but can still type freely:
 ```twig
 {{ cms.form.report('blog', {
     includeOptions: [
-        'published:true',
+        'draft:false',
         'featured:true',
-        'category:news',
+        'categories:news',
         'author:admin',
     ],
     excludeOptions: [
@@ -20373,9 +20515,9 @@ Set `includeSelect` or `excludeSelect` to `true` to lock the filter to predefine
 ```twig
 {{ cms.form.report('blog', {
     includeOptions: [
-        'published:true',
+        'draft:false',
         'featured:true',
-        'category:news',
+        'categories:news',
     ],
     includeSelect: true,
     excludeOptions: [
@@ -20391,7 +20533,7 @@ You can mix modes — for example, a locked include select with a flexible exclu
 ```twig
 {{ cms.form.report('blog', {
     includeOptions: [
-        'published:true',
+        'draft:false',
         'featured:true',
     ],
     includeSelect: true,
@@ -20411,9 +20553,9 @@ For more descriptive items, use `{value, label}` objects. Works with both datali
 ```twig
 {{ cms.form.report('blog', {
     includeOptions: [
-        { value: 'published:true', label: 'Published posts' },
+        { value: 'draft:false', label: 'Published posts' },
         { value: 'featured:true', label: 'Featured posts' },
-        { value: 'category:news,published:true', label: 'Published news' },
+        { value: 'categories:news,draft:false', label: 'Published news' },
         { value: 'author:admin,featured:true', label: 'Featured by admin' },
     ],
     includeSelect: true,
@@ -20444,8 +20586,8 @@ You can mix plain strings and label/value objects in the same array:
 The include and exclude filters use the format `field:value` with multiple filters separated by commas:
 
 ```
-published:true                     # Single filter
-category:news,featured:true        # Multiple filters (AND)
+draft:false                        # Single filter
+categories:news,featured:true      # Multiple filters (AND)
 ```
 
 ## How It Works
@@ -20685,7 +20827,7 @@ The handler is stored in its own `.php` file next to the automation object (an *
 | `$ctx->objectFetcher` | Read objects — `fetchObject($collection, $id)` |
 | `$ctx->objectSaver` | Create objects — `saveObject($collection, $data)` |
 | `$ctx->objectUpdater` | Update objects — `updateObject($collection, $id, $data)` |
-| `$ctx->objectRemover` | Delete objects — `removeObject($collection, $id)` |
+| `$ctx->objectRemover` | Delete objects — `deleteObject($collection, $id)` |
 | `$ctx->objectCloner` | Duplicate an object — `cloneObject($from, $to)` |
 | `$ctx->propertyIncrementer` | Atomic counters — `incrementProperty($collection, $id, $property, $amount = 1)` / `decrementProperty(...)` |
 
@@ -22089,52 +22231,52 @@ Total CMS provides helper functions to check permissions in your templates, allo
 
 **Check specific collection object access:**
 ```twig
-{% if cms.canAccessCollection('blog', 'read') %}
+{% if cms.auth.canAccessCollection('blog', 'read') %}
     <a href="/admin/collections/blog">View Blog Posts</a>
 {% endif %}
 
-{% if cms.canAccessCollection('blog', 'create') %}
+{% if cms.auth.canAccessCollection('blog', 'create') %}
     <a href="/admin/collections/blog/new">New Post</a>
 {% endif %}
 
-{% if cms.canAccessCollection('blog', 'update') %}
+{% if cms.auth.canAccessCollection('blog', 'update') %}
     <button>Edit Post</button>
 {% endif %}
 
-{% if cms.canAccessCollection('blog', 'delete') %}
+{% if cms.auth.canAccessCollection('blog', 'delete') %}
     <button class="delete">Delete Post</button>
 {% endif %}
 ```
 
 **Check general collection object access:**
 ```twig
-{% if cms.canAccessCollectionsOperation('read') %}
+{% if cms.auth.canAccessCollectionsOperation('read') %}
     <p>You can view collections</p>
 {% endif %}
 ```
 
 **Check collection metadata access:**
 ```twig
-{% if cms.canAccessCollectionMeta('blog', 'read') %}
+{% if cms.auth.canAccessCollectionMeta('blog', 'read') %}
     <a href="/admin/collections/blog/settings">View Collection Settings</a>
 {% endif %}
 
-{% if cms.canAccessCollectionMeta('blog', 'update') %}
+{% if cms.auth.canAccessCollectionMeta('blog', 'update') %}
     <button>Edit Collection Settings</button>
 {% endif %}
 
-{% if cms.canAccessCollectionMeta('blog', 'delete') %}
+{% if cms.auth.canAccessCollectionMeta('blog', 'delete') %}
     <button class="delete">Delete Collection</button>
 {% endif %}
 ```
 
 **Check general collection metadata access:**
 ```twig
-{% if cms.canAccessCollectionsMetaOperation('read') %}
+{% if cms.auth.canAccessCollectionsMetaOperation('read') %}
     <a href="/admin/collections">View Collections List</a>
 {% endif %}
 
-{% if cms.canAccessCollectionsMetaOperation('create') %}
+{% if cms.auth.canAccessCollectionsMetaOperation('create') %}
     <a href="/admin/collections/new">New Collection</a>
 {% endif %}
 ```
@@ -22150,26 +22292,26 @@ Total CMS provides helper functions to check permissions in your templates, allo
 
 **Check specific schema access:**
 ```twig
-{% if cms.canAccessSchema('blog', 'read') %}
+{% if cms.auth.canAccessSchema('blog', 'read') %}
     <a href="/admin/schemas/blog">View Blog Schema</a>
 {% endif %}
 
-{% if cms.canAccessSchema('blog', 'update') %}
+{% if cms.auth.canAccessSchema('blog', 'update') %}
     <a href="/admin/schemas/blog/edit">Edit Schema</a>
 {% endif %}
 
-{% if cms.canAccessSchema('blog', 'delete') %}
+{% if cms.auth.canAccessSchema('blog', 'delete') %}
     <button class="delete">Delete Schema</button>
 {% endif %}
 ```
 
 **Check general schemas access:**
 ```twig
-{% if cms.canAccessSchemasOperation('read') %}
+{% if cms.auth.canAccessSchemasOperation('read') %}
     <a href="/admin/schemas">View Schemas</a>
 {% endif %}
 
-{% if cms.canAccessSchemasOperation('create') %}
+{% if cms.auth.canAccessSchemasOperation('create') %}
     <a href="/admin/schemas/new">New Schema</a>
 {% endif %}
 ```
@@ -22178,7 +22320,7 @@ Total CMS provides helper functions to check permissions in your templates, allo
 
 **Check Site Builder access (boolean):**
 ```twig
-{% if cms.canAccessBuilder() %}
+{% if cms.auth.canAccessBuilder() %}
     <a href="/admin/builder">Builder</a>
 {% endif %}
 ```
@@ -22187,7 +22329,7 @@ Total CMS provides helper functions to check permissions in your templates, allo
 
 **Check extension access (boolean):**
 ```twig
-{% if cms.canAccessExtension('acme/seo-pro') %}
+{% if cms.auth.canAccessExtension('acme/seo-pro') %}
     <a href="/admin/ext/acme/seo-pro/reports">SEO Reports</a>
 {% endif %}
 ```
@@ -22196,18 +22338,18 @@ Total CMS provides helper functions to check permissions in your templates, allo
 
 **Check specific utils page:**
 ```twig
-{% if cms.canAccessUtil('cache-manager') %}
+{% if cms.auth.canAccessUtil('cache-manager') %}
     <a href="/admin/utils/cache-manager">Cache Manager</a>
 {% endif %}
 
-{% if cms.canAccessUtil('jumpstart') %}
+{% if cms.auth.canAccessUtil('jumpstart') %}
     <a href="/admin/utils/jumpstart">JumpStart</a>
 {% endif %}
 ```
 
 **Check general utils access:**
 ```twig
-{% if cms.canAccessUtils() %}
+{% if cms.auth.canAccessUtils() %}
     <a href="/admin/utils">Utils</a>
 {% endif %}
 ```
@@ -22216,21 +22358,21 @@ Total CMS provides helper functions to check permissions in your templates, allo
 
 **Check mailer access:**
 ```twig
-{% if cms.canAccessMailer() %}
+{% if cms.auth.canAccessMailer() %}
     <a href="/admin/mailer">Mailer</a>
 {% endif %}
 ```
 
 **Check playground access:**
 ```twig
-{% if cms.canAccessPlayground() %}
+{% if cms.auth.canAccessPlayground() %}
     <a href="/admin/utils/twig-playground">Twig Playground</a>
 {% endif %}
 ```
 
 **Check docs access:**
 ```twig
-{% if cms.canAccessDocs() %}
+{% if cms.auth.canAccessDocs() %}
     <a href="/admin/docs">Documentation</a>
 {% endif %}
 ```
@@ -22239,7 +22381,7 @@ Total CMS provides helper functions to check permissions in your templates, allo
 
 **Check if user is super admin:**
 ```twig
-{% if cms.isAdmin() %}
+{% if cms.auth.isAdmin() %}
     <div class="admin-only-feature">
         <a href="/admin/utils/access-groups">Manage Access Groups</a>
     </div>
@@ -22254,23 +22396,23 @@ Super admins bypass all access checks and have full access to everything.
 
 ```twig
 <nav>
-    {% if cms.canAccessCollectionsMetaOperation('read') %}
+    {% if cms.auth.canAccessCollectionsMetaOperation('read') %}
     <a href="/admin/collections">Collections</a>
     {% endif %}
 
-    {% if cms.canAccessSchemasOperation('read') %}
+    {% if cms.auth.canAccessSchemasOperation('read') %}
     <a href="/admin/schemas">Schemas</a>
     {% endif %}
 
-    {% if cms.canAccessBuilder() %}
+    {% if cms.auth.canAccessBuilder() %}
     <a href="/admin/builder">Builder</a>
     {% endif %}
 
-    {% if cms.canAccessUtils() %}
+    {% if cms.auth.canAccessUtils() %}
     <a href="/admin/utils">Utils</a>
     {% endif %}
 
-    {% if cms.isAdmin() %}
+    {% if cms.auth.isAdmin() %}
     <a href="/admin/utils/access-groups">Access Groups</a>
     {% endif %}
 </nav>
@@ -22281,15 +22423,15 @@ Super admins bypass all access checks and have full access to everything.
 ```twig
 <ul>
 {% for collection in collections %}
-    {% if cms.canAccessCollection(collection.id, 'read') %}
+    {% if cms.auth.canAccessCollection(collection.id, 'read') %}
     <li>
         <a href="/admin/collections/{{ collection.id }}">{{ collection.name }}</a>
 
-        {% if cms.canAccessCollection(collection.id, 'create') %}
+        {% if cms.auth.canAccessCollection(collection.id, 'create') %}
         <a href="/admin/collections/{{ collection.id }}/new">New Item</a>
         {% endif %}
 
-        {% if cms.canAccessCollectionMeta(collection.id, 'update') %}
+        {% if cms.auth.canAccessCollectionMeta(collection.id, 'update') %}
         <a href="/admin/collections/{{ collection.id }}/settings">Settings</a>
         {% endif %}
     </li>
@@ -22302,15 +22444,15 @@ Super admins bypass all access checks and have full access to everything.
 
 ```twig
 <div class="object-actions">
-    {% if cms.canAccessCollection(collection, 'create') %}
+    {% if cms.auth.canAccessCollection(collection, 'create') %}
     <a href="/admin/collections/{{ collection }}/new" class="btn">New Object</a>
     {% endif %}
 
-    {% if cms.canAccessCollection(collection, 'update') %}
+    {% if cms.auth.canAccessCollection(collection, 'update') %}
     <button class="btn" data-action="edit">Edit</button>
     {% endif %}
 
-    {% if cms.canAccessCollection(collection, 'delete') %}
+    {% if cms.auth.canAccessCollection(collection, 'delete') %}
     <button class="btn btn-danger" data-action="delete">Delete</button>
     {% endif %}
 </div>
@@ -22320,15 +22462,15 @@ Super admins bypass all access checks and have full access to everything.
 
 ```twig
 <div class="schema-actions">
-    {% if cms.canAccessSchemasOperation('create') %}
+    {% if cms.auth.canAccessSchemasOperation('create') %}
     <a href="/admin/schemas/new" class="btn">New Schema</a>
     {% endif %}
 
-    {% if cms.canAccessSchema(schema.id, 'update') %}
+    {% if cms.auth.canAccessSchema(schema.id, 'update') %}
     <a href="/admin/schemas/{{ schema.id }}/edit" class="btn">Edit</a>
     {% endif %}
 
-    {% if cms.canAccessSchema(schema.id, 'delete') %}
+    {% if cms.auth.canAccessSchema(schema.id, 'delete') %}
     <button class="btn btn-danger" data-schema="{{ schema.id }}">Delete</button>
     {% endif %}
 </div>
@@ -22502,7 +22644,7 @@ Super admins bypass all access checks and have full access to everything.
 
 4. **Graceful Degradation**: Hide buttons/actions users can't perform rather than showing disabled buttons.
 
-5. **Admin-Only Features**: Use `cms.isAdmin()` for features that should never be delegated (like managing access groups, API keys, or user accounts).
+5. **Admin-Only Features**: Use `cms.auth.isAdmin()` for features that should never be delegated (like managing access groups, API keys, or user accounts).
 
 6. **Operation-Level Checks**: Use general operation checks (e.g., `canAccessCollectionsOperation()`) for listing pages where no specific resource is selected yet.
 
@@ -22834,9 +22976,9 @@ Resets a user's password using a valid token.
 
 ## Related Documentation
 
-- [Authentication Configuration](docs/operations/configuration#authentication)
+- [Authentication Configuration](docs/operations/configuration)
 - [Whitelabel Templates](docs/admin/whitelabel)
-- [Email/SMTP Configuration](docs/operations/configuration#email-smtp)
+- [Email/SMTP Configuration](docs/operations/configuration)
 - [Mailer Collection](docs/notifications/mailer)
 
 ---
@@ -23045,16 +23187,6 @@ Check if the user can perform operations on schemas in general.
 {% endif %}
 ```
 
-### canAccessTemplates()
-
-Check if the user can access templates.
-
-```twig
-{% if cms.auth.canAccessTemplates() %}
-    <a href="/admin/templates">Templates</a>
-{% endif %}
-```
-
 ### canAccessUtil()
 
 Check if the user can access a specific utility page.
@@ -23189,9 +23321,11 @@ curl -H "X-API-Key: tcms_1234567890abcdef1234567890abcdef" \
      https://yoursite.com/api/collections/blog
 ```
 
-**Using query parameter:**
+**Using the Authorization: Bearer header:**
 ```bash
-curl "https://yoursite.com/api/collections/blog?api_key=tcms_1234567890abcdef1234567890abcdef"
+curl -H "Authorization: Bearer tcms_1234567890abcdef1234567890abcdef" \
+     -H "Content-Type: application/json" \
+     https://yoursite.com/api/collections/blog
 ```
 
 **Key Features:**
@@ -23241,7 +23375,7 @@ GET /api/collections
 **Response:**
 ```json
 {
-    "collections": [
+    "data": [
         {
             "name": "blog",
             "title": "Blog Posts",
@@ -23294,12 +23428,7 @@ curl "https://yoursite.com/api/collections/blog?limit=20&offset=40"
 **Response:**
 ```json
 {
-    "collection": "blog",
-    "total": 25,
-    "count": 10,
-    "limit": 10,
-    "offset": 0,
-    "objects": [
+    "data": [
         {
             "id": "my-first-post",
             "title": "My First Post",
@@ -23328,21 +23457,23 @@ curl https://yoursite.com/api/collections/blog/my-first-post
 **Response:**
 ```json
 {
-    "id": "my-first-post",
-    "title": "My First Post",
-    "content": "Post content here...",
-    "author": "john-doe",
-    "status": "published",
-    "date": "2024-01-15",
-    "tags": ["tutorial", "beginner"],
-    "image": {
-        "url": "/media/images/post-image.jpg",
-        "alt": "Post featured image",
-        "width": 1200,
-        "height": 630
-    },
-    "created": "2024-01-15T09:00:00Z",
-    "modified": "2024-01-16T10:30:00Z"
+    "data": {
+        "id": "my-first-post",
+        "title": "My First Post",
+        "content": "Post content here...",
+        "author": "john-doe",
+        "status": "published",
+        "date": "2024-01-15",
+        "tags": ["tutorial", "beginner"],
+        "image": {
+            "url": "/media/images/post-image.jpg",
+            "alt": "Post featured image",
+            "width": 1200,
+            "height": 630
+        },
+        "created": "2024-01-15T09:00:00Z",
+        "modified": "2024-01-16T10:30:00Z"
+    }
 }
 ```
 
@@ -23366,14 +23497,16 @@ POST /api/collections/{collection}
 **Response (201 Created):**
 ```json
 {
-    "id": "new-blog-post",
-    "title": "New Blog Post",
-    "content": "This is the content of my new blog post.",
-    "author": "jane-doe",
-    "status": "draft",
-    "tags": ["announcement", "news"],
-    "created": "2024-01-20T14:30:00Z",
-    "modified": "2024-01-20T14:30:00Z"
+    "data": {
+        "id": "new-blog-post",
+        "title": "New Blog Post",
+        "content": "This is the content of my new blog post.",
+        "author": "jane-doe",
+        "status": "draft",
+        "tags": ["announcement", "news"],
+        "created": "2024-01-20T14:30:00Z",
+        "modified": "2024-01-20T14:30:00Z"
+    }
 }
 ```
 
@@ -23394,14 +23527,16 @@ PUT /api/collections/{collection}/{id}
 **Response (200 OK):**
 ```json
 {
-    "id": "new-blog-post",
-    "title": "Updated Blog Post Title",
-    "content": "This is the content of my new blog post.",
-    "author": "jane-doe",
-    "status": "published",
-    "tags": ["announcement", "news"],
-    "created": "2024-01-20T14:30:00Z",
-    "modified": "2024-01-20T15:45:00Z"
+    "data": {
+        "id": "new-blog-post",
+        "title": "Updated Blog Post Title",
+        "content": "This is the content of my new blog post.",
+        "author": "jane-doe",
+        "status": "published",
+        "tags": ["announcement", "news"],
+        "created": "2024-01-20T14:30:00Z",
+        "modified": "2024-01-20T15:45:00Z"
+    }
 }
 ```
 
@@ -23539,12 +23674,14 @@ curl "https://yoursite.com/api/collections/blog/query?format=csv&include=title,d
             "date": "2024-01-15"
         }
     ],
-    "pagination": {
-        "total": 25,
-        "count": 10,
-        "per_page": 10,
-        "current_page": 1,
-        "total_pages": 3
+    "meta": {
+        "pagination": {
+            "total": 25,
+            "count": 10,
+            "per_page": 10,
+            "current_page": 1,
+            "total_pages": 3
+        }
     }
 }
 ```
@@ -23759,7 +23896,7 @@ Export collection data as CSV or JSON with field selection.
 ### Get Report Fields
 
 ```http
-GET /report/collections/{collection}/fields
+GET /api/report/collections/{collection}/fields
 ```
 
 Returns the list of fields available for export.
@@ -23786,7 +23923,7 @@ Returns the list of fields available for export.
 ### Export CSV Report
 
 ```http
-GET /report/collections/{collection}/csv
+GET /api/report/collections/{collection}/csv
 ```
 
 **Query Parameters:**
@@ -23796,7 +23933,7 @@ GET /report/collections/{collection}/csv
 
 **Example:**
 ```bash
-curl "https://yoursite.com/report/collections/blog/csv?fields=title,date,status"
+curl "https://yoursite.com/api/report/collections/blog/csv?fields=title,date,status"
 ```
 
 **Response:** CSV file download with `Content-Disposition: attachment`.
@@ -23806,7 +23943,7 @@ Deck fields expand into multiple rows per object — one row per deck item, with
 ### Export JSON Report
 
 ```http
-GET /report/collections/{collection}/json
+GET /api/report/collections/{collection}/json
 ```
 
 **Query Parameters:**
@@ -23816,7 +23953,7 @@ GET /report/collections/{collection}/json
 
 **Example:**
 ```bash
-curl "https://yoursite.com/report/collections/blog/json?fields=title,date,status"
+curl "https://yoursite.com/api/report/collections/blog/json?fields=title,date,status"
 ```
 
 **Response:** JSON file download. Deck fields remain nested (not expanded like CSV).
@@ -23910,7 +24047,7 @@ GET /api/schemas/{collection}
 
 Save, move, delete, and manage files attached to a property on an object. These are the endpoints the admin UI uses behind every image, file, gallery, and depot field — and the ones to call from your own integrations.
 
-Files are stored under `tcms-data/{collection}/{id}/{property}/[{path}/]{filename}` and served back over the public `imageworks` / `download` / `stream` endpoints documented in [File Downloads & Streaming](#file-downloads--streaming).
+Files are stored under `tcms-data/{collection}/{id}/{property}/[{path}/]{filename}` and served back over the public `imageworks` / `download` / `stream` endpoints documented in [File Downloads & Streaming](#file-downloads-streaming).
 
 ### Save a File to a Property
 
@@ -24684,7 +24821,7 @@ $objectSaver = $totalcms->objectSaver();
 $objectSaver->saveObject('blog', [
     'id'    => 'my-new-post',
     'title' => 'Hello World',
-    'body'  => 'This is my first post.',
+    'content' => 'This is my first post.',
 ]);
 ```
 
@@ -24701,14 +24838,17 @@ $objectUpdater->updateObject('blog', 'my-new-post', [
 
 ```php
 $objectRemover = $totalcms->objectRemover();
-$objectRemover->removeObject('blog', 'my-new-post');
+$objectRemover->deleteObject('blog', 'my-new-post');
 ```
 
 #### Cloning Objects
 
 ```php
 $objectCloner = $totalcms->objectCloner();
-$objectCloner->cloneObject('blog', 'my-post', 'my-post-copy');
+$objectCloner->cloneObject(
+    ['collection' => 'blog', 'id' => 'my-post'],
+    ['collection' => 'blog', 'id' => 'my-post-copy'],
+);
 ```
 
 #### Incrementing Properties
@@ -24753,7 +24893,7 @@ $totalcms->deckItemRemover()->removeDeckItem('orders', 'order-123', 'line_items'
 
 ```php
 // List all available schemas
-$schemas = $totalcms->schemaLister()->listSchemas();
+$schemas = $totalcms->schemaLister()->listAllSchemas();
 
 // Fetch a specific schema definition
 $schema = $totalcms->schemaFetcher()->fetchSchema('blog');
@@ -24765,7 +24905,7 @@ $collections = $totalcms->collectionLister();
 $collection = $totalcms->collectionFetcher();
 
 // Rebuild a collection's index
-$totalcms->indexBuilder()->rebuildIndex('blog');
+$totalcms->indexBuilder()->buildIndex('blog');
 ```
 
 ### Email
@@ -24791,8 +24931,8 @@ $jobRunner = $totalcms->jobRunner();
 
 ```php
 // Save files and images programmatically
-$totalcms->fileSaver()->saveFile('documents', 'doc-id', 'file', $uploadedFile);
-$totalcms->imageSaver()->saveImage('gallery', 'gallery-id', 'image', $uploadedFile);
+$totalcms->fileSaver()->save('documents', 'doc-id', 'file', '/path/to/upload.pdf');
+$totalcms->imageSaver()->save('gallery', 'gallery-id', 'image', '/path/to/photo.jpg');
 
 // Get filesystem paths
 $path = $totalcms->filePath('my-document');
@@ -25219,15 +25359,16 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 $response = curl_exec($ch);
 ```
 
-### Query Parameter Authentication
+### Authorization: Bearer Header
 
-Alternatively, pass the API key as a query parameter:
+You can also send the key as a standard Bearer token:
 
+```bash
+curl -H "Authorization: Bearer tcms_1234567890abcdef1234567890abcdef" \
+     https://yoursite.com/api/collections/blog
 ```
-https://yoursite.com/api/collections/blog?api_key=tcms_1234567890abcdef1234567890abcdef
-```
 
-**Note**: Header authentication is preferred for better security (query parameters may be logged).
+**Note**: API keys are only read from the `X-API-Key` or `Authorization: Bearer` request headers. There is no query-parameter (`?api_key=…`) authentication.
 
 ### Authentication Precedence
 
@@ -25252,7 +25393,7 @@ If both session authentication and API key are present, Total CMS uses:
 ### Network Security
 - **Use HTTPS**: Always use encrypted connections in production
 - **Restrict by IP**: Consider firewall rules for server-to-server integrations
-- **Header authentication**: Prefer `X-API-Key` header over query parameters
+- **Header authentication**: Keys are only accepted via the `X-API-Key` or `Authorization: Bearer` headers — never in the URL
 
 ### Incident Response
 - **Immediate revocation**: Delete compromised keys immediately
@@ -25421,7 +25562,7 @@ Zapier's test step triggers the consent flow. Approve it from a T3 admin session
 
 ## Connecting Claude Desktop or Cursor
 
-AI clients that follow the MCP spec auto-discover everything — you do nothing in the T3 admin beyond ensuring **Allow Dynamic Registration** is on (the default).
+AI clients that follow the MCP spec auto-discover everything — provided you have turned on **Allow Dynamic Registration**, which is **off by default** and must be enabled first.
 
 In Claude Desktop, add a remote MCP server and paste your site URL:
 
@@ -25732,10 +25873,18 @@ search="exact phrase"          # Quoted phrase (matches exact sequence)
 
 **PHP Code:**
 ```php
-$results = $pipeline->execute($items, [
-    'search' => 'travel adventure',
+use TotalCMS\Domain\Query\Service\QueryPipeline;
+
+// QueryPipeline is available via dependency injection.
+public function __construct(private QueryPipeline $pipeline) {}
+
+// QueryPipeline::execute() runs search + include/exclude over pre-loaded
+// items. The third argument is a cache-key prefix (search queries bypass
+// the cache automatically).
+$result = $this->pipeline->execute($items, [
+    'search'  => 'travel adventure',
     'include' => 'published:true',
-]);
+], 'collection-query:blog');
 ```
 
 > **Note:** Search results are not cached. When a `search` parameter is present, the cache is bypassed to ensure accurate results.
@@ -26163,32 +26312,32 @@ The `IndexFilter` service is used throughout Total CMS:
 The collection index API endpoint supports filtering via URL parameters:
 
 ```
-GET /collections/{collection}/index?include=published:true&exclude=draft:true
+GET /api/collections/{collection}/index?include=published:true&exclude=draft:true
 ```
 
 **Examples:**
 
 ```bash
 # Get all published blog posts
-GET /collections/blog/index?include=published:true
+GET /api/collections/blog/index?include=published:true
 
 # Get featured products that are in stock
-GET /collections/products/index?include=featured:true,instock:true
+GET /api/collections/products/index?include=featured:true,instock:true
 
 # Get events excluding cancelled
-GET /collections/events/index?exclude=cancelled:true
+GET /api/collections/events/index?exclude=cancelled:true
 
 # Get blog posts with "travel" tag
-GET /collections/blog/index?include=tags:travel
+GET /api/collections/blog/index?include=tags:travel
 
 # Complex filtering: published posts with travel tag, excluding drafts
-GET /collections/blog/index?include=published:true,tags:travel&exclude=draft:true
+GET /api/collections/blog/index?include=published:true,tags:travel&exclude=draft:true
 
 # Full-text search
-GET /collections/blog/index?search=adventure
+GET /api/collections/blog/index?search=adventure
 
 # Search combined with filters
-GET /collections/blog/index?search=adventure&include=published:true&exclude=draft:true
+GET /api/collections/blog/index?search=adventure&include=published:true&exclude=draft:true
 ```
 
 The API returns a filtered `IndexData` object with only matching objects.
@@ -27098,10 +27247,10 @@ Begin the article now.
 
 ### Object-aware workflow
 
-Pull live collection data into the prompt body using `cms.object()`:
+Pull live collection data into the prompt body using `cms.collection.object()`:
 
 ```twig
-{% set post = cms.object(args.post_id, 'blog') %}
+{% set post = cms.collection.object('blog', args.post_id) %}
 You are editing an existing blog post.
 
 Title:     {{ post.title }}
@@ -27646,7 +27795,14 @@ Provider ids must be globally unique across all registered providers plus the bu
 
 ### Edition gating
 
-The framework does not gate search providers by edition. Extensions are responsible for their own checks. If your provider is a paid add-on, check `$context->editionAllows()` in `register()` and return early if the site's edition doesn't qualify — the provider simply won't register and the site falls back to text search silently.
+The framework does not gate search providers by edition. Extensions are responsible for their own checks. If your provider is a paid add-on, resolve the `EditionFeatureService` and check the relevant feature flag in `register()`, returning early if the site's edition doesn't qualify — the provider simply won't register and the site falls back to text search silently:
+
+```php
+$editionFeatures = $context->get(EditionFeatureService::class);
+if (!$editionFeatures->can(EditionFeature::ALGOLIA_SEARCH)) {
+    return;
+}
+```
 
 ### Worked example: Meilisearch
 
@@ -27743,9 +27899,9 @@ Register it in `boot.php`:
 use Acme\MeilisearchProvider\Service\MeilisearchSearchProvider;
 
 $context->registerSearchProvider(new MeilisearchSearchProvider(
-    host:      $context->getSetting('host', ''),
-    apiKey:    $context->getSetting('apiKey', ''),
-    indexName: $context->getSetting('indexName', 'totalcms'),
+    host:      $context->setting('host', ''),
+    apiKey:    $context->setting('apiKey', ''),
+    indexName: $context->setting('indexName', 'totalcms'),
 ));
 ```
 
@@ -28665,7 +28821,7 @@ Once registered, `geo-redirect` shows up in the page form's middleware multisele
 
 **Capability:** `page-middleware`
 
-See the [Page Middleware section in the Builder overview](docs/site-builder/overview#page-middleware) for the user-facing perspective.
+See the [Page Middleware section in the Builder overview](docs/site-builder/overview#page-features-middleware) for the user-facing perspective.
 
 ## Form Actions
 
@@ -29268,12 +29424,12 @@ If two listeners have the same priority, they execute in the order they were reg
 
 ## Sending Notifications from Event Listeners
 
-Extensions can use events to trigger notifications automatically when content changes. The built-in `PushoverService` and `EmailService` are available via the DI container in the `boot()` phase.
+Extensions can use events to trigger notifications automatically when content changes. The `PushoverService` is provided by the bundled **Pushover** extension and is only available via the DI container when that extension is installed and enabled (it registers its own container definition). The `EmailService` is part of core.
 
 ### Pushover Notification on Object Created
 
 ```php
-use TotalCMS\Domain\Notification\Service\PushoverService;
+use TotalCMS\Bundled\Pushover\PushoverService;
 
 public function boot(ExtensionContext $context): void
 {
@@ -32183,42 +32339,6 @@ After editing the server block:
 
 This guide provides essential security recommendations for protecting your Total CMS installation and data.
 
-## Table of Contents
-- [Total CMS Security Guide](#total-cms-security-guide)
-	- [Table of Contents](#table-of-contents)
-	- [Protecting the tcms-data Folder](#protecting-the-tcms-data-folder)
-		- [Best Practice: Move Outside Document Root](#best-practice-move-outside-document-root)
-		- [Alternative: Restrict Access Within Document Root](#alternative-restrict-access-within-document-root)
-			- [Apache (.htaccess)](#apache-htaccess)
-			- [Nginx](#nginx)
-			- [Caddy](#caddy)
-	- [Authentication and Session Security](#authentication-and-session-security)
-		- [Strong Password Requirements](#strong-password-requirements)
-		- [Session Security](#session-security)
-		- [Account Security](#account-security)
-	- [Content Security](#content-security)
-		- [HTML Sanitization](#html-sanitization)
-		- [SVG Security](#svg-security)
-	- [File Upload Security](#file-upload-security)
-		- [Best Practices](#best-practices)
-		- [Configuration](#configuration)
-	- [HTTPS and Transport Security](#https-and-transport-security)
-		- [Always Use HTTPS](#always-use-https)
-		- [Apache HTTPS Configuration](#apache-https-configuration)
-		- [Nginx HTTPS Configuration](#nginx-https-configuration)
-		- [Caddy HTTPS Configuration](#caddy-https-configuration)
-	- [Additional Security Headers](#additional-security-headers)
-		- [Apache](#apache)
-		- [Nginx](#nginx-1)
-		- [Caddy](#caddy-1)
-	- [Regular Security Maintenance](#regular-security-maintenance)
-		- [Keep Software Updated](#keep-software-updated)
-		- [Security Monitoring](#security-monitoring)
-		- [Backup Strategy](#backup-strategy)
-		- [Security Checklist](#security-checklist)
-	- [Emergency Response](#emergency-response)
-	- [Additional Resources](#additional-resources)
-
 ## Protecting the tcms-data Folder
 
 The `tcms-data` folder contains all your CMS content, including potentially sensitive information (API keys, user data, collection data). It's crucial to protect this directory from unauthorized web access.
@@ -32427,7 +32547,7 @@ Configure upload restrictions in your collection schemas:
 	"rules" : {
 		"size"     : {"min":0,"max":300},
 		"filetype" : ["image/jpeg", "image/png", "application/pdf"],
-		"filename" : ["image.jpg"],
+		"filename" : ["image.jpg"]
 	}
 }
 ```
@@ -33963,7 +34083,7 @@ will lose access to that data until you upgrade to an edition that supports it.
 Total CMS 3 is a ground-up rewrite, so a v1 site moves over in two parts:
 
 1. **Your content** — the data in `cms-data/` (blogs, galleries, images, files, dates, feeds). Total CMS 3 ships a built-in importer that brings this across for you.
-2. **Your templates** — the `%macro(cmsid)%` tags scattered through your v1 HTML become `{{ cms... }}` calls inside [Twig templates](docs/twig/overview). The [macro mapping table](#update-your-templates-v1-macros--twig) below covers every one.
+2. **Your templates** — the `%macro(cmsid)%` tags scattered through your v1 HTML become `{{ cms... }}` calls inside [Twig templates](docs/twig/overview). The [macro mapping table](#update-your-templates-v1-macros-twig) below covers every one.
 
 This page is the one-stop guide for both. Read it top to bottom before you start a migration.
 
@@ -34030,7 +34150,7 @@ Total CMS v1 injected content into a page with `%macro(cmsid)%` tags placed dire
 | **Content addressing** | A single global `cmsid` per content type | A **collection** + object **id**. The reserved collections (`text`, `image`, `gallery`, `file`, `toggle`, `date`, …) are the defaults, so a lone `cmsid` still maps 1:1 |
 | **Image sizes** | Fixed `Thumb` / `Square` presets baked into the macro name | Any dimensions on demand via [ImageWorks](docs/twig/imageworks) options — `{w: 300, h: 300, fit: 'crop'}` |
 | **PNG output** | Separate `…Png…` macros | One option: `{fm: 'png'}` |
-| **Markdown / formatting** | Separate `…Format` macros | A Twig filter: `| markdown` or `| markdownInline` |
+| **Markdown / formatting** | Separate `…Format` macros | A Twig filter: `\| markdown` or `\| markdownInline` |
 
 Because the reserved-collection defaults match v1's content types, the `cmsid` you used in v1 becomes the object **id** in T3 with no extra arguments. If you migrated content into a *custom* collection, add a context object: `{collection: 'pages', property: 'body'}`.
 
@@ -34040,8 +34160,8 @@ Because the reserved-collection defaults match v1's content types, the `cmsid` y
 |--------------|-------------|------------------|
 | `%cmsData(cmsid)%` | Raw stored value | `{{ cms.data('text', 'cmsid', 'text') }}` |
 | `%cmsText(cmsid)%` | Text | `{{ cms.data.text('cmsid') }}` |
-| `%cmsTextFormat(cmsid)%` | Markdown → HTML | `{{ cms.data.text('cmsid')| markdown }}` |
-| `%cmsTextStripHTML(cmsid)%` | Strip HTML | `{{ cms.data.text('cmsid')| striptags }}` |
+| `%cmsTextFormat(cmsid)%` | Markdown → HTML | `{{ cms.data.text('cmsid') \| markdown }}` |
+| `%cmsTextStripHTML(cmsid)%` | Strip HTML | `{{ cms.data.text('cmsid') \| striptags }}` |
 | `%cmsToggle(cmsid)%` | Boolean toggle | `{{ cms.data.toggle('cmsid') }}` |
 
 > `cms.data('text', 'cmsid', 'text')` is the [callable shorthand](docs/twig/data#raw-data-access) for `cms.data.raw(...)` — it returns the value exactly as stored. For everyday text use `cms.data.text('cmsid')`.
@@ -34051,7 +34171,7 @@ Because the reserved-collection defaults match v1's content types, the `cmsid` y
 | Total CMS v1 | Description | Total CMS 3 Twig |
 |--------------|-------------|------------------|
 | `%cmsImageAlt(cmsid)%` | Image alt | `{{ cms.render.alt('cmsid') }}` |
-| `%cmsImageAltFormat(cmsid)%` | Image alt (markdown) | `{{ cms.render.alt('cmsid')| markdownInline }}` |
+| `%cmsImageAltFormat(cmsid)%` | Image alt (markdown) | `{{ cms.render.alt('cmsid') \| markdownInline }}` |
 
 ### Gallery alt text
 
@@ -34060,11 +34180,11 @@ The v1 `Featured` / `First` / `Last` macros become the [dynamic selectors](docs/
 | Total CMS v1 | Description | Total CMS 3 Twig |
 |--------------|-------------|------------------|
 | `%cmsGalleryImageFeaturedAlt(cmsid)%` | Featured image alt | `{{ cms.render.galleryAlt('cmsid', 'featured') }}` |
-| `%cmsGalleryImageFeaturedAltFormat(cmsid)%` | Featured alt (markdown) | `{{ cms.render.galleryAlt('cmsid', 'featured')| markdownInline }}` |
+| `%cmsGalleryImageFeaturedAltFormat(cmsid)%` | Featured alt (markdown) | `{{ cms.render.galleryAlt('cmsid', 'featured') \| markdownInline }}` |
 | `%cmsGalleryImageFirstAlt(cmsid)%` | First image alt | `{{ cms.render.galleryAlt('cmsid', 'first') }}` |
-| `%cmsGalleryImageFirstAltFormat(cmsid)%` | First alt (markdown) | `{{ cms.render.galleryAlt('cmsid', 'first')| markdownInline }}` |
+| `%cmsGalleryImageFirstAltFormat(cmsid)%` | First alt (markdown) | `{{ cms.render.galleryAlt('cmsid', 'first') \| markdownInline }}` |
 | `%cmsGalleryImageLastAlt(cmsid)%` | Last image alt | `{{ cms.render.galleryAlt('cmsid', 'last') }}` |
-| `%cmsGalleryImageLastAltFormat(cmsid)%` | Last alt (markdown) | `{{ cms.render.galleryAlt('cmsid', 'last')| markdownInline }}` |
+| `%cmsGalleryImageLastAltFormat(cmsid)%` | Last alt (markdown) | `{{ cms.render.galleryAlt('cmsid', 'last') \| markdownInline }}` |
 
 ### Image path macros
 
@@ -34151,9 +34271,9 @@ Migrated blogs use the **`blog-legacy`** schema, whose property names are shown 
 | `%blogExtraContent()%` | `{{ post.extra }}` |
 | `%blogExtraContent2()%` | `{{ post.extra2 }}` |
 | `%blogMedia()%` | `{{ post.media }}` |
-| `%blogTags()%` | `{{ post.tags| join(', ') }}` |
-| `%blogCategories()%` | `{{ post.categories| join(', ') }}` |
-| `%blogLabels()%` | `{{ post.labels| join(', ') }}` |
+| `%blogTags()%` | `{{ post.tags \| join(', ') }}` |
+| `%blogCategories()%` | `{{ post.categories \| join(', ') }}` |
+| `%blogLabels()%` | `{{ post.labels \| join(', ') }}` |
 
 The v1 `…Format` and `…StripHTML` variants are just Twig filters on the same field — append `| markdown` (or `| markdownInline`) for the formatted version and `| striptags` to strip HTML. For example `%blogContentFormat()%` → `{{ post.content| markdown }}` and `%blogContentStripHTML()%` → `{{ post.content| striptags }}`. The `tags` / `categories` / `labels` fields are lists, so render them with `| join(', ')` (or loop over them).
 
@@ -34163,15 +34283,15 @@ The post's `date` is stored as ISO‑8601; format it with Twig's [`date`](docs/t
 
 | Total CMS v1 | Output | Total CMS 3 Twig |
 |--------------|--------|------------------|
-| `%blogDateMonth()%` | `01`–`12` | `{{ post.date| date('m') }}` |
-| `%blogDateMonthName()%` | `January`–`December` | `{{ post.date| date('F') }}` |
-| `%blogDateMonthNameShort()%` | `Jan`–`Dec` | `{{ post.date| date('M') }}` |
-| `%blogDateDay()%` | `01`–`31` | `{{ post.date| date('d') }}` |
-| `%blogDateDayName()%` | `Monday`–`Sunday` | `{{ post.date| date('l') }}` |
-| `%blogDateDayNameShort()%` | `Mon`–`Sun` | `{{ post.date| date('D') }}` |
-| `%blogDateYear()%` | `2017` | `{{ post.date| date('Y') }}` |
-| `%blogDateYearShort()%` | `17` | `{{ post.date| date('y') }}` |
-| `%blogDateISO8601()%` | `2022-06-04T00:50:29+00:00` | `{{ post.date| date('c') }}` |
+| `%blogDateMonth()%` | `01`–`12` | `{{ post.date \| date('m') }}` |
+| `%blogDateMonthName()%` | `January`–`December` | `{{ post.date \| date('F') }}` |
+| `%blogDateMonthNameShort()%` | `Jan`–`Dec` | `{{ post.date \| date('M') }}` |
+| `%blogDateDay()%` | `01`–`31` | `{{ post.date \| date('d') }}` |
+| `%blogDateDayName()%` | `Monday`–`Sunday` | `{{ post.date \| date('l') }}` |
+| `%blogDateDayNameShort()%` | `Mon`–`Sun` | `{{ post.date \| date('D') }}` |
+| `%blogDateYear()%` | `2017` | `{{ post.date \| date('Y') }}` |
+| `%blogDateYearShort()%` | `17` | `{{ post.date \| date('y') }}` |
+| `%blogDateISO8601()%` | `2022-06-04T00:50:29+00:00` | `{{ post.date \| date('c') }}` |
 
 #### Images & galleries
 
@@ -34217,472 +34337,131 @@ Note how `cms.render.image()` replaces the paired `%cmsImageSquare%` + `%cmsImag
 
 ## Configuration
 
-Total CMS uses a hierarchical configuration system based on PHP files. This allows for flexible environment-specific settings while maintaining secure defaults.
+Most of Total CMS is configured from the **Admin UI** (the Settings page) — domains, email, image presets, auth, dashboard appearance, and so on are all stored in your data directory and edited from the browser. You only need a config file for the handful of **bootstrap** settings that have to be known before the data directory is loaded, or to override a default that the admin UI doesn't expose.
 
-## Configuration Load Order
+## Where Configuration Lives
 
-Configuration files are loaded in a specific order, with later files overriding earlier ones:
+Total CMS ships two PHP files in `config/`:
 
-1. `config/defaults.php` - Base application defaults
-2. `config/env.php` - Environment detection
-3. `config/{environment}.php` - Environment-specific settings (e.g., `production.php`, `development.php`)
-4. `{DOCUMENT_ROOT}/env.php` - Server-specific overrides (optional)
+- **`config/defaults.php`** — the base settings array for the whole application. This file is part of the codebase and is replaced on updates. **Do not edit it.**
+- **`config/tcms.php`** — your optional override file. It does not exist by default. To create it, copy the sample:
 
-This hierarchy allows you to:
-- Set safe defaults for all environments
-- Override settings per environment (dev, staging, production)
-- Apply server-specific settings without modifying the codebase
+```bash
+cp config/tcms-sample.php config/tcms.php
+```
 
-## Core Configuration Files
-
-### defaults.php
-
-The base configuration file that sets application-wide defaults:
+The sample is intentionally tiny. Out of the box it returns an empty array and documents only the two bootstrap keys you might need:
 
 ```php
 <?php
-// config/defaults.php
 
-// Error reporting (production safe)
-error_reporting(0);
-ini_set('display_errors', '0');
+declare(strict_types=1);
 
-// Locale settings
-setlocale(LC_ALL, 'C.UTF-8', 'en_US.UTF-8', 'en_US');
+// Total CMS Bootstrap Configuration
+// Only path settings that are needed before the data directory is loaded.
+//
+// NOTE: Most settings should be configured via the Admin UI (Settings page).
+return [
+	// Data directory location. Default: document root + /tcms-data
+	// 'datadir' => __DIR__ . '/tcms-data',
 
-// Core settings
-$settings = [
-    'env' => 'prod',
-    'locale' => 'en_US',
-    'timezone' => 'UTC',
-    'debug' => false,
-];
-
-// Database settings
-$settings['db'] = [
-    'driver' => 'sqlite',
-    'database' => __DIR__ . '/../data/database.sqlite',
-];
-
-// Paths
-$settings['paths'] = [
-    'root' => dirname(__DIR__),
-    'public' => dirname(__DIR__) . '/public',
-    'cache' => dirname(__DIR__) . '/cache',
-    'logs' => dirname(__DIR__) . '/logs',
-    'data' => dirname(__DIR__) . '/tcms-data',
+	// URL prefix where the API is mounted. Default: '/api'
+	// 'api' => '/api',
 ];
 ```
 
-### Environment Configuration
+## The Deep-Merge Override Model
 
-Environment-specific files override defaults:
+Whatever array you return from `config/tcms.php` is **deep-merged** over `config/defaults.php`. You only specify the keys you want to change — nested arrays merge rather than replace, so you can override a single sub-key without restating the whole block.
+
+For example, to keep all of the default `auth` settings but raise the maximum login attempts and turn off passkeys:
 
 ```php
 <?php
-// config/development.php
 
-// Enable debugging in development
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
-
-$settings['debug'] = true;
-$settings['env'] = 'dev';
-
-// Development database
-$settings['db']['database'] = __DIR__ . '/../data/dev-database.sqlite';
-
-// Disable caching
-$settings['cache']['enabled'] = false;
-
-// Verbose logging
-$settings['logger']['level'] = 'debug';
-```
-
-## Configuration Categories
-
-### Application Settings
-
-```php
-// Basic application settings
-$settings['app'] = [
-    'name' => 'Total CMS',
-    'version' => '3.0.0',
-    'timezone' => 'America/New_York',
-    'locale' => 'en_US',
-    'charset' => 'UTF-8',
-];
-
-// URL and domain settings
-$settings['domain'] = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$settings['url'] = 'https://' . $settings['domain'];
-$settings['api'] = $settings['url'] . '/api/v3';
-```
-
-### Security Settings
-
-```php
-// Security configuration
-$settings['security'] = [
-    // Session settings
-    'session' => [
-        'name' => 'TCMS_SESSION',
-        'lifetime' => 7200, // 2 hours
-        'path' => '/',
-        'domain' => '',
-        'secure' => true,
-        'httponly' => true,
-        'samesite' => 'Lax',
-    ],
-    
-    // CSRF protection
-    'csrf' => [
-        'enabled' => true,
-        'token_name' => 'csrf_token',
-        'header_name' => 'X-CSRF-Token',
-    ],
-    
-    // Password hashing
-    'password' => [
-        'algorithm' => PASSWORD_BCRYPT,
-        'options' => ['cost' => 12],
-    ],
+return [
+	'auth' => [
+		'maxAttempts' => 5,
+		'usePasskeys' => false,
+	],
 ];
 ```
 
-### Storage Settings
-
-```php
-// File storage configuration
-$settings['storage'] = [
-    // Data storage
-    'data_path' => $settings['paths']['data'],
-    'collections_path' => $settings['paths']['data'] . '/collections',
-    'schemas_path' => $settings['paths']['data'] . '/schemas',
-    
-    // Media storage
-    'media' => [
-        'path' => $settings['paths']['public'] . '/media',
-        'url' => '/media',
-        'allowed_extensions' => ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx'],
-        'max_upload_size' => '10M',
-    ],
-    
-    // Image processing
-    'images' => [
-        'driver' => 'gd', // or 'imagick'
-        'quality' => 85,
-        'cache' => true,
-        'cache_path' => $settings['paths']['cache'] . '/images',
-    ],
-];
-```
-
-### Cache Configuration
-
-```php
-// Caching settings
-$settings['cache'] = [
-    'enabled' => true,
-    'driver' => 'file', // file, redis, memcached
-    'ttl' => 3600, // 1 hour default
-    
-    // File cache settings
-    'file' => [
-        'path' => $settings['paths']['cache'],
-    ],
-    
-    // Redis settings (if using Redis)
-    'redis' => [
-        'host' => '127.0.0.1',
-        'port' => 6379,
-        'database' => 0,
-    ],
-    
-    // Template cache
-    'templates' => [
-        'enabled' => true,
-        'path' => $settings['paths']['cache'] . '/twig',
-    ],
-];
-```
-
-### Database Configuration
-
-```php
-// Database settings
-$settings['db'] = [
-    // SQLite (default for job queue)
-    'sqlite' => [
-        'driver' => 'sqlite',
-        'database' => $settings['paths']['data'] . '/jobqueue.db',
-    ],
-    
-    // MySQL (optional)
-    'mysql' => [
-        'driver' => 'mysql',
-        'host' => 'localhost',
-        'database' => 'totalcms',
-        'username' => 'root',
-        'password' => '',
-        'charset' => 'utf8mb4',
-        'collation' => 'utf8mb4_unicode_ci',
-        'prefix' => '',
-    ],
-];
-```
-
-### Logging Configuration
-
-```php
-// Logging settings
-$settings['logger'] = [
-    'name' => 'totalcms',
-    'path' => $settings['paths']['logs'] . '/app.log',
-    'level' => 'warning', // debug, info, notice, warning, error, critical
-    'max_files' => 30,
-    
-    // Separate logs for different components
-    'channels' => [
-        'security' => $settings['paths']['logs'] . '/security.log',
-        'api' => $settings['paths']['logs'] . '/api.log',
-        'jobs' => $settings['paths']['logs'] . '/jobs.log',
-    ],
-];
-```
-
-### API Configuration
-
-```php
-// API settings
-$settings['api'] = [
-    'version' => 'v3',
-    'rate_limit' => [
-        'enabled' => true,
-        'requests_per_minute' => 60,
-        'burst' => 10,
-    ],
-    'cors' => [
-        'enabled' => true,
-        'origins' => ['*'],
-        'methods' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        'headers' => ['Content-Type', 'Authorization', 'X-Requested-With'],
-        'credentials' => true,
-        'max_age' => 86400,
-    ],
-];
-```
-
-### Email Configuration
-
-```php
-// Email settings
-$settings['mail'] = [
-    'driver' => 'smtp', // smtp, sendmail, mail
-    'from' => [
-        'address' => 'noreply@example.com',
-        'name' => 'Total CMS',
-    ],
-    
-    // SMTP settings
-    'smtp' => [
-        'host' => 'smtp.mailtrap.io',
-        'port' => 2525,
-        'encryption' => 'tls', // tls or ssl
-        'username' => '',
-        'password' => '',
-    ],
-];
-```
-
-### License Configuration
-
-```php
-// License settings
-$settings['license'] = [
-    'enabled' => true,
-    'api_url' => 'https://license.totalcms.co/api',
-    'cache_ttl' => 86400, // 24 hours
-    'trial_days' => 30,
-    'features' => [
-        'collections' => ['blog', 'image', 'gallery', 'file'],
-        'max_objects' => 1000,
-        'custom_schemas' => false,
-    ],
-];
-```
-
-## Environment Variables
-
-You can also use environment variables for sensitive configuration:
-
-```php
-// Using environment variables
-$settings['api_key'] = $_ENV['TOTALCMS_API_KEY'] ?? null;
-$settings['db']['password'] = $_ENV['DB_PASSWORD'] ?? '';
-$settings['mail']['smtp']['password'] = $_ENV['SMTP_PASSWORD'] ?? '';
-```
-
-## Creating Custom Configuration
-
-### Server-Specific Configuration
-
-Create a file at `{DOCUMENT_ROOT}/env.php` for server-specific settings:
+Every other key under `auth` (`loginWith`, `collection`, `persistentLoginDays`, and so on) keeps its default value. The same pattern works for any nested settings block:
 
 ```php
 <?php
-// /path/to/document/root/env.php
 
-// Override domain for this server
-$settings['domain'] = 'mysite.com';
-$settings['url'] = 'https://mysite.com';
-
-// Production database
-$settings['db']['mysql'] = [
-    'host' => 'localhost',
-    'database' => 'prod_totalcms',
-    'username' => 'prod_user',
-    'password' => 'secure_password',
-];
-
-// Disable debug mode
-$settings['debug'] = false;
-error_reporting(0);
-```
-
-### Feature Flags
-
-Enable/disable features via configuration:
-
-```php
-// Feature flags
-$settings['features'] = [
-    'blog' => true,
-    'ecommerce' => false,
-    'multi_language' => true,
-    'api_v4' => false,
-    'beta_features' => false,
-];
-
-// Check feature in code
-if ($settings['features']['ecommerce'] ?? false) {
-    // Enable e-commerce functionality
-}
-```
-
-## Configuration Best Practices
-
-### 1. Never Commit Sensitive Data
-
-Keep sensitive configuration out of version control:
-
-```php
-// BAD - Don't commit passwords
-$settings['db']['password'] = 'my-secret-password';
-
-// GOOD - Use environment variables
-$settings['db']['password'] = $_ENV['DB_PASSWORD'] ?? '';
-```
-
-### 2. Use Environment Detection
-
-Automatically detect the environment:
-
-```php
-// config/env.php
-$settings['env'] = match ($_SERVER['HTTP_HOST'] ?? '') {
-    'localhost', '127.0.0.1' => 'development',
-    'staging.example.com' => 'staging',
-    default => 'production',
-};
-```
-
-### 3. Validate Configuration
-
-Add configuration validation:
-
-```php
-// Validate required settings
-$required = ['domain', 'paths.data', 'paths.cache'];
-foreach ($required as $key) {
-    if (empty(array_get($settings, $key))) {
-        throw new ConfigurationException("Missing required config: {$key}");
-    }
-}
-```
-
-### 4. Document Settings
-
-Always document custom configuration:
-
-```php
-// Custom image processing settings
-$settings['image_processing'] = [
-    // Maximum dimension for auto-resize (0 = disabled)
-    'max_dimension' => 2048,
-    
-    // Automatically convert uploads to WebP
-    'auto_webp' => true,
-    
-    // Strip EXIF data from uploads
-    'strip_exif' => true,
+return [
+	'datadir' => '/var/www/shared/tcms-data',
+	'dashboard' => [
+		'title' => "Joe's Bistro Admin",
+	],
+	'cache' => [
+		'redis' => false,
+	],
 ];
 ```
 
-## Accessing Configuration
+The merge and type-safety handling lives in `TotalCMS\Support\Config`. Each settings block is validated with `is_array()` before it is applied, so a malformed override falls back to the default rather than breaking the app.
 
-### In PHP Code
+## What Lives in the Bootstrap File
+
+These are the keys you are most likely to set in `config/tcms.php`. They all exist in `config/defaults.php` — refer to that file for the complete list and the inline comments that document each one.
+
+- **`datadir`** — absolute path to your `tcms-data` directory. Auto-detected by default (document root, or its parent if a `tcms-data` folder exists there). Set this explicitly for custom layouts or shared data directories.
+- **`api`** — URL prefix where the front controller is mounted. Empty at the domain root, or a subpath like `/cms` for subfolder installs.
+- **`domain`** — the site domain. Auto-detected from the request `Host` header, but behind Docker or a reverse proxy that doesn't forward `Host`, set it explicitly so licensing and link-building resolve correctly.
+- **`debug`** — `false` in production; set `true` for development.
+- **`logger`** — log channel name, level, retention, and path (see below).
+- **`session`** — cookie name, lifetime, SameSite, secure flag, and garbage-collection lifetime.
+- **`cache`** — backend toggles (`apcu`, `redis`, `memcached`, `filesystem`) plus Redis/Memcached connection details and fragment-cache settings.
+
+### Logger Path
+
+The logger's `path` is empty in `defaults.php` on purpose — Total CMS resolves it **after** the merge so a `datadir` override is respected:
+
+- **Composer installs** → `logs/` at the project root (survives `composer update`).
+- **Zip installs** → `<datadir>/.system/logs/` (survives the application-directory swap during updates).
+
+To override the location entirely, set it in `tcms.php`:
 
 ```php
-// Get the container
-$container = $app->getContainer();
+<?php
 
-// Access settings
-$settings = $container->get('settings');
-$debug = $settings['debug'];
-$dbConfig = $settings['db'];
-
-// Using helper function
-$value = config('app.name'); // "Total CMS"
-$apiUrl = config('api.url', 'http://localhost'); // With default
+return [
+	'logger' => [
+		'path'  => '/var/log/totalcms',
+		'level' => Monolog\Level::Warning,
+	],
+];
 ```
 
-### In Twig Templates
+## Reading Configuration in Twig
+
+Configuration is exposed in templates through the `cms` global, using `cms.config()`. There is **no** `config` global.
+
+`cms.config()` takes the settings block as the first argument and an optional sub-key as the second:
 
 ```twig
-{# Access configuration in templates #}
-{{ config.app.name }}
-{{ config.domain }}
+{# The whole auth block #}
+{{ cms.config('auth') }}
 
-{# Check feature flags #}
-{% if config.features.blog %}
-    {# Show blog features #}
-{% endif %}
+{# A single sub-key #}
+{{ cms.config('auth', 'collection') }}
+{{ cms.config('dashboard', 'title') }}
 ```
 
-## Troubleshooting Configuration
+Common scalar settings are also available directly on `cms`:
 
-### Debug Configuration Loading
-
-```php
-// Add to config/env.php for debugging
-if ($_GET['debug_config'] ?? false) {
-    echo '<pre>';
-    print_r($settings);
-    echo '</pre>';
-    exit;
-}
+```twig
+{{ cms.env }}
+{{ cms.domain }}
+{{ cms.url }}
 ```
-
-### Common Issues
-
-1. **Configuration not loading**: Check file permissions and path
-2. **Settings being overridden**: Check the load order
-3. **Environment detection failing**: Verify $_SERVER variables
-4. **Cache not clearing**: Manually clear cache directory
 
 ## Configuration Reference
 
-For a complete list of all configuration options, see the `config/defaults.php` file in your Total CMS installation. Each setting is documented with its purpose and acceptable values.
+For the authoritative, fully-commented list of every setting and its default, read `config/defaults.php` in your installation. Anything you can set there can be overridden by returning the same key from `config/tcms.php`.
 
 ---

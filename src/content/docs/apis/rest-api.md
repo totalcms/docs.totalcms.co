@@ -31,9 +31,11 @@ curl -H "X-API-Key: tcms_1234567890abcdef1234567890abcdef" \
      https://yoursite.com/api/collections/blog
 ```
 
-**Using query parameter:**
+**Using the Authorization: Bearer header:**
 ```bash
-curl "https://yoursite.com/api/collections/blog?api_key=tcms_1234567890abcdef1234567890abcdef"
+curl -H "Authorization: Bearer tcms_1234567890abcdef1234567890abcdef" \
+     -H "Content-Type: application/json" \
+     https://yoursite.com/api/collections/blog
 ```
 
 **Key Features:**
@@ -83,7 +85,7 @@ GET /api/collections
 **Response:**
 ```json
 {
-    "collections": [
+    "data": [
         {
             "name": "blog",
             "title": "Blog Posts",
@@ -136,12 +138,7 @@ curl "https://yoursite.com/api/collections/blog?limit=20&offset=40"
 **Response:**
 ```json
 {
-    "collection": "blog",
-    "total": 25,
-    "count": 10,
-    "limit": 10,
-    "offset": 0,
-    "objects": [
+    "data": [
         {
             "id": "my-first-post",
             "title": "My First Post",
@@ -170,21 +167,23 @@ curl https://yoursite.com/api/collections/blog/my-first-post
 **Response:**
 ```json
 {
-    "id": "my-first-post",
-    "title": "My First Post",
-    "content": "Post content here...",
-    "author": "john-doe",
-    "status": "published",
-    "date": "2024-01-15",
-    "tags": ["tutorial", "beginner"],
-    "image": {
-        "url": "/media/images/post-image.jpg",
-        "alt": "Post featured image",
-        "width": 1200,
-        "height": 630
-    },
-    "created": "2024-01-15T09:00:00Z",
-    "modified": "2024-01-16T10:30:00Z"
+    "data": {
+        "id": "my-first-post",
+        "title": "My First Post",
+        "content": "Post content here...",
+        "author": "john-doe",
+        "status": "published",
+        "date": "2024-01-15",
+        "tags": ["tutorial", "beginner"],
+        "image": {
+            "url": "/media/images/post-image.jpg",
+            "alt": "Post featured image",
+            "width": 1200,
+            "height": 630
+        },
+        "created": "2024-01-15T09:00:00Z",
+        "modified": "2024-01-16T10:30:00Z"
+    }
 }
 ```
 
@@ -208,14 +207,16 @@ POST /api/collections/{collection}
 **Response (201 Created):**
 ```json
 {
-    "id": "new-blog-post",
-    "title": "New Blog Post",
-    "content": "This is the content of my new blog post.",
-    "author": "jane-doe",
-    "status": "draft",
-    "tags": ["announcement", "news"],
-    "created": "2024-01-20T14:30:00Z",
-    "modified": "2024-01-20T14:30:00Z"
+    "data": {
+        "id": "new-blog-post",
+        "title": "New Blog Post",
+        "content": "This is the content of my new blog post.",
+        "author": "jane-doe",
+        "status": "draft",
+        "tags": ["announcement", "news"],
+        "created": "2024-01-20T14:30:00Z",
+        "modified": "2024-01-20T14:30:00Z"
+    }
 }
 ```
 
@@ -236,14 +237,16 @@ PUT /api/collections/{collection}/{id}
 **Response (200 OK):**
 ```json
 {
-    "id": "new-blog-post",
-    "title": "Updated Blog Post Title",
-    "content": "This is the content of my new blog post.",
-    "author": "jane-doe",
-    "status": "published",
-    "tags": ["announcement", "news"],
-    "created": "2024-01-20T14:30:00Z",
-    "modified": "2024-01-20T15:45:00Z"
+    "data": {
+        "id": "new-blog-post",
+        "title": "Updated Blog Post Title",
+        "content": "This is the content of my new blog post.",
+        "author": "jane-doe",
+        "status": "published",
+        "tags": ["announcement", "news"],
+        "created": "2024-01-20T14:30:00Z",
+        "modified": "2024-01-20T15:45:00Z"
+    }
 }
 ```
 
@@ -381,12 +384,14 @@ curl "https://yoursite.com/api/collections/blog/query?format=csv&include=title,d
             "date": "2024-01-15"
         }
     ],
-    "pagination": {
-        "total": 25,
-        "count": 10,
-        "per_page": 10,
-        "current_page": 1,
-        "total_pages": 3
+    "meta": {
+        "pagination": {
+            "total": 25,
+            "count": 10,
+            "per_page": 10,
+            "current_page": 1,
+            "total_pages": 3
+        }
     }
 }
 ```
@@ -601,7 +606,7 @@ Export collection data as CSV or JSON with field selection.
 ### Get Report Fields
 
 ```http
-GET /report/collections/{collection}/fields
+GET /api/report/collections/{collection}/fields
 ```
 
 Returns the list of fields available for export.
@@ -628,7 +633,7 @@ Returns the list of fields available for export.
 ### Export CSV Report
 
 ```http
-GET /report/collections/{collection}/csv
+GET /api/report/collections/{collection}/csv
 ```
 
 **Query Parameters:**
@@ -638,7 +643,7 @@ GET /report/collections/{collection}/csv
 
 **Example:**
 ```bash
-curl "https://yoursite.com/report/collections/blog/csv?fields=title,date,status"
+curl "https://yoursite.com/api/report/collections/blog/csv?fields=title,date,status"
 ```
 
 **Response:** CSV file download with `Content-Disposition: attachment`.
@@ -648,7 +653,7 @@ Deck fields expand into multiple rows per object — one row per deck item, with
 ### Export JSON Report
 
 ```http
-GET /report/collections/{collection}/json
+GET /api/report/collections/{collection}/json
 ```
 
 **Query Parameters:**
@@ -658,7 +663,7 @@ GET /report/collections/{collection}/json
 
 **Example:**
 ```bash
-curl "https://yoursite.com/report/collections/blog/json?fields=title,date,status"
+curl "https://yoursite.com/api/report/collections/blog/json?fields=title,date,status"
 ```
 
 **Response:** JSON file download. Deck fields remain nested (not expanded like CSV).
@@ -752,7 +757,7 @@ GET /api/schemas/{collection}
 
 Save, move, delete, and manage files attached to a property on an object. These are the endpoints the admin UI uses behind every image, file, gallery, and depot field — and the ones to call from your own integrations.
 
-Files are stored under `tcms-data/{collection}/{id}/{property}/[{path}/]{filename}` and served back over the public `imageworks` / `download` / `stream` endpoints documented in [File Downloads & Streaming](#file-downloads--streaming).
+Files are stored under `tcms-data/{collection}/{id}/{property}/[{path}/]{filename}` and served back over the public `imageworks` / `download` / `stream` endpoints documented in [File Downloads & Streaming](#file-downloads-streaming).
 
 ### Save a File to a Property
 

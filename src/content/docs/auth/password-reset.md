@@ -299,7 +299,7 @@ Resets a user's password using a valid token.
 
 ## Related Documentation
 
-- [Authentication Configuration](/operations/configuration#authentication/)
+- [Authentication Configuration](/operations/configuration/)
 - [Whitelabel Templates](/admin/whitelabel/)
-- [Email/SMTP Configuration](/operations/configuration#email-smtp/)
+- [Email/SMTP Configuration](/operations/configuration/)
 - [Mailer Collection](/notifications/mailer/)
