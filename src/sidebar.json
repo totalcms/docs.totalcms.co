@@ -133,8 +133,8 @@
                         "slug": "fields/price"
                     },
                     {
-                        "label": "Radio & Multicheckbox",
-                        "slug": "fields/radio-multicheckbox"
+                        "label": "Radio & Checklist",
+                        "slug": "fields/radio-checklist"
                     },
                     {
                         "label": "Secret",
@@ -594,6 +594,10 @@
             {
                 "label": "Security",
                 "slug": "operations/security"
+            },
+            {
+                "label": "Impersonation",
+                "slug": "operations/impersonation"
             },
             {
                 "label": "Server Sizing",

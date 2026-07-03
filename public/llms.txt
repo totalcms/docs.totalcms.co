@@ -66,7 +66,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Number & Range](https://docs.totalcms.co/fields/number-range/): Configure number and range input fields in Total CMS with min, max, and step settings for precise numeric value control.
 - [Password](https://docs.totalcms.co/fields/password/): Set up password fields in Total CMS with automatic confirmation input, match validation, and customizable placeholder text.
 - [Price](https://docs.totalcms.co/fields/price/): Locale-aware currency price field — live formatting as you type, a per-currency symbol and icon, configurable currency/decimals/locale, stored as a plain number.
-- [Radio & Multicheckbox](https://docs.totalcms.co/fields/radio-multicheckbox/): Configure radio button and multicheckbox fields in Total CMS with responsive fieldGrid and fieldColumns layout settings for multi-column option displays.
+- [Radio & Checklist](https://docs.totalcms.co/fields/radio-checklist/): Configure radio button and checklist fields in Total CMS with responsive fieldGrid and fieldColumns layout settings for multi-column option displays.
 - [Secret](https://docs.totalcms.co/fields/secret/): Mask plaintext-stored sensitive values like API keys and tokens using the secret field type, with a built-in show/hide toggle and password-manager opt-out.
 - [Select](https://docs.totalcms.co/fields/select/): Configure select and multiselect dropdown fields in Total CMS with the clearValue button setting for optional selection clearing.
 - [Styled Text](https://docs.totalcms.co/fields/styled-text/): Configure the Tiptap rich text editor in Total CMS with toolbar options, inline styles, HTML snippets, color palettes, and image upload rules.
@@ -74,7 +74,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Text Inputs](https://docs.totalcms.co/fields/text-inputs/): Configure text and textarea fields in Total CMS with maxlength, minlength, pattern validation, readonly, disabled, rows, and HTML sanitization settings.
 
 #### Field Options
-- [Static Options](https://docs.totalcms.co/fields/static-options/): Define static options for select, radio, multicheckbox, and list fields in Total CMS using simple lists, label/value pairs, or grouped options.
+- [Static Options](https://docs.totalcms.co/fields/static-options/): Define static options for select, radio, checklist, and list fields in Total CMS using simple lists, label/value pairs, or grouped options.
 - [Property Options](https://docs.totalcms.co/fields/property-options/): Auto-populate select options and datalists from existing field values in a Total CMS collection for dynamic, data-driven form fields.
 - [Relational Options](https://docs.totalcms.co/fields/relational-options/): Link form field options to another Total CMS collection or DataView with multi-field labels, sorting, and include/exclude filtering for relational data.
 - [Sorting Options](https://docs.totalcms.co/fields/sorting-options/): Sort form field options alphabetically or in custom order using the sortOptions setting in Total CMS schema property definitions.
@@ -194,6 +194,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Apache](https://docs.totalcms.co/operations/apache/): Apache and LiteSpeed rewrite rules for Total CMS — what ships in the box, where each .htaccess file lives, and common customizations like HTTPS redirects, caching, and compression.
 - [Nginx](https://docs.totalcms.co/operations/nginx/): Configure Nginx to work with Total CMS — front-controller routing, blocking the tcms-data directory, PHP-FPM, and snippets for the recommended docroot layout.
 - [Security](https://docs.totalcms.co/operations/security/): Secure your Total CMS installation with tcms-data folder protection, HTTPS setup, HTML and SVG sanitization, upload restrictions, and security headers.
+- [Impersonation](https://docs.totalcms.co/operations/impersonation/): Super-admins can temporarily browse and edit the site as another user to debug permission and access issues. All actions taken while impersonating are recorded in the access log.
 - [Server Sizing](https://docs.totalcms.co/operations/server-sizing/): Choose the right CPU, RAM, and storage for Total CMS with guidance on APCu cache tuning, PHP-FPM workers, Redis setup, and multi-site hosting.
 - [Filesystem](https://docs.totalcms.co/operations/filesystem/): Explore the Total CMS filesystem structure including tcms-data directory, collection JSON files, object assets, indexes, and custom schema storage.
 - [Sync](https://docs.totalcms.co/operations/sync/): Push and pull schemas and templates between local development and production Total CMS instances using the CLI or admin dashboard.
