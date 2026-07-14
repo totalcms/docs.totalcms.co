@@ -1,17 +1,23 @@
-/* Total CMS Documentation - Custom Styles */
+/* Total CMS Documentation - Custom Styles
+   Dark surfaces/text mirror totalcms.co (css/main.css :root):
+   bg #090e1b · card #0d1322 · border #1b2336 */
 
 :root {
 	--sl-color-accent-low: #1a3a5c;
 	--sl-color-accent: #2563eb;
 	--sl-color-accent-high: #93bbfc;
-	--sl-color-white: #ffffff;
-	--sl-color-gray-1: #eceef2;
-	--sl-color-gray-2: #c0c2c7;
-	--sl-color-gray-3: #888b96;
-	--sl-color-gray-4: #545861;
-	--sl-color-gray-5: #353841;
-	--sl-color-gray-6: #24272f;
-	--sl-color-black: #17181c;
+
+	/* text — main site text ramp */
+	--sl-color-white: #f4f6fb;
+	--sl-color-gray-1: #dfe4ee;
+	--sl-color-gray-2: #aab3c5;
+	--sl-color-gray-3: #8892a6;
+	--sl-color-gray-4: #6b7688;
+
+	/* surfaces — main site navy ramp */
+	--sl-color-gray-5: #1b2336;   /* borders / hairlines */
+	--sl-color-gray-6: #0d1322;   /* panels / code blocks */
+	--sl-color-black: #090e1b;    /* page, header, sidebar background */
 
 	/* Wider content area (Starlight default is 45rem) */
 	--sl-content-width: 55rem;
