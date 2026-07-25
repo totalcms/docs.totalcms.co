@@ -7,8 +7,8 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 ## Key Features
 
 - Flat-file JSON storage (no database required)
-- 24 reserved collection schemas plus unlimited custom schemas
-- Twig templating with 50+ custom filters and functions
+- 33 reserved collection schemas plus unlimited custom schemas
+- Twig templating with 89 custom filters and 49 custom functions
 - Full REST API for headless CMS usage
 - Admin dashboard with 20+ form field types
 - Image processing with watermarking and OKLCH color handling
@@ -26,6 +26,9 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - One-click updates with rollback and maintenance mode
 - Push/pull sync between development and production
 - Tiptap rich text editor and inline template designer
+- Automations — schedule, webhook, and event-triggered handlers with a job queue and run history
+- Built-in MCP server (Pro) — exposes collections, schemas, and search to AI agents over OAuth 2.1
+- Installs with Composer: `composer create-project totalcms/totalcms`
 
 ## Documentation
 
