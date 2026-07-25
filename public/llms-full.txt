@@ -280,7 +280,9 @@ Choose your preferred language for the admin interface:
 | `en_GB` | English (UK) |
 | `de_DE` | Deutsch |
 | `es_ES` | Español |
+| `it_IT` | Italiano |
 | `nl_NL` | Nederlands |
+| `pl_PL` | Polski |
 
 > This setting only affects the admin. Your public-facing site uses its own translations.
 
@@ -324,7 +326,17 @@ You can change the license later from **Settings → License Manager** in the ad
 
 ![Setup Wizard — License](docs/get-started/images/wizard-license.jpg)
 
-### 6. Server config
+### 6. Error monitoring
+
+Choose whether Total CMS may report application errors to the developer. Leaving this on means bugs get discovered and fixed quickly — often before you notice anything went wrong, and without you having to file a report.
+
+Reports contain only the error and where it occurred in the code. No content, credentials, or private data ever leaves your server — the reporting client is explicitly configured to never attach request bodies, cookies, session data, or IP addresses. See [Error Monitoring](docs/operations/security#error-monitoring) for the full details.
+
+You can change this choice at any time in **Settings → General** ("Share Application Errors with Developer").
+
+<!-- TODO: screenshot — docs/get-started/images/wizard-error-monitoring.jpg -->
+
+### 7. Server config
 
 The wizard renders the exact rewrite-rule snippets you need for your server. For Composer installs, the Apache rules ship in `.htaccess` automatically — the wizard tells you everything's already in place. For other servers (Nginx, Caddy), copy the snippet into your server config and reload.
 
@@ -14746,14 +14758,16 @@ Reverses obfuscation applied by `obfuscate`.
 ```
 
 #### `encrypt(string $string): string`
-Encrypts a string using the application's encryption key.
+Encrypts a string with AES-256, keyed to a secret unique to your deployment. The key is generated automatically on first use and stored at `tcms-data/.system/site.key` — it is never part of the Total CMS source, so possessing the code doesn't allow decrypting your data.
 
 ```twig
 {{ sensitiveData | encrypt }}
 ```
 
+> The site key is part of your deployment's identity: include `tcms-data/.system/site.key` in backups, and note that values encrypted on one site only decrypt on a site with the same key (`tcms pull`/`push` sync it automatically).
+
 #### `decrypt(string $string): string`
-Decrypts a string that was encrypted with `encrypt`.
+Decrypts a string that was encrypted with `encrypt`. Values encrypted by Total CMS versions before the per-site key existed continue to decrypt transparently.
 
 ```twig
 {{ encryptedData | decrypt }}
@@ -21130,14 +21144,16 @@ Grant it when creating the key: in **Utilities → API Keys → New**, include *
 
 ## Synchronous vs. asynchronous
 
-The trigger's `sync` flag controls the response:
+The trigger's `sync` flag (the **Synchronous** toggle in the trigger form) controls the response. It is **`false` by default** — webhooks queue their runs unless you opt in to synchronous execution:
 
 | `sync` | Behaviour | Response |
 |--------|-----------|----------|
-| on | The handler runs inline and the request blocks until it finishes. | `200` with the handler's return value as JSON. |
-| off | The run is queued and processed on the next `automations:process` tick. | `202 Accepted` with `{ "status": "queued", "runId": "…" }`. |
+| `true` | The handler runs inline and the request blocks until it finishes. | `200` with the handler's return value as JSON. |
+| `false` (default) | The run is queued and processed on the next `automations:process` tick. | `202 Accepted` with `{ "status": "queued", "runId": "…" }`. |
 
 Use **sync** when the caller needs the result (e.g. a lookup). Use **async** for fire-and-forget work, or anything slow — the caller isn't kept waiting and a long handler can't tie up a web worker.
+
+> When editing trigger JSON by hand, `sync` must be the literal boolean `true` — string values like `"true"` or `"on"` are treated as `false` (the run falls back to the safe queued path).
 
 ## The payload
 
@@ -22068,7 +22084,11 @@ Generate Nginx rewrite rules for pretty URLs.
 
 ### quickActionButton()
 
-Build an HTMX-powered quick action button for admin operations.
+Build an HTMX-powered quick action button. The route is relative to the site
+base, so it can target any route — include the `/api` prefix for API routes,
+or point at a public route like an [automation webhook](../automations/webhooks.md).
+(A leading slash is optional; `/api/cache/clear` and `api/cache/clear` are
+equivalent.)
 
 ```twig
 {{ cms.admin.quickActionButton('Clear Cache', '/api/cache/clear', {
@@ -22076,6 +22096,11 @@ Build an HTMX-powered quick action button for admin operations.
     confirm: 'Are you sure?',
     reload: true,
     class: 'btn-danger'
+})|raw }}
+
+{# Fire an automation webhook (sameOrigin auth) from a page #}
+{{ cms.admin.quickActionButton('Run Report', '/automations/build-report', {
+    confirm: 'Queue the report build?'
 })|raw }}
 ```
 
@@ -22086,6 +22111,13 @@ Build an HTMX-powered quick action button for admin operations.
 | `reload` | bool | `false` | Reload page after action completes |
 | `redirect` | string | `''` | Redirect URL after action completes |
 | `class` | string | `''` | Additional CSS classes |
+
+The response is not swapped into the page (`hx-swap: none`) — use `reload` or
+`redirect` when the action's effect should become visible.
+
+> Prior to 3.5.0-rc.13 the `/api` prefix was added automatically, which made it
+> impossible to target public routes. Update any custom templates by adding the
+> prefix explicitly (`'/cache/clear'` → `'/api/cache/clear'`).
 
 ## Edition Restrictions
 
@@ -23524,6 +23556,13 @@ fetch('/api/collections/blog', {
     }
 });
 ```
+
+The CSRF token is **required** on state-changing requests (POST, PUT,
+PATCH, DELETE) that authenticate via the session cookie — send it as the
+`X-CSRF-Token` header or a `csrf_token` body field, or the request is
+rejected with 403. GET requests, API-keyed requests, and OAuth Bearer
+requests never need it. Scripted callers should use an API key instead
+of a session cookie.
 
 **When to use session authentication:**
 - Admin panel JavaScript
@@ -25544,9 +25583,13 @@ curl -H "Authorization: Bearer tcms_1234567890abcdef1234567890abcdef" \
 
 ### Authentication Precedence
 
-If both session authentication and API key are present, Total CMS uses:
-1. Session authentication (if valid session exists)
-2. API key authentication (fallback)
+On endpoints that accept both methods, Total CMS checks in this order:
+1. OAuth Bearer token (if already validated upstream)
+2. API key (if an `X-API-Key` or `Authorization` header is present — an
+   invalid key is rejected with an error and never falls back to the
+   session cookie)
+3. Session authentication (state-changing requests additionally require
+   the CSRF token — see [REST API](docs/apis/rest-api))
 
 ## Security Best Practices
 
@@ -28132,6 +28175,28 @@ tcms-data/extensions/
 ```
 
 Total CMS also ships **bundled extensions** in `resources/extensions/` — included with every install but disabled by default. They appear in the admin alongside user-installed extensions but cannot be removed (only disabled). See [Bundled Extensions](docs/extensions/bundled).
+
+### Project Extensions
+
+Site-specific extensions can instead live in an `extensions/` directory at the **project root**, next to `tcms-data/`:
+
+```
+my-site/
+    extensions/
+        my-vendor/
+            my-extension/
+                extension.json
+                Extension.php
+                ...
+    tcms-data/
+    public/
+```
+
+The directory is purely convention-based — if `extensions/` exists it is scanned, exactly like `tcms-data/extensions/` (same layout, same manifest, same lifecycle). The difference is ownership: `tcms-data` is content (backed up, usually gitignored), while a project extension is **code that belongs in your site's git repo**. Keeping it outside `tcms-data` means committing it requires no gitignore gymnastics, and `git pull` deploys it.
+
+Project extensions can be disabled but not removed from the admin or CLI — they belong to source control, so removal happens there.
+
+If the same extension id exists in more than one location, the most specific copy wins: project over `tcms-data/extensions/` over bundled. A log entry is written whenever one copy shadows another.
 
 ## Quick Example
 
@@ -32774,7 +32839,16 @@ example.com {
 
 ## Additional Security Headers
 
-Total CMS automatically sets several security headers, but you can enhance them:
+Total CMS sets security headers on every admin, login, and setup page automatically — no server configuration needed:
+
+| Header | Value |
+|---|---|
+| `Content-Security-Policy` | `frame-ancestors 'self'` (clickjacking protection) |
+| `X-Frame-Options` | `SAMEORIGIN` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+
+Your **public pages** are a different story: whether they may be framed, what referrer they send, and any Content Security Policy are decisions for your site, not the CMS. Set those at the server level if you want them:
 
 ### Apache
 ```apache
@@ -32806,6 +32880,18 @@ header {
     Permissions-Policy "geolocation=(), microphone=(), camera=()"
 }
 ```
+
+## Error Monitoring
+
+Total CMS can report application errors to the developer so bugs get discovered and fixed quickly — often before you notice anything went wrong, and without you having to file a report. You choose during the setup wizard, and you can change your mind at any time in **Settings → General** ("Share Application Errors with Developer").
+
+**What a report contains:** the exception, its stack trace, the request URL and method, and the Total CMS version.
+
+**What is never sent:** the reporting client is explicitly configured to never attach request bodies, cookies, session data, IP addresses, or user information. Your content, credentials, and CMS data stay on your server.
+
+**Air-gapped deployments:** installing an [offline license](docs/operations/licenses#offline-licensing) disables error monitoring automatically at the configuration layer — a network-isolated install never attempts an outbound call, regardless of the settings toggle.
+
+When disabled, errors are still logged locally on your server — see the log files in your data directory.
 
 ## Regular Security Maintenance
 
@@ -33392,6 +33478,12 @@ fields get added to the collection digest.
 Custom schemas will be stored inside of a
 `.schemas` folder inside the `tcms-data` directory.
 
+## The .system Directory
+
+`tcms-data/.system/` holds the installation's operational state — settings (`settings.json`), setup-wizard progress, extension state and permissions, OAuth signing keys, and (on zip installs) logs.
+
+One file deserves a special call-out: **`site.key`** is your deployment's encryption secret, generated automatically the first time the `encrypt` Twig filter or an encrypted download URL is used. Values encrypted on this site can only be decrypted with this key. It is part of your deployment's identity: **always include `tcms-data/.system/` in backups**, and know that `tcms pull`/`push` sync it between environments automatically.
+
 ## Logs
 
 Total CMS writes its log files to a layout-aware location:
@@ -33874,6 +33966,12 @@ When you export your current CMS data to JumpStart format:
 - **Images**: Can use `"image": "imageBlur"` factory rules
 - **Galleries**: Can use factory rules to generate sample gallery items
 
+> **Note**: Schema-level `factory` definitions apply only to entries in the
+> `factory` array. Objects imported through the `objects` array are treated
+> as real data — only image/gallery faker rules written directly into the
+> object data are generated, and any property you omit falls back to its
+> schema default (it is never faker-filled).
+
 > **💡 Tip**: You may want to review and clean up the exported objects before creating your final JumpStart
 > definition. Consider moving repetitive objects to the factory array for easier maintenance.
 
@@ -34279,6 +34377,22 @@ Trial licenses have full Pro-level access.
 ## Development License
 
 Development licenses have full Pro-level access.
+
+## Offline Licensing
+
+For deployments that cannot (or must not) reach the internet — air-gapped networks, classified environments, strict data-sovereignty setups — Total CMS supports a fully offline license. Available for Pro licenses; [contact us](https://totalcms.co/support) to arrange one for a specific deployment.
+
+**How it works:** we generate a cryptographically signed license file for your domain, which you install at:
+
+```
+tcms-data/.system/{domain}-offline-license.key
+```
+
+The file is checked before any online validation, so with it in place there is **no validation callback, no periodic check-in, and no outbound connectivity of any kind**. The signature is verified locally against a public key that ships with Total CMS.
+
+Installing an offline license also **disables error monitoring automatically** — a network-isolated deployment never attempts an outbound call, regardless of the settings toggle. See [Error Monitoring](docs/operations/security#error-monitoring).
+
+Updates for offline deployments are downloaded separately, transferred across the network boundary by whatever process your environment permits, and installed manually.
 
 ## Edition Simulation
 
