@@ -478,6 +478,10 @@
             {
                 "label": "Index Filter",
                 "slug": "apis/index-filter"
+            },
+            {
+                "label": "WordPress Publishing",
+                "slug": "apis/wordpress-publishing"
             }
         ]
     },
@@ -487,6 +491,10 @@
             {
                 "label": "MCP Server",
                 "slug": "mcp/server"
+            },
+            {
+                "label": "Editing with AI Agents",
+                "slug": "mcp/agent-editing"
             },
             {
                 "label": "Saved-Query Tools",

@@ -1222,11 +1222,26 @@ Current number of active objects in the collection.
 **Type:** `string` (ISO 8601 datetime)
 **Read-only:** Yes
 
-Timestamp of the most recent object modification in the collection.
+The **content** timestamp: when an object in this collection was last created, updated, or deleted. Says nothing about the collection's settings — see `updated` for that.
 
 ```json
 {
     "lastUpdated": "2024-01-15T14:30:00+00:00"
+}
+```
+
+---
+
+### updated
+
+**Type:** `string` (ISO 8601 datetime)
+**Read-only:** Yes
+
+The **settings** timestamp: when this collection's configuration last changed (URL, MCP card, sitemap, access, schema overrides…). It is delta-stamped — the save compares the configuration before writing, so content activity and counter bumps never move it. Sync uses it to tell which side has the newer configuration, and preserves it verbatim when settings arrive via sync.
+
+```json
+{
+    "updated": "2026-07-30T09:12:00+00:00"
 }
 ```
 
@@ -3674,6 +3689,33 @@ Get the list of property types in a schema that are incompatible with deck usage
 
 These settings can be applied to **any field type**. They control universal behaviors like hiding fields and conditional visibility.
 
+## Help
+
+The `help` string renders under the field in the admin form. **It is rendered as
+HTML**, so you can mark up an explanation:
+
+```json
+"data": {
+	"type": "string",
+	"field": "json",
+	"label": "Page Data",
+	"help": "Exposed to the template as <code>page.data.*</code>. See <a href=\"docs/site-builder/overview\">the guide</a>."
+}
+```
+
+Because it is HTML, **escape any tag you want the reader to see literally**:
+
+```json
+"help": "The &lt;title&gt; tag. Include the product name."
+```
+
+Writing `<title>` unescaped would otherwise emit a real `<title>` element. As a
+safety net, tags whose content model is raw text — `title`, `textarea`, `script`,
+`style`, `iframe`, `xmp`, `noscript`, `noembed`, `plaintext` — are escaped for you
+rather than emitted, because a single one of them left open makes the browser
+swallow the remainder of the admin page and the form truncates from that field
+down. Every other tag renders as markup, so escaping the rest is up to you.
+
 ## Autogen
 
 The `autogen` setting automatically generates a field's value from other fields using template variables. This works on any text-based field type (text, textarea, hidden, email, url, etc.).
@@ -4739,6 +4781,87 @@ object is created or updated.
 
 ## Deck Item Label
 
+Read this first if you are writing deck data by hand — in a JumpStart file, through
+the API, or from a script. The admin handles all of this for you; these rules only
+surface when you author the JSON yourself.
+
+A deck is **a dictionary of named items, not a list**. Each key names one item, and
+that key must also appear as the item's `id`:
+
+```json
+{
+	"myDeck": {
+		"first_item":  { "id": "first_item",  "name": "First",  "qty": 1 },
+		"second_item": { "id": "second_item", "name": "Second", "qty": 2 }
+	}
+}
+```
+
+Three rules the runtime enforces:
+
+1. **A dictionary, never an array.** `[{...}, {...}]` is rejected — items are keyed so
+   templates can reach a specific one by name.
+2. **Keys may contain only letters, numbers, and underscores.** No hyphens (see
+   *Important Notes* below).
+3. **An item's `id` must equal its key.** Omitting `id` is allowed; contradicting the
+   key is not.
+
+In Twig, iterate the deck or address an item by name:
+
+```twig
+{% for item in object.myDeck %}{{ item.name }}{% endfor %}
+
+{{ object.myDeck.first_item.name }}
+```
+
+## Defining a Deck in a Schema
+
+A deck points at a **second schema** describing one item, via `schemaref` plus a
+matching `patternProperties` entry:
+
+```json
+"myDeck": {
+	"$ref": "https://www.totalcms.co/schemas/properties/deck.json",
+	"field": "deck",
+	"label": "My Deck",
+	"schemaref": "https://www.totalcms.co/schemas/custom/my-item.json",
+	"settings": { "deckItemLabel": "${name}" },
+	"patternProperties": {
+		"^[a-z0-9][a-z0-9_]*$": {
+			"$ref": "https://www.totalcms.co/schemas/custom/my-item.json"
+		}
+	}
+}
+```
+
+The item schema is an ordinary object schema, and — like every Total CMS schema — it
+**must define an `id` property**, not merely list `id` in `required`. Leaving it out
+produces a validation error that points at your data (`The required properties (id)
+are missing`) when the real problem is the schema:
+
+```json
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://www.totalcms.co/schemas/custom/my-item.json",
+	"id": "my-item",
+	"type": "object",
+	"title": "My Item",
+	"properties": {
+		"id":   { "$ref": "https://www.totalcms.co/schemas/properties/slug.json", "field": "id", "label": "Key" },
+		"name": { "type": "string", "field": "text", "label": "Name" }
+	},
+	"required": ["id"],
+	"index": ["id", "name"]
+}
+```
+
+Use `"field": "deckTable"` instead of `"deck"` to render the same data as an editable
+table in the admin — a good fit for rows of short, uniform values.
+
+---
+
+# Deck Item Label
+
 The `deckItemLabel` setting controls how deck items are labeled in the admin interface. It uses the same template syntax as the `autogen` setting (see [ID Autogen](docs/fields/id) documentation), but displays raw values without slugification.
 
 **Default:** `${id}` (displays the item's ID)
@@ -4783,7 +4906,7 @@ The `deckItemLabel` setting controls how deck items are labeled in the admin int
 > **Note:** `${oid}` is not supported for deck items. Use `${uuid}` or `${uid}` for auto-generated deck item IDs instead.
 
 - **No slugification:** Values are displayed as-is without URL-safe transformation. If a field contains "The Big Red Fox", the label will show exactly that.
-- **Twig compatibility:** Deck item IDs are automatically sanitized to use underscores instead of hyphens for Twig dot notation access (`mydeck.item_id`).
+- **Twig compatibility:** Deck item IDs may contain only letters, numbers, and underscores — **hyphens are not allowed**. The admin converts hyphens to underscores as you type, so this only bites when you write deck data by hand (JumpStart files, the API, imports), where a hyphenated key is rejected. The rule exists so items are readable with dot notation in Twig (`mydeck.item_id` rather than `mydeck['item-id']`).
 - **SVG support:** If a field contains SVG code, it will be displayed as a small icon in the label.
 - **Long text:** Labels automatically truncate with ellipsis (...) if content is too long.
 
@@ -13920,7 +14043,7 @@ Each tag has an internal version counter. A fragment's storage key embeds the cu
 
 ## Notes
 
-- Fragments are stored in the normal Total CMS cache (APCu → Redis → Memcached → filesystem) and are wiped by any global cache clear (devmode, `/emergency/cache/clear`).
+- Fragments are stored in the normal Total CMS cache (APCu → Redis → Memcached → filesystem) and are wiped by any global cache clear (devmode, `/api/emergency/cache/clear`).
 - Caching is skipped automatically in **devmode** so you always see fresh output while editing.
 - Set `cache.fragments` to `false` in config to disable the tag globally; `cache.fragmentTtl` sets the default lifetime.
 - If a cache backend errors, the block falls back to a live render — it never breaks the page.
@@ -25715,6 +25838,8 @@ The private key is the root of trust for every token your site issues. The key l
 
 ---
 
+> **Behind a firewall?** User-agent-filtering WAF rules (7G/8G and similar) block OAuth discovery and token requests from non-browser clients. If a client reports the server as incompatible or a connector asks for manual credentials despite dynamic registration being enabled, check the firewall before the OAuth config — see [MCP Server](docs/mcp/server) for the symptom guide.
+
 ## Setting up a static client
 
 Use static clients for ActivePieces, Zapier, n8n, or any integration where you control the configuration on both sides. You create the client once in the admin and paste the credentials into the third-party app.
@@ -26053,6 +26178,31 @@ exclude=property                          # Shorthand for property:true
 ```
 
 **Logic:** If ANY condition matches, the object is excluded.
+
+### Operators
+
+Both include and exclude accept a three-part `property:operator:value` form for comparisons beyond equality:
+
+```
+include=price:lte:500000                  # price at or below 500000
+include=reviewed:lte:2026-07-26           # reviewed on or before a date
+include=category:in:tech|travel|food      # category is one of a list
+exclude=status:in:draft|archived          # status is none of a list
+```
+
+| Operator | Meaning |
+|---|---|
+| `eq` | Equal (default when no operator is given) |
+| `ne` | Not equal |
+| `lt` / `lte` | Less than / less than or equal |
+| `gt` / `gte` | Greater than / greater than or equal |
+| `contains` | Case-insensitive substring match |
+| `starts` / `ends` | Case-insensitive prefix / suffix match |
+| `in` / `notin` | Value is in / not in a pipe-separated list (`a\|b\|c`) |
+
+The ordered operators (`lt`, `lte`, `gt`, `gte`) compare numbers numerically and dates chronologically — a bare `2026-07-26` cutoff works against full ISO-8601 stored values. Values that are neither both numbers nor both dates have no defined order and match nothing.
+
+List values for `in`/`notin` use `|` as the item separator, so `,` remains unambiguously a clause boundary.
 
 ### Search
 
@@ -26670,6 +26820,117 @@ var_dump($matches); // true or false
 
 ---
 
+## WordPress Publishing (XML-RPC)
+
+Total CMS answers the same XML-RPC calls WordPress does, so desktop and iOS writing apps that already know how to talk to WordPress can publish straight into a `blog`-schema collection without knowing anything about T3's own API.
+
+**Requires the Pro edition or higher.** Trials count as Pro for testing. The endpoint is off by default — see [Setup](#setup) below.
+
+## Which apps work
+
+Tested against the classic WordPress XML-RPC dialect (MetaWeblog, Blogger, and the `wp.*` extensions):
+
+- **MarsEdit** (macOS)
+- **Byword** (macOS/iOS)
+- **Ulysses** (macOS/iOS)
+- **Open Live Writer** (Windows)
+
+**iA Writer is *not* supported.** iA Writer's WordPress publishing talks to the WordPress **REST API** (`/wp-json/wp/v2/...`), not XML-RPC — a completely different protocol that Total CMS does not implement. Do not enable this feature expecting iA Writer to connect; it will not.
+
+## Setup
+
+1. In the admin, go to **Settings → WordPress Publishing** and turn on **Enable XML-RPC Publishing**.
+2. Go to **Utilities → API Keys** and create a new key. Under **Select Endpoints**, check **both**:
+   - **XML-RPC Publishing (`/xmlrpc.php`)** — required to authenticate at all
+   - **each collection** you want to publish into (e.g. `/collections/blog`)
+
+   A key scoped to only the XML-RPC endpoint authenticates fine but is not scoped to any blog collection — it has nowhere to publish. `blogger.getUsersBlogs` / `wp.getUsersBlogs` fault in this case rather than silently reporting zero blogs, and the fault message names this exact fix. This is the single likeliest support question this feature will generate, so if a client connects but shows an error instead of a blog in its site list, this is almost certainly why. Go back and add the collection.
+3. Grant HTTP methods on the key to match what the app needs to do: `GET` to read, `POST` to create, `PUT` to edit, `DELETE` to remove. A read-only key can list and open posts but not publish.
+4. In your writing app, add a new WordPress/MetaWeblog site using:
+   - **Endpoint URL** — see below
+   - **Username** — any Total CMS user's login. This is **not verified as a password** — it is used only to attribute authorship on posts you create. Whatever you type here just needs to resolve to a real user for the author name to show up correctly; a value that doesn't resolve to anyone still works, falling back to the key's name.
+   - **Password** — the API key itself
+
+Many clients (MarsEdit included) can also discover the endpoint automatically from just your site's home page URL, via the RSD document served at `{endpoint}?rsd`. This only works if the page the client fetches renders `{{ cms.assetsHead() }}` — that call is what emits the `<link rel="EditURI">` tag clients look for, and it only appears when XML-RPC Publishing is enabled. A template that doesn't render `cms.assetsHead()` won't advertise the endpoint, and auto-detect will fail even though the endpoint itself works fine. If auto-detect doesn't find it, just paste the **Endpoint URL** directly — that always works.
+
+## Endpoint URLs
+
+Two shapes are served, both under the site root — not under `/api`:
+
+| Route | Collection selection |
+|---|---|
+| `POST {site}/xmlrpc.php` | The client's `blogid` selects the collection (a string, e.g. `blog`). `blogger.getUsersBlogs` / `wp.getUsersBlogs` lists every collection the key can reach |
+| `POST {site}/xmlrpc/{collection}` | The collection is pinned by the URL; `blogid` is ignored entirely |
+
+Use the collection-pinned form (`/xmlrpc/{collection}`) if your host's firewall or security scanner blocks the literal path `xmlrpc.php` — a common default rule, since a bare `xmlrpc.php` is one of the most probed paths on the web. It's also useful for clients that hardcode `blogid=1`.
+
+On a subfolder install, both shapes hang off the same subfolder your site already lives in — e.g. `https://example.com/mysite/xmlrpc.php` — there is nothing extra to configure.
+
+**With more than one blog collection granted:** several WordPress methods (`metaWeblog.getPost`, `metaWeblog.editPost`, `mt.getPostCategories`, `mt.setPostCategories`, `blogger.deletePost`) carry a post id but no `blogid` at all — that's the WordPress protocol, not a T3 limitation. These operations locate the post by looking for it in every collection the key can see. If exactly one contains it, the call proceeds normally. If the same id happens to exist in two or more granted collections, the call faults rather than guessing which one you meant — use the `/xmlrpc/{collection}` endpoint form to target the collection directly and remove the ambiguity.
+
+A bare `GET` to either endpoint returns the plain-text string `XML-RPC server accepts POST requests only.` (used by some clients to verify the URL); `GET {site}/xmlrpc.php?rsd` returns the RSD discovery document.
+
+## What round-trips and what doesn't
+
+- **Images are not supported over this endpoint in v1.** Attempting to attach media (`metaWeblog.newMediaObject`, `wp.uploadFile`) returns a clear fault explaining that images must be added in the **Total CMS admin**, where cropping and alt text are also available. Because MarsEdit uploads media as part of publishing a post, **a post containing an image cannot be published from the app at all** — the failure surfaces as a publish error, not a silently dropped image. Text-only posts are unaffected. `wp.getOptions` reports `post_thumbnail: false`, which tells clients that support the hint not to offer featured-image UI in the first place.
+- **A hero image set in the admin survives an edit made from a writing app.** Writes are patched onto the existing object, never replaced wholesale, and the WordPress post struct has no field for `image`/`gallery`/custom fields — so a text-only edit sent from MarsEdit cannot touch them.
+- **Posts written in T3's own Tiptap editor may lose T3-specific markup once edited by a writing app.** Content round-trips as plain HTML; standard tags and attributes survive, but Tiptap extensions like `RawHTML` blocks and `InlineClass` spans can come back simplified or stripped after passing through a third-party editor. This is inherent to any round-trip through a different HTML editor, not a T3-specific bug.
+- **Renaming a post (changing its ID/slug) is an admin-only operation.** `wp_slug` is honored on *create* only — in T3 the object ID is also its storage location and drives its public URL, so accepting a rename over this endpoint would mean silently deleting and recreating the post, breaking uploaded files and inbound links. Editing a post's title from a writing app does not rename it.
+- **`private` posts and scheduled (`future`) posts both arrive in T3 as drafts.** T3 has no private-post concept, and core has no autopublish scheduler, so both statuses map to `draft: true` — failing hidden rather than accidentally public.
+- **The `wp.*` dialect only splits `post_content` on `<!--more-->` for a post that already has its own extended entry.** A post imported from WordPress carries its `content` verbatim, including any inline `<!--more-->`, with no `extra` set. Editing that post through `wp.editPost` (title-only or otherwise) leaves the marker exactly where it is — it is never split into `content`/`extra` — because a writing app echoes the full `post_content` back on every edit, and splitting on a marker we didn't create would truncate the visible body. `wp.newPost` follows the same rule: a create has no existing post to consult, so a marker in a new post's `post_content` also stays inline. The split only ever runs when the post being edited already has a non-empty `extra`, which is exactly the metaWeblog dialect's `mt_text_more` — unaffected by any of this.
+
+## Authorization: access groups are not enforced
+
+The `username` parameter is display attribution only — it is never checked against a password, and access groups are not consulted at all for XML-RPC calls. **The API key's scopes (paths + HTTP methods) are the entire authorization story.** A key scoped to `/xmlrpc.php` + `/collections/blog` with `GET, POST, PUT, DELETE` can fully manage the `blog` collection regardless of which username was typed into the writing app, and regardless of what access group that username's user account belongs to elsewhere in the admin.
+
+## Field mapping
+
+| WordPress field | Total CMS `blog` field | Notes |
+|---|---|---|
+| `title` | `title` | |
+| `description` | `content` | HTML; T3's own upload URLs are expanded to absolute on read, and collapsed back to path-relative on write |
+| `mt_excerpt` | `summary` | |
+| `mt_text_more` | `extra` | |
+| `mt_keywords` | `tags` | Comma-separated string on the wire ↔ list array in storage |
+| `categories` | `categories` | Array of names — no numeric term-ID registry |
+| `date_created_gmt` / `dateCreated` | `date` | The GMT variant is preferred and converted to the site timezone; `dateCreated` is treated as already site-local |
+| `sticky` | `featured` | Only written when the client actually sends it |
+| `wp_slug` | `id` | **Create only** — ignored on edit, see above |
+| `post_status` / the `publish` flag | `draft` | `publish` → `draft: false`; `draft`/`pending`/`private` → `draft: true`; `future` → `draft: true` with the given `date` (no autopublish) |
+| `wp_author_display_name` | `author` | Read side; on write, **create only** — `metaWeblog.newPost` attributes the resolved username, but editing a post never changes its author |
+| `postid` | `id` | Carried as a string — T3 slugs pass through unchanged |
+| `permaLink` / `link` | — | Read-only, built from the collection's URL settings |
+| `wp_password`, `mt_allow_comments`, `mt_allow_pings`, `custom_fields`, `wp_post_thumbnail` | — | Accepted on the wire and silently ignored |
+
+A field a client never sends is never touched — `metaWeblog.editPost` patches only the keys present in the struct, so an app that edits only the title leaves every other field, including the hero image, exactly as it was.
+
+## Troubleshooting
+
+### Fault codes
+
+| Code | Meaning |
+|---|---|
+| `403` | Bad credentials — the password (API key) didn't validate for the XML-RPC path |
+| `401` | The key authenticated, but is not permitted to do this: either the HTTP method isn't in its scope (e.g. a GET-only key tried to publish), the call hit a deliberately unsupported method (media upload, pages), or `getUsersBlogs` found the key scoped to no blog collection at all |
+| `404` | Unknown post or blog — including a key that authenticates but has no `/collections/{id}` grant matching the target collection |
+| `429` | Rate limit exceeded for this IP (see the **Rate Limit** setting alongside the enable toggle) |
+| `-32601` | Unknown method — the call isn't one T3 registers at all |
+| `-32700` | Malformed request body |
+
+### "My client connects but getUsersBlogs faults instead of showing a site"
+
+The API key authenticated (it has the `/xmlrpc.php` grant) but was not also scoped to any `/collections/{id}` path. `blogger.getUsersBlogs` / `wp.getUsersBlogs` fault with a 401 explaining exactly this, rather than returning an empty list with no explanation. Go to **Utilities → API Keys**, edit the key, and grant `/collections` for every collection or `/collections/{id}` for one.
+
+### "The connection times out or is refused before I even see an error"
+
+Some hosts run a web application firewall or a security-scanner rule that blocks `xmlrpc.php` outright, since it's one of the most commonly abused WordPress paths on the internet — the request never reaches PHP at all, so nothing in Total CMS's logs will show it. Try the collection-pinned form instead: `{site}/xmlrpc/{collection}`.
+
+### "Attaching an image fails the whole post"
+
+Expected in v1 — see [What round-trips and what doesn't](#what-round-trips-and-what-doesnt) above. Publish the text, then add the image in the Total CMS admin.
+
+---
+
 
 ============================================================
 # MCP
@@ -26731,6 +26992,8 @@ Public access is **default-deny**. Anonymous requests get a 401 unless the opera
 
 For Claude Desktop / Claude Code: add your site under MCP servers in the client's settings — point at the `/mcp` URL and provide the API key as the Bearer token if the host supports it, otherwise as a header config.
 
+> **Server firewalls block MCP clients.** WAF rulesets that filter by user-agent (7G/8G firewall, some security plugins and host-level rules) 403 non-browser clients — which is every MCP client: claude.ai connectors, Claude Desktop, Claude Code, and `curl` alike. The symptom is an endpoint that works in a browser but fails from clients — a connector that errors or falls back to asking for manual credentials, or `curl` returning 403 with the default user-agent. Exempt `/mcp`, `/oauth/*`, and `/.well-known/*` from user-agent filtering (or drop the UA rules) before debugging anything else.
+
 ---
 
 ## Connecting an AI client via OAuth
@@ -26763,7 +27026,7 @@ A typical "read-only AI browser" connection requests `cms:read mcp:tools mcp:res
 
 ### Configuring a static client for Claude Desktop
 
-Dynamic registration is on by default and handles the zero-touch Claude Desktop flow automatically. If you've disabled it — or if you want a named client you can track and revoke independently — create a static client first:
+Dynamic registration is **off by default** (an unauthenticated endpoint that writes server state — see the toggle's help text for the trade-off). Turn it on in **Admin → Settings → OAuth Server → Allow Dynamic Registration** for the zero-touch Claude flow: until it's on, the discovery document doesn't advertise `registration_endpoint`, and clients either report the server as incompatible (Claude Code) or ask for a manual Client ID and secret (claude.ai connectors). If you'd rather not enable it — or want a named client you can track and revoke independently — create a static client instead:
 
 1. **Admin → Utilities → OAuth Clients → Create Client.**
 2. Name it something traceable: "Claude Desktop – Joe", "Cursor – Content Team".
@@ -26806,6 +27069,20 @@ Navigate to **Admin → Utilities → OAuth Grants**. Every active grant is list
 
 Deleting the client in **Admin → Utilities → OAuth Clients** cascades — all grants for that client are revoked at once. Useful when you retire a shared client that multiple users connected through.
 
+### Troubleshooting the first connection
+
+Every one of these has bitten a real setup. Match the symptom, apply the fix:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Claude Code: "Incompatible auth server: does not support dynamic client registration" | Dynamic registration is off (the default) | Enable **Allow Dynamic Registration**, or create a static client and connect with its Client ID |
+| claude.ai connector asks for a manual Client ID and secret | Same — DCR not advertised in discovery | Same as above |
+| OAuth errors about keys / empty `jwks.json` | Signing keys never generated | Run `tcms oauth:setup` once |
+| Works in a browser, but connectors/`curl` get 403 | A firewall (7G/8G, security plugin) filters non-browser user agents | Exempt `/mcp`, `/oauth/*`, `/.well-known/*` from UA rules |
+| Every request returns 401 | Wrong or revoked API key / token | Check the key; `WWW-Authenticate` on the 401 names the scheme it expects |
+| Agent connects but write tools are missing | Connected as the public or OAuth persona, not admin | Send the API key as `X-API-Key`; confirm with `tcms mcp:status` which persona sees which tools |
+| Login succeeds but token lacks access | Token missing `mcp:*` scopes | Re-authorize requesting `mcp:tools` (+ `mcp:resources`, `mcp:prompts` as needed) |
+
 ---
 
 ## Tool catalog
@@ -26846,19 +27123,20 @@ All tool descriptions are also visible to the AI client at runtime via `tools/li
 | `create_collection` | admin | Create a new collection bound to a schema. Errors on duplicate id. |
 | `create_object` | admin | Create a content object in a collection. Runs the same `ObjectSaver` path as the admin form — schema validation, slug generation, events. See *Binary fields* below. |
 | `update_object` | admin | Replace a content object by id. Idempotent. Full replace, not a partial merge — send the whole object. See *Binary fields* below. |
+| `patch_object` | admin | Merge a subset of fields into an existing object — omitted fields keep their current values, so no get/round-trip is needed. Containers (card/deck/list) replace whole. The safer default for targeted agent edits. See *Binary fields* below. |
 | `list_extensions` | admin | Every installed extension with id, name, enabled flag, capabilities. |
 | `clear_cache` | admin | **Destructive.** Flush every available cache backend. Returns per-backend status. |
 
-#### Binary fields on `create_object` / `update_object`
+#### Binary fields on the object write tools
 
-Image, file, gallery, and depot fields can't be written through MCP — they need an upload pipeline (multipart bodies, storage handles) that a JSON tool call doesn't carry. The tools handle this at the **payload level**, not the schema level:
+Image, file, gallery, and depot fields can't be written through MCP — they need an upload pipeline (multipart bodies, storage handles) that a JSON tool call doesn't carry. `create_object`, `update_object`, and `patch_object` all handle this at the **payload level**, not the schema level:
 
-- A collection that merely *contains* a binary field is fully writable — just **omit** those fields from your payload. On `create_object` they're left unset; on `update_object` they keep their current value (the update never wipes an image you didn't touch).
+- A collection that merely *contains* a binary field is fully writable — just **omit** those fields from your payload. On `create_object` they're left unset; on `update_object` and `patch_object` they keep their current value (a write never wipes an image you didn't touch).
 - If the payload actually sets a non-empty value on a binary field, the call is refused with an error naming the offending fields. Drop them and retry, or edit those fields in the admin UI.
 
 This means content-rich collections (blog posts with an optional hero image, etc.) work end-to-end from an agent. Set binary fields afterward in the admin UI, or via the admin clone feature.
 
-> Reading objects with `get_object` / `query_collection` returns binary fields too. If you fetch an object, edit a text field, and send it back to `update_object`, strip the binary fields first (or blank them) — otherwise the call is refused.
+> Reading objects with `get_object` / `query_collection` returns binary fields too. If you fetch an object, edit a text field, and send it back to `update_object`, strip the binary fields first (or blank them) — otherwise the call is refused. (`patch_object` sidesteps the whole issue: send only the fields you changed.)
 
 ---
 
@@ -27086,7 +27364,9 @@ For `localizedstyledtext` (locale-keyed objects), each locale's HTML is converte
 ## CLI reference
 
 ```bash
-# Show enabled state, edition gate, tool count by persona
+# Show enabled state, edition gate, and the tool list per persona.
+# Saved-query tools from collection MCP cards are included and
+# annotated "(saved query)"; --json lists them in `schema_tools`.
 tcms mcp:status
 
 # Invoke a tool locally without going through the HTTP endpoint
@@ -27199,6 +27479,105 @@ The full MCP server, including all of the following, ships in 3.5:
 - **MCP sampling** — letting the server request inference from the client. Not on the near-term roadmap.
 
 See the planning notes in `docs/planning/mcp-server.md` for the full forward roadmap.
+
+---
+
+## Editing Content with AI Agents
+
+The MCP server lets an AI agent (Claude Code, Cursor, claude.ai, …) read and
+write your site's content directly. This page is the workflow guide: which tool
+to reach for, and the one rule that keeps writes safe. For setup and the full
+tool catalog, see [MCP Server](docs/mcp/server).
+
+Writes require the **admin persona** (an `X-API-Key` header) or an OAuth token
+with write access. If `update_object` is missing from the agent's tool list,
+it is connected read-only.
+
+## Picking the right read tool
+
+Three read tools, three jobs:
+
+| You want… | Use | Not |
+|---|---|---|
+| items matching field values, sorted, paginated | `query_collection` with `include`/`exclude`/`sort` | `search_collection` |
+| free-text matches inside a collection | `search_collection` | `query_collection` |
+| one complete record, including non-indexed fields | `get_object` | either of the above |
+
+`describe_collection` shows which properties are indexed — only those appear in
+query/search results and only those filter or sort. Everything else exists on
+the object and comes back from `get_object` alone.
+
+If the site defines [saved-query tools](docs/mcp/saved-query-tools), prefer
+them when one matches the task — they encode the site owner's intended query.
+
+## Writing: patch by default
+
+**`patch_object` is the safe default for edits.** It merges only the fields
+you send over the stored object — omitted fields keep their current values, so
+there is nothing to round-trip and nothing to accidentally lose:
+
+```
+patch_object { collection: "blog", id: "summer-update", data: { title: "New Title" } }
+```
+
+Three merge rules to know:
+
+- **Containers replace whole.** A card, deck, or list value in the payload
+  replaces the stored one entirely — send the complete container to change any
+  part of it (this is also how you *remove* a deck item).
+- **Clearing is explicit.** Pass the empty value (`""` for text, `[]` for
+  containers) to clear a field. Omitting a field never clears it.
+- **Binary fields are untouchable.** Image, file, gallery, and depot fields
+  always keep their current values; a payload that sets one is refused.
+
+## Full replace, when you need it
+
+**`update_object` replaces the entire object** — the server saves exactly the
+`data` you send, and any schema field you omit reverts to its default. Use it
+when you intend to rewrite the whole record. The safe sequence:
+
+1. **Fetch the complete object with `format: "html"`.**
+   The default `format` is `markdown`, which *converts* styled-text fields for
+   reading. Markdown-converted content written back would permanently replace
+   the original HTML. `html` returns fields as stored.
+2. **Edit the fields that need to change** — in the full returned object.
+3. **Strip the `url` key.** Read tools decorate each item with its public
+   `url`; it is not part of the object and must not be written back.
+4. **Send the whole body** to `update_object`. The response echoes the saved
+   object — confirm your change is in it.
+
+After any write — patch, update, or create — **do not clear the cache**:
+object writes fire the `object.updated` event, which invalidates affected page
+caches automatically.
+
+`create_object` takes the same complete-body shape. Hand-authored data follows
+the same rules as any imported JSON: every object carries its `id`, and deck
+fields are dictionaries keyed by item id (letters, numbers, and underscores
+only).
+
+## Guiding the agent
+
+Two site-side features improve what agents produce:
+
+- **Property help text is agent-facing.** Whatever you write in a property's
+  help/description fields becomes part of the MCP tool catalog — it is the
+  agent's only documentation for your content model. Fill it in, and run
+  `tcms schema:lint` to find properties that are missing it.
+- **[Prompts](docs/mcp/prompts)** deliver editorial guidance (brand voice,
+  per-collection editing instructions) straight into the agent's client.
+  A `brand_voice` prompt is the cheapest way to keep agent-written copy
+  on-message.
+
+## A typical editorial session
+
+```
+get_site_info                                     # right site, right edition?
+query_collection { collection: "blog", sort: "date:desc", limit: 5 }
+get_object       { collection: "blog", id: "summer-update", format: "html" }
+# …rework the body…
+patch_object     { collection: "blog", id: "summer-update", data: { body: "<p>…</p>" } }
+# response echoes the merged object; the live page updates on next request
+```
 
 ---
 
@@ -27348,6 +27727,15 @@ Specify an `operator` alongside `value` in any filter entry. The default is `eq`
   "status": { "operator": "notin",    "value": "draft|archived" }
 }
 ```
+
+The ordered operators (`lt`, `lte`, `gt`, `gte`) compare numbers numerically and **dates chronologically** — so a tool can take an ISO date param and filter a date field against it:
+
+```json
+"params":  { "before": { "type": "string", "format": "date", "description": "Cutoff date." } },
+"filters": { "reviewed": { "operator": "lte", "value": "{{params.before}}" } }
+```
+
+A bare `2026-07-26` cutoff works against full ISO-8601 stored values. Values that are neither both numbers nor both dates have no defined order and match nothing.
 
 ## Persona inheritance and safety
 
@@ -28987,7 +29375,9 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-Extension automations appear in the automations admin **read-only** — operators can run or disable them (via the capability toggle) but cannot edit the closure, since it lives in your code. Returning a value records it on the run record; throwing marks the run failed.
+Extension automations appear in the automations admin **read-only**, grouped under your extension's id in the sidebar and listed with their triggers, last run, and consecutive-failure count on the Automations landing page. Operators can **Run now** and reset a failure count there, but cannot edit the closure, since it lives in your code — there is no code field to show. To switch a whole extension's automations off, they use the `automations` capability toggle on your extension's settings page; a forbidden automation still appears, marked *permission off*, rather than vanishing. Returning a value records it on the run record; throwing marks the run failed.
+
+Note that the failure guard applies to your automations too: five consecutive failures on Production auto-disables one, so a handler that throws every tick will stop being scheduled. The failure count and the reset button are how an operator sees and recovers from that.
 
 For **HTTP triggers**, register a [public route](#public-routes) rather than a `webhook` trigger — an extension automation's id (`vendor/name:id`) isn't a URL path, so webhook triggers stay reserved for user-authored automations.
 
@@ -29938,6 +30328,27 @@ tcms schema:import my-schema.json --json
 |----------|----------|-------------|
 | `file` | Yes | Path to schema JSON file |
 
+### `schema:lint`
+
+Lint stored schemas without saving anything. `schema:import` validates on the way in, but schemas edited in place (by hand or by an AI agent) are never re-validated — the linter closes that gap. Errors are structural problems that break at runtime: no `id` property defined, `required`/`index` entries naming undefined properties, `inheritFrom` pointing at a missing schema, deck/card `schemaref` targets that don't exist or contain deck-incompatible types, and meta-schema violations. Warnings flag agent-legibility gaps — properties without help text (help feeds the MCP tool catalog) and schemas without a description.
+
+```bash
+tcms schema:lint                 # all custom schemas
+tcms schema:lint blog            # one schema (reserved schemas allowed by ID)
+tcms schema:lint --strict        # warnings also fail the run
+tcms schema:lint --json          # machine-readable report
+```
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `id` | No | Schema ID (default: lint all custom schemas) |
+
+| Option | Description |
+|--------|-------------|
+| `--strict` | Treat warnings as failures |
+
+Exit code is `0` when no errors were found (warnings allowed), `1` when errors were found — or warnings under `--strict` — so it slots into CI.
+
 ---
 
 ## Collection Commands
@@ -30084,6 +30495,21 @@ tcms object:get blog my-post --json
 |----------|----------|-------------|
 | `collection` | Yes | Collection ID |
 | `id` | Yes | Object ID |
+
+### `object:create`
+
+Create one object from a JSON file (or stdin with `-`). The object goes through the full save pipeline — schema defaults fill in, validation runs, the index updates, and the `object.created` event fires — exactly as if it were saved from the admin. Refuses to overwrite an existing object, and refuses a JSON array (use `collection:import` for bulk data).
+
+```bash
+tcms object:create blog my-post.json
+echo '{"id":"hello","title":"Hello"}' | tcms object:create blog -
+tcms object:create blog my-post.json --json    # echoes the saved object
+```
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `collection` | Yes | Collection ID |
+| `file` | Yes | Path to a JSON file holding one object, or `-` for stdin |
 
 ### `object:export`
 
@@ -30282,35 +30708,45 @@ tcms push
 tcms push --dry-run
 tcms push --schemas=blog,products
 tcms push --templates=blog-post,sidebar
+tcms push --collections=builder-pages
 tcms push --schemas=blog --templates=blog-post --dry-run
 ```
 
 | Option | Description |
 |--------|-------------|
-| `--schemas` | Comma-separated schema IDs to push (default: all custom) |
-| `--templates` | Comma-separated template IDs to push (default: all custom) |
-| `--dry-run` | Preview what would be pushed without sending |
+| `--schemas` | Comma-separated schema IDs to push |
+| `--templates` | Comma-separated template IDs to push |
+| `--collections` | Comma-separated allowlisted collection IDs whose objects to push |
+| `--collection-meta` | Comma-separated collection IDs whose settings to push (any collection; counters never travel) |
+| `--dry-run` | Compare both sides: per-item unchanged/differs/new status with newer-side hints |
 
 ### `pull`
 
-Pull schemas and templates from the production server.
+Pull schemas, templates, and allowlisted collection objects from the production server.
 
 ```bash
 tcms pull
 tcms pull --dry-run
 tcms pull --schemas=blog
 tcms pull --templates=blog-post,sidebar
+tcms pull --collections=builder-pages
 ```
 
 | Option | Description |
 |--------|-------------|
-| `--schemas` | Comma-separated schema IDs to pull (default: all) |
-| `--templates` | Comma-separated template IDs to pull (default: all) |
-| `--dry-run` | Preview what would be pulled without applying |
+| `--schemas` | Comma-separated schema IDs to pull |
+| `--templates` | Comma-separated template IDs to pull |
+| `--collections` | Comma-separated allowlisted collection IDs whose objects to pull |
+| `--collection-meta` | Comma-separated collection IDs whose settings to pull (any collection; counters never travel) |
+| `--dry-run` | Compare both sides: per-item unchanged/differs/new status with newer-side hints |
 
-**What gets synced:** Custom schemas and custom templates only.
+**What gets synced:** Custom schemas, custom templates, collection settings (any collection — never its counters), and objects from five reserved collections — `builder-pages`, `mailer`, `mcp-prompt`, `dataviews`, `automations`. The collection list is hardcoded and cannot be extended.
 
-**What never gets synced:** Content/objects, media/images, system settings, API keys, reserved schemas.
+**What never gets synced:** Objects in your own custom collections, media/images, system settings, API keys, reserved schemas. A custom collection's *schema* syncs; the objects inside it do not.
+
+**Filter semantics:** a bare `tcms push` or `tcms pull` is a full mirror — every category travels. The moment any of `--schemas`, `--templates`, or `--collections` is given, the categories you did not mention are excluded entirely, so `tcms push --schemas=blog` moves the blog schema and nothing else.
+
+**Backups:** before an overwrite lands, the receiving instance snapshots the current version to `tcms-data/.system/backups/{schemas,objects}/...` (ten most recent per item). See the [Sync guide](operations/sync) for details.
 
 ---
 
@@ -30318,12 +30754,31 @@ tcms pull --templates=blog-post,sidebar
 
 ### `cache:clear`
 
-Clear all caches. When run from CLI, a signal file is written so the web process clears its APCu cache on the next request.
+Clear all caches.
 
 ```bash
 tcms cache:clear
 tcms cache:clear --json
 ```
+
+**How this reaches the web server.** APCu is per-process, so a CLI run cannot clear the cache the web server is holding — the two never share memory. Instead, `cache:clear` clears what it can reach directly (filesystem, Redis, Memcached) and writes a signal file to `tcms-data/.system/.cache_invalidate`. The next request to hit the site replays that signal and clears APCu in the web process.
+
+That means **the clear does not take effect until someone loads a page.** If you clear from a deploy script and immediately check the site, the very request you make is the one that applies it — so a single reload can still look stale. Load the page twice.
+
+If a clear appears not to have worked, check whether the signal file is still sitting there:
+
+```bash
+ls tcms-data/.system/.cache_invalidate
+```
+
+Present means no request has replayed it yet. Gone means it was applied.
+
+**Alternatives when you are iterating.** Two options avoid the round trip entirely:
+
+- **Turn on Developer Mode** in the admin. Cache reads are bypassed outright while it is active, so you see fresh output on every request without clearing anything. This is the right choice while you are actively editing templates or content.
+- **Hit the HTTP endpoint** at `/api/emergency/cache/clear`, which clears in the web process directly rather than by signal. It needs no login, and it is rate-limited to one call per IP every 15 minutes.
+
+> Note the `/api` prefix — `/emergency/cache/clear` without it returns a 404.
 
 ### `jobs:process`
 
@@ -30362,6 +30817,30 @@ Webhook and event triggers do not depend on this command — webhooks fire on HT
 **Cron setup** (add this as a second line, alongside `jobs:process`):
 ```bash
 * * * * * php /path/to/resources/bin/tcms automations:process
+```
+
+---
+
+## MCP Commands
+
+See the [MCP Server guide](docs/mcp/server) for the full server documentation.
+
+### `mcp:status`
+
+Show the MCP server's operator-facing health: enabled state, public-access switch, edition gate, tool prefix, and the tool list each persona sees. Saved-query tools defined in collection MCP cards are included and annotated `(saved query)`.
+
+```bash
+tcms mcp:status
+tcms mcp:status --json    # persona tool lists plus a schema_tools array
+```
+
+### `mcp:test`
+
+Invoke a tool locally without going through the HTTP endpoint — useful for verifying a tool's output and persona visibility before an agent connects.
+
+```bash
+tcms mcp:test query_collection --params='{"collection":"blog","limit":3}'
+tcms mcp:test query_collection --params='{"collection":"blog"}' --persona=public
 ```
 
 ---
@@ -31910,7 +32389,7 @@ deploy:
 For shared-hosting environments where you can't run shell commands, Total CMS exposes an HTTP fallback that clears application caches (but not the compiled DI container or PHP-FPM OPcache):
 
 ```bash
-curl -s https://example.com/tcms/emergency/cache/clear
+curl -s https://example.com/tcms/api/emergency/cache/clear
 ```
 
 This is a last resort — it can't wipe `cache/container/` or reload FPM workers, so any deploy that changes class signatures or constructor wiring needs proper shell access to `tcms deploy`.
@@ -32936,7 +33415,7 @@ If you suspect a security breach:
    - Change all passwords
    - Review access logs
    - Check for unauthorized file changes
-   - Clear the cache: `/emergency/cache/clear`
+   - Clear the cache: `/api/emergency/cache/clear`
 
 2. **Investigation**:
    - Review user accounts for unauthorized access
@@ -33329,7 +33808,7 @@ max_execution_time = 30
 - Slow disk I/O on HDD (consider upgrading to SSD)
 
 ### Emergency Cache Clearing
-If your server becomes unresponsive due to cache issues, Total CMS provides an emergency endpoint at `/emergency/cache/clear` that can be accessed without logging into the admin.
+If your server becomes unresponsive due to cache issues, Total CMS provides an emergency endpoint at `/api/emergency/cache/clear` that can be accessed without logging into the admin.
 
 ---
 
@@ -33511,16 +33990,52 @@ Sync lets you push schemas and templates from a local development instance to a 
 
 - Custom schemas (`.schemas/` directory)
 - Custom templates
+- **Collection settings** — every collection's configuration (`.meta.json`): URL, MCP card, sitemap settings, access groups, schema overrides, form settings. A collection that exists on the source but not the target is created there (settings only — its objects don't travel). The environment-local counters (`count`, `totalObjects`) and the content timestamp (`lastUpdated`) **never** move: the receiving side always keeps its own, no matter what a payload carries.
+- Objects from five reserved collections: `builder-pages`, `mailer`, `mcp-prompt`, `dataviews`, `automations`
 
-> **Git-managed templates are excluded.** If you keep a `builder/` folder at your project root, templates travel by git, not Sync — so Sync skips them and carries only schemas and content. See [Git-First Templates](operations/git-first-templates).
+> **Git-managed templates are excluded.** If you keep a `builder/` folder at your project root, templates travel by git, not Sync — so Sync skips them and carries schemas and allowlisted collection objects only. See [Git-First Templates](operations/git-first-templates).
+
+### The collection allowlist
+
+Sync moves objects for exactly those five collections and no others. The list is hardcoded, not a config option, and that is deliberate: the moment it becomes configurable, operators add collections holding images, files, galleries or depots and reasonably assume the binaries travel with them. Sync does not move binaries, and appearing to would be worse than refusing.
+
+The practical consequence is that **your own custom collections' objects never sync.** A `products` or `comparisons` collection you defined holds content — it belongs to whichever server owns it. Sync carries the *schema* that defines it and the collection's *settings*, never the objects inside it.
 
 ## What Never Gets Synced
 
-- Collection content and objects
+- Objects in custom collections, or in any reserved collection outside the five above
 - Media files and images
 - System settings
 - API keys
 - Reserved (built-in) schemas
+
+## The Source-of-Truth Rule
+
+Sync is a mirror, and mirrors need a direction. The rule that keeps the two
+sides sane: **before launch, your local project is the source of truth. After
+launch, the production server is.**
+
+Before launch, everything — content, schemas, templates, settings — is authored
+locally and deployed together. Seed files and imports are fine; you can wipe and
+re-seed at will.
+
+The day the site goes live, content ownership flips. Editors, forms, and AI
+agents write to production, and any local copy of *content* is stale the moment
+they do. From then on:
+
+- **Content** is production's. Work with it by pulling it down, or by editing
+  production directly (admin, REST, MCP). Never re-import old local seed files
+  over live data — delete them once the site is live so they can't be reached
+  for by accident.
+- **Schemas and collection settings** remain yours to develop locally — that is
+  what `push --schemas` / `--collection-meta` are for. A dry run showing the
+  remote side "likely newer" means someone changed it in production: pull it
+  before you push over it.
+- **Templates** follow whichever mode you chose: git-managed (a project-root
+  `builder/` folder) deploys through git; otherwise they sync like schemas.
+
+The dry run is how you check the direction assumption before every sync — it
+costs one command and has caught every would-be overwrite so far.
 
 ## Setup
 
@@ -33530,7 +34045,7 @@ On your **production** Total CMS instance:
 
 1. Go to **Utilities > API Keys**
 2. Create a new key with **GET** and **POST** permissions
-3. Set the endpoint pattern to `/export/*` and `/import/*`
+3. Under endpoints, choose **Specific endpoints** and tick **Sync Manager** — this grants the `/sync` routes that push (`POST /sync/import`) and pull (`GET /sync/export`) use, and nothing else
 4. Copy the generated API key
 
 ### 2. Configure Sync Settings
@@ -33546,11 +34061,16 @@ On your **local** Total CMS instance:
 
 Go to **Utilities > Sync Manager** to push or pull using the admin interface.
 
-- **Select All** syncs every custom schema and template
-- Uncheck **Select All** to pick individual schemas and templates
-- Click **Push to Production** to send your local changes to the remote server
-- Click **Pull from Production** to download remote schemas and templates to your local instance
-- Both actions show a confirmation dialog before proceeding
+When the page opens it compares this site against the remote (the same comparison `--dry-run` shows in the CLI) and annotates every item:
+
+- Unchanged items are dimmed — syncing them rewrites identical content
+- **~ local newer / ~ remote newer** — the two copies differ, with a hint from their `updated` timestamps about which side holds the later edit
+- **+ new** — exists here but not on the remote
+- A per-section note counts items that exist only on the remote (a pull with **All** brings them down; a push leaves them untouched)
+
+Selection works per section: **Select All**, individual checkboxes, or **Select Changed** — which checks exactly the items that differ or are missing on the remote, the usual "push my changes up" set. On a git-managed site the Templates section offers no checkboxes at all — it simply notes that templates travel by git and are excluded from sync.
+
+**Push to Production** and **Pull from Production** open a preview before anything happens: what will be overwritten (with an explicit warning when the copy being replaced is the newer one), what will be created, and what's identical. If the remote can't be reached, the comparison is skipped and the page behaves as a plain picker with a standard confirmation.
 
 ## Using the CLI
 
@@ -33559,34 +34079,44 @@ The CLI provides `push` and `pull` commands that read the same sync settings fro
 ### Push
 
 ```bash
-# Push all schemas and templates
+# Full mirror: all schemas, templates, and allowlisted collection objects
 tcms push
 
-# Push specific schemas only
+# Push specific schemas only — nothing else travels
 tcms push --schemas=blog,products
 
 # Push specific templates only
 tcms push --templates=blog-post,sidebar
 
+# Push the objects of specific allowlisted collections only
+tcms push --collections=builder-pages,automations
+
+# Push the SETTINGS of specific collections only (any collection)
+tcms push --collection-meta=comparisons,builder-pages
+
 # Combine filters
 tcms push --schemas=blog --templates=blog-post
 
-# Preview without sending
+# Preview the full payload (objects included) without sending
 tcms push --dry-run
 
 # JSON output for scripting
 tcms push --json
 ```
 
+Filters are exclusive: as soon as any of `--schemas`, `--templates`, `--collections`, or `--collection-meta` is given, the categories you did not mention are left out entirely.
+
 ### Pull
 
 ```bash
-# Pull all schemas and templates
+# Full mirror down from production
 tcms pull
 
-# Pull specific items
+# Pull specific items — nothing else travels
 tcms pull --schemas=products
 tcms pull --templates=blog-post,sidebar
+tcms pull --collections=builder-pages
+tcms pull --collection-meta=comparisons
 
 # Preview without applying
 tcms pull --dry-run
@@ -33597,7 +34127,7 @@ tcms pull --json
 
 ### Dry Run
 
-Both `push` and `pull` support `--dry-run` which shows what would be synced without making any changes. This is useful for verifying your filters before running the actual sync.
+Both `push` and `pull` support `--dry-run`, which compares both sides and shows what would actually **change** — not just what would travel.
 
 ```bash
 tcms push --dry-run
@@ -33607,30 +34137,76 @@ tcms push --dry-run
 Dry run — would push to https://example.com/tcms:
 
 Schemas:
-  - products
-  - invoice
-Templates:
-  - blog-post
-  - sidebar
+  ~ products      differs — local newer (local 29 Jul 2026 14:02, remote 24 Jul 2026 15:04)
+  + invoice       new on remote
+  = 6 unchanged: blog, events, faq, review, team, testimonial
+
+Objects — builder-pages:
+  ~ home          differs — remote newer (…) ← would overwrite the newer copy
+  = 10 unchanged: about, blog, contact, …
+  · 2 only on remote — untouched (push never deletes)
 ```
+
+How to read it:
+
+- `~` — the two copies differ. Content is compared by hash with timestamps excluded, so two identical copies with different save dates read as unchanged.
+- `+` — exists only on the sending side; the sync creates it on the target.
+- `=` — identical on both sides. The sync still writes them, but nothing changes.
+- `·` — exists only on the receiving side. Sync never deletes, so these are left alone.
+
+When copies differ, the `updated` timestamps say **which side holds the newer edit** — and the preview warns explicitly when the sync would land an older copy on top of a newer one. Two caveats: an item with a timestamp on only one side reports that side as *likely* newer (a copy without one was last written by a release that didn't maintain the field, which usually — not always — means it's older), and the comparison trusts each machine's clock. Treat direction as a hint; the differs/unchanged status itself doesn't depend on timestamps.
+
+If the remote can't be reached, the preview degrades to a plain listing of the payload without comparison.
 
 ## How It Works
 
 Sync is built on top of Total CMS's JumpStart system. When you push:
 
-1. The local instance exports selected schemas and templates as a JumpStart payload
-2. The payload is sent to the production server's `/import/jumpstart` endpoint
-3. The production server imports the schemas and templates, overwriting any existing versions
+1. The local instance exports the selected schemas, templates and allowlisted collection objects as a JumpStart payload
+2. The payload is sent to the production server's `/api/sync/import` endpoint
+3. The production server imports it, replacing any existing versions
 
-When you pull, the process is reversed — the production server exports its schemas and templates, and the local instance imports them.
+When you pull, the process is reversed — the production server exports, and the local instance imports.
+
+Step 2 uses `/api/sync/import` rather than the general `/api/import/jumpstart` route, and the difference matters. The general import route is built for starter kits, so it *skips* anything that already exists. The sync route runs the importer in **upsert** mode instead, so a push lands as a true mirror of the source rather than silently ignoring every record the target already has.
 
 ## Overwrite Behavior
 
-Sync always overwrites existing schemas and templates on the target. If a schema or template with the same ID already exists, it will be replaced with the synced version. This is intentional — sync is designed for deploying known changes, not merging.
+Sync always overwrites on the target. If a schema, template or object with the same ID already exists there, it is replaced with the synced version. This is intentional — sync deploys known changes, it does not merge them.
+
+> **A bare `tcms push` is a full mirror — it includes objects.** With no filter flags, a push carries every custom schema, every template, and every object in all five allowlisted collections. If pages are edited on the production server, push from local with that in mind. To move one thing, name it: the moment any filter flag is given, the categories you did not mention are excluded — `tcms push --schemas=blog` pushes the blog schema and nothing else. `--dry-run` shows the complete payload, objects included.
+
+## Automatic Backups
+
+Before a sync overwrite replaces an existing schema or object, the instance being overwritten snapshots its current version to:
+
+```
+tcms-data/.system/backups/schemas/{id}/{id}-{YYYYMMDD-HHMMSS}.json
+tcms-data/.system/backups/objects/{collection}/{id}/{id}-{YYYYMMDD-HHMMSS}.json
+tcms-data/.system/backups/collections/{id}/{id}-{YYYYMMDD-HHMMSS}.json
+```
+
+This happens on whichever side is receiving: production backs up on a push, your local instance backs up on a pull. Each schema and object keeps its ten most recent snapshots; re-syncing unchanged content does not stack duplicates. Restoring is a manual copy — find the snapshot you want and copy it back over the live file, then clear the cache.
+
+Backups only cover what sync overwrites. They are not a substitute for real backups of `tcms-data/`.
+
+## Timestamps
+
+Schemas carry a top-level `updated` value stamped on every save, and each of the five syncable collections has an auto-maintained `updated` field. These exist so dry-run can tell you which side of a difference holds the newer edit.
+
+Collections carry **two** timestamps with deliberately different meanings:
+
+- `lastUpdated` — the **content** timestamp. Bumped by every object create, update, and delete. Says nothing about settings.
+- `updated` — the **settings** timestamp. Stamped only when the collection's configuration actually changes (the save compares the config before writing, so content activity and counter bumps never move it). This is the value sync freshness hints compare.
+
+
+The rule that makes them trustworthy: **a sync import preserves incoming timestamps instead of restamping them.** A synced copy keeps the save date of the original it mirrors — a timestamp only moves when a person (or the API) actually edits the item on that machine. Without this rule every sync would make the receiving side look newer than the sender, and the comparison would be permanently wrong in one direction.
+
+Items saved before this feature existed have no timestamp yet; they gain one on their next save.
 
 ## Alternative: Git / Source Control
 
-If your `tcms-data/` directory is tracked in version control, git itself is an effective way to keep schemas and templates in sync between environments. Schemas live in `tcms-data/.schemas/` as JSON files, and templates live in `tcms-data/templates/` as Twig files — both are plain text and diff cleanly.
+If your `tcms-data/` directory is tracked in version control, git itself is an effective way to keep schemas and templates in sync between environments. Schemas live in `tcms-data/.schemas/` as JSON files, and templates live in `tcms-data/builder/` as Twig files — both are plain text and diff cleanly.
 
 A typical git-based workflow:
 

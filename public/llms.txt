@@ -55,12 +55,12 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 ### Fields
 
 #### Field Types
-- [All Fields](https://docs.totalcms.co/fields/all-fields/): Universal settings for all Total CMS field types including autogen, calc (computed fields), hidden fields, and conditional visibility.
+- [All Fields](https://docs.totalcms.co/fields/all-fields/): Universal settings for all Total CMS field types including help text, autogen, calc (computed fields), hidden fields, and conditional visibility.
 - [Card](https://docs.totalcms.co/fields/card/): Group related fields into a single nested object using the card field type — a single-instance deck whose shape is defined by another schema via schemaref.
 - [Code Editor](https://docs.totalcms.co/fields/code-editor/): Configure the CodeMirror-powered code editor field in Total CMS with syntax highlighting modes, HTML sanitization, and embed code support.
 - [Color](https://docs.totalcms.co/fields/color/): Color picker field — renders the native swatch picker, accepts hex/rgb/hsl/oklch input, and stores both hex and OKLCH so templates can output any CSS color format.
 - [Date](https://docs.totalcms.co/fields/date/): Auto-populate date fields in Total CMS with onCreate and onUpdate settings for automatic timestamps when objects are created or modified.
-- [Deck](https://docs.totalcms.co/fields/deck/): Customize deck item labels in the Total CMS admin using template syntax with field references, minItems, maxItems, and modalSize settings.
+- [Deck](https://docs.totalcms.co/fields/deck/): Customize deck item labels in the Total CMS admin using template syntax with field references, minItems, maxItems, and modalSize settings. Includes the on-disk shape of deck data and how to define a deck in a schema.
 - [File & Depot](https://docs.totalcms.co/fields/file-depot/): Configure file and depot upload fields in Total CMS with size limits, file type restrictions, filename validation, and collection-based access control.
 - [ID](https://docs.totalcms.co/fields/id/): Auto-generate object IDs in Total CMS from field values using autogen templates with variables like uuid, date components, and custom formats.
 - [Image & Gallery](https://docs.totalcms.co/fields/image-gallery/): Configure image and gallery upload fields in Total CMS with validation rules, location stripping, and image or text watermark settings.
@@ -165,9 +165,11 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [API Keys](https://docs.totalcms.co/apis/api-keys/): Create and manage token-based API keys for Total CMS REST API authentication with scoped method and path permissions and usage tracking.
 - [OAuth Server](https://docs.totalcms.co/apis/oauth/): Connect external services and AI clients to your T3 site via OAuth 2.1
 - [Index Filter](https://docs.totalcms.co/apis/index-filter/): Filter and sort Total CMS collection indexes with include, exclude, and sort criteria for sitemaps, RSS feeds, and API endpoints using boolean, string, and array values.
+- [WordPress Publishing](https://docs.totalcms.co/apis/wordpress-publishing/): Publish to Total CMS from desktop and iOS writing apps that speak the WordPress XML-RPC API — MarsEdit, Byword, Ulysses, Open Live Writer.
 
 ### MCP
 - [MCP Server](https://docs.totalcms.co/mcp/server/): Expose your Total CMS site as a Model Context Protocol server so AI agents (Claude, ChatGPT, custom integrations) can discover, query, and manage content.
+- [Editing with AI Agents](https://docs.totalcms.co/mcp/agent-editing/): The safe workflow for reading and writing site content through the MCP server: tool selection, the full-replace round-trip, and verification.
 - [Saved-Query Tools](https://docs.totalcms.co/mcp/saved-query-tools/): Define parameterized AI-callable query tools for a collection using JSON — no PHP required.
 - [Prompts](https://docs.totalcms.co/mcp/prompts/): Define Twig-rendered AI prompt templates in the admin and expose them via the MCP server's prompts/list and prompts/get endpoints.
 - [Extending MCP](https://docs.totalcms.co/mcp/extensions/): Publish custom MCP tools and resources from a T3 extension — vendor-prefixed names, capability toggles, strict collision policy.
