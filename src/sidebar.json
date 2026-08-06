@@ -616,12 +616,20 @@
                 "slug": "operations/filesystem"
             },
             {
+                "label": "Sharing One Data Folder",
+                "slug": "operations/shared-data-cache"
+            },
+            {
                 "label": "Sync",
                 "slug": "operations/sync"
             },
             {
                 "label": "Git-First Templates",
                 "slug": "operations/git-first-templates"
+            },
+            {
+                "label": "Cron URLs",
+                "slug": "operations/cron-urls"
             },
             {
                 "label": "Updates",
