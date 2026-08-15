@@ -63,9 +63,9 @@ If you'd rather skip the tutorial and go straight to setup:
 
 ## Using AI coding assistants
 
-If you use Claude Code, Cursor, Windsurf, or GitHub Copilot, point them at the Total CMS MCP server at `https://mcp.totalcms.co/`. Your assistant can then look up exact Twig signatures, field configurations, REST endpoints, and CLI commands on demand — no more guessing at function names from stale training data.
+If you use Claude Code, Cursor, Windsurf, or GitHub Copilot, point them at the Total CMS docs MCP server at `https://totalcms.co/mcp` — our own docs site, dogfooding Total CMS's built-in MCP server. Your assistant can then look up exact Twig signatures, field configurations, REST endpoints, and CLI commands on demand — no more guessing at function names from stale training data.
 
-One JSON snippet in your editor's config gets it working across every Total CMS project. See [Using Total CMS with AI](docs/extensions/ai-integration) for the per-tool setup and the full list of MCP tools (`docs_search`, `docs_twig_function`, `docs_field_type`, and more).
+One JSON snippet in your editor's config gets it working across every Total CMS project. See [Using Total CMS with AI](docs/extensions/ai-integration) for the per-tool setup and the full list of MCP tools (`docs_search`, `docs_get`, `docs_lookup`, and more).
 
 ## Community & support
 
@@ -27470,7 +27470,7 @@ tcms mcp:test list_collections --json
 
 ## Extension authoring
 
-Extensions can publish their own MCP tools and resources via `ExtensionContext::registerMcpTool()`, `registerMcpResource()`, and `registerMcpResourceTemplate()`. Custom tools and resources show up alongside the core surface — AI agents see them the same way they see `query_collection` or `tcms://blog/`.
+Extensions can publish their own MCP tools and resources via `ExtensionContext::registerMcpTool()`, `registerMcpResource()`, and `registerMcpResourceTemplate()`. Custom tools and resources show up alongside the core surface — AI agents see them the same way they see `query_collection` or `tcms://blog/`. The bundled [Documentation Tools](mcp/docs-tools) (`docs_search`, `docs_get`, `docs_lookup`) are a real-world example — a bundled extension registering `authenticated`-access tools with the same `ExtensionContext` API a third-party extension would use.
 
 See **[Extending MCP](mcp/extensions)** for the full authoring guide, including registration examples, naming conventions, capability toggles, and real-world use cases.
 
@@ -27529,7 +27529,7 @@ Before submitting your site to Anthropic's Connector Directory, walk through:
 - [ ] Tool names ≤ 64 characters (including any `toolPrefix`).
 - [ ] Read and write operations split into separate tools (no mixed-mode tools).
 - [ ] Tool descriptions don't instruct Claude ("always do X", "you must call Y first") — Total CMS uses `setInstructions()` for cross-tool guidance.
-- [ ] Tools return MCP tool errors (`isError: true`) with recovery hints, not exceptions.
+- [ ] Tools report errors by throwing `Mcp\Exception\ToolCallException` with a recovery hint in the message — the SDK sets `isError: true` for you (see [Extending MCP](mcp/extensions), "Returning data and reporting errors"). A hand-built `['isError' => true, ...]` return array does NOT set the outer `CallToolResult.isError`.
 - [ ] Lazy authentication verified: public tools work unauthenticated; only protected tools challenge.
 - [ ] Submission slug chosen carefully (fixed after publication).
 
@@ -27555,6 +27555,7 @@ The full MCP server, including all of the following, ships in 3.5:
 - **MCP prompts** — templated workflows like "draft a blog post in our voice" or "audit broken links" ([Prompts](docs/mcp/prompts)).
 - **OAuth 2.1 + PKCE** — full authorization-code flow, scoped tokens, customer-visible activity dashboard, the "connect Joe's Bistro to Claude" path ([OAuth Server](docs/apis/oauth)).
 - **Pluggable search providers** — extension hook for swapping the built-in text search for Algolia, Meilisearch, etc.; built-in `text` provider always available.
+- **Bundled documentation tools** — `docs_search`, `docs_get`, `docs_lookup`, shipped enabled by default and matched to this install's own version ([Documentation Tools](docs/mcp/docs-tools)).
 
 ## What's deferred
 
@@ -27563,6 +27564,128 @@ The full MCP server, including all of the following, ships in 3.5:
 - **MCP sampling** — letting the server request inference from the client. Not on the near-term roadmap.
 
 See the planning notes in `docs/planning/mcp-server.md` for the full forward roadmap.
+
+---
+
+## Connecting AI Clients
+
+Your site's MCP endpoint is your site URL with `/mcp` on the end:
+
+```
+https://yoursite.com/mcp
+```
+
+That single URL is all most clients need. What a client can *see* through it depends on who it is: anonymous callers get whatever you've exposed publicly, and an API key unlocks admin-level access to schemas, templates, and content. See [MCP Server](mcp/server) for how those audiences differ.
+
+Everything below is copy-paste. Claude has no one-click install link, so the desktop extension is the closest equivalent; Cursor and VS Code do support install links, covered at the end.
+
+## Claude Desktop
+
+The lowest-friction option is the **Total CMS desktop extension**: a single file that installs with a double-click, no config file and no toolchain.
+
+1. Download `totalcms.mcpb` from the <a href="https://github.com/totalcms/mcpb/releases/latest" target="_blank" rel="noopener">releases page</a>
+2. Double-click it, or drag it onto the Claude Desktop window
+3. When prompted, set **Total CMS MCP endpoint** to `https://yoursite.com/mcp`
+4. Leave **API key** blank for public access, or paste one for admin access
+
+Leave the endpoint untouched and it points at the official Total CMS documentation server, so you can ask Claude about Total CMS itself with no setup at all.
+
+## Claude (web and desktop)
+
+Without the extension, add your site as a custom connector:
+
+1. Click the **+** button beside the chat input
+2. Choose **Add custom connector**
+3. Paste `https://yoursite.com/mcp`
+
+## Claude Code
+
+One command:
+
+```bash
+claude mcp add --transport http totalcms https://yoursite.com/mcp
+```
+
+## Cursor
+
+Add your site to `.cursor/mcp.json` in a project, or `~/.cursor/mcp.json` to make it available everywhere:
+
+```json
+{
+    "mcpServers": {
+        "totalcms": {
+            "url": "https://yoursite.com/mcp"
+        }
+    }
+}
+```
+
+With an API key:
+
+```json
+{
+    "mcpServers": {
+        "totalcms": {
+            "url": "https://yoursite.com/mcp",
+            "headers": {
+                "X-API-Key": "tcms_your_key_here"
+            }
+        }
+    }
+}
+```
+
+## VS Code
+
+From the command line:
+
+```bash
+code --add-mcp '{"name":"totalcms","type":"http","url":"https://yoursite.com/mcp"}'
+```
+
+You can also browse MCP servers inside VS Code by opening the Extensions view and typing `@mcp` in the search box.
+
+## One-click install links
+
+Cursor and VS Code both accept an install link, so you can put a button on a page instead of asking anyone to edit JSON. These point at the official Total CMS documentation server:
+
+- **Cursor** — <a href="https://cursor.com/en/install-mcp?name=totalcms&config=eyJ1cmwiOiJodHRwczovL3RvdGFsY21zLmNvL21jcCJ9" target="_blank" rel="noopener">Add Total CMS to Cursor</a>
+- **VS Code** — [Add Total CMS to VS Code](vscode:mcp/install?%7B%22name%22%3A%20%22totalcms%22%2C%20%22type%22%3A%20%22http%22%2C%20%22url%22%3A%20%22https%3A%2F%2Ftotalcms.co%2Fmcp%22%7D)
+
+To build one for your own site, the two formats differ:
+
+**Cursor** is an ordinary https link, with the server config base64-encoded:
+
+```bash
+CONFIG=$(printf '{"url":"https://yoursite.com/mcp"}' | base64)
+echo "https://cursor.com/en/install-mcp?name=totalcms&config=${CONFIG}"
+```
+
+**VS Code** takes URL-encoded JSON, and needs the `type` as well as the `url`:
+
+```
+vscode:mcp/install?{"name":"totalcms","type":"http","url":"https://yoursite.com/mcp"}
+```
+
+URL-encode that JSON before using it as a link. Use the `vscode-insiders:` scheme for Insiders builds.
+
+## Using an API key
+
+Anonymous callers see only what you have deliberately exposed. An API key raises the connection to admin level — schemas, templates, cache, and content writes included — so treat one like a password, and prefer a key over signing in when you want an agent to work on the site itself.
+
+Create one in **Admin → API Keys**, then supply it as an `X-API-Key` header, or paste it into the desktop extension's **API key** field at install time.
+
+Without a key, what an agent can reach is governed by `mcp.publicAccess` and each collection's own `mcp.access` setting. A site with public access off simply exposes nothing to anonymous callers, which is the default.
+
+## If it doesn't connect
+
+Connection failures usually have one of a handful of causes, and they stack — a site often has two at once. [Troubleshooting](mcp/troubleshooting) walks them in the order they actually occur, starting with bot filters and stripped `Authorization` headers.
+
+Confirm the server side independently with:
+
+```bash
+tcms mcp:status
+```
 
 ---
 
@@ -27710,6 +27833,26 @@ Each tool entry is an object with the following fields. Only `id` and `descripti
 
 The `mcp-tool.json` JSON Schema enforces `maxLength: 64` on the base `id` field only — it cannot dynamically account for the site's configured `mcp.toolPrefix`. The save-time validator performs the full prefix-inclusive check: `strlen(toolPrefix + "_" + id) ≤ 64`. If a site has a 10-character prefix configured, base ids must be ≤ 54 characters. The error message will state both the prefix in use and the resulting length.
 
+## Result shape
+
+A saved-query tool returns the same paginated envelope as `query_collection` — both are built from the same `CollectionQueryResultFormatter`:
+
+```json
+{
+  "items": [ { "id": "post-1", "url": "/blog/post-1", "...": "..." } ],
+  "total": 37,
+  "limit": 10,
+  "offset": 0,
+  "has_more": true
+}
+```
+
+- `total` — total matching records, after persona filtering (drafts excluded for public callers).
+- `limit` / `offset` — the tool definition's own `limit` and `offset` values (see [Tool definition reference](#tool-definition-reference)). Saved-query tools have no caller-supplied pagination parameter — `limit` and `offset` are fixed by the definition so the tool stays a curated, bounded answer.
+- `has_more` — `true` when `total` exceeds `offset + limit`, i.e. the tool's fixed window doesn't cover every matching record.
+
+If an agent needs to page past a saved-query tool's fixed window, it should call `query_collection` directly — the general-purpose tool that accepts `limit`/`offset` — rather than expecting the saved-query tool to move its own window. `has_more: true` is a signal to reach for `query_collection`, not an invitation to re-call the saved-query tool with different arguments it doesn't accept.
+
 ## Fixed-filter tools
 
 Fixed-filter tools take no caller arguments. They are preset queries with a stable result shape — useful for "give me all draft posts" or "return the three most recent announcements":
@@ -27845,6 +27988,7 @@ If a tool is missing from `tools/list` despite being defined in the schema, chec
 | Agent selects by | Tool name | Tool name + inline args |
 | Best for | Stable, reused queries | Ad-hoc filter composition |
 | Caller can change filters | No (fixed + declared params only) | Yes |
+| Pagination | Fixed `limit`/`offset` from the definition; `has_more` signals to switch tools | Caller-supplied `limit`/`offset` |
 | Requires PHP | No | No |
 
 Use a saved-query tool when you want a predictable, named entry point. Use `query_collection` when the agent needs to compose filters freely.
@@ -27865,6 +28009,89 @@ Use a saved-query tool when you want a predictable, named entry point. Use `quer
 
 - [MCP Server](mcp/server) — personas, transport, core tool catalog, collection MCP settings.
 - [Extending MCP](mcp/extensions) — registering tools and resources from PHP extensions, progress notifications, error handling, persona-aware handlers.
+
+---
+
+## Documentation Tools
+
+Every Total CMS install ships a bundled extension, `totalcms/docs`, that exposes the documentation you're reading right now — `resources/docs/*.md`, plus the generated search and reference indexes — through this site's own MCP server as three tools: `docs_search`, `docs_get`, and `docs_lookup`. It's the successor to the standalone `mcp.totalcms.co` connector.
+
+The reason it ships per-install instead of staying centralized: the docs corpus these tools read is the one that shipped with **this** codebase. An agent working against a site running 3.5.0-rc.12 gets rc.12's documentation — field names, tool catalogs, and behavior that matches what's actually installed — not whatever happens to be current on the public docs site. Version drift between "what the docs say" and "what the site does" stops being possible.
+
+## The three tools
+
+| Tool | Input | What it does |
+|---|---|---|
+| `docs_search` | `query` (string, required), `limit` (int, default 8, max 20) | Free-text search across every doc page. Returns matching pages with `path`, `title`, `group`, and matched section headings. |
+| `docs_get` | `path` (string, required) | Fetch one page's full markdown by the `path` a `docs_search` result returned (e.g. `"twig/data"`, `"site-builder/overview"`). |
+| `docs_lookup` | `kind` (enum, required), `name` (string, optional) | Structured lookup into the reference index: `twig_function`, `twig_filter`, `field_type`, `api_endpoint`, `schema_config`, `cli_command`, `extension_api`, or `builder_api`. Omit `name` to list every entry of that kind; a near-miss `name` returns close candidates instead of nothing. |
+
+The intended flow is `docs_search` → `docs_get`: search returns paths, `docs_get` reads the page. `docs_lookup` is a shortcut for the cases where an agent already knows what it's after — a specific Twig function, field type, or CLI command — without searching prose first.
+
+`docs_lookup` depends on `reference-index.json`, which ships alongside `search-index.json`. If an older install doesn't have it yet, `docs_lookup` returns a graceful error explaining that `docs_search` still works — it doesn't fail the whole extension.
+
+No MCP resource template ships for the docs corpus — only tools. `docs_search` + `docs_get` cover the same ground in one round trip, without adding an enumerable resource surface for a corpus nobody would browse by URI.
+
+## The five workflow prompts
+
+Tools give an agent the ability to read the docs; they don't tell it when to bother. The same extension registers five MCP prompts that do:
+
+| Prompt | Arguments | What it does |
+|---|---|---|
+| `tcms_research` | `question` | Answer a Total CMS question from this install's docs rather than from the model's memory. Sets the retrieval order — `docs_lookup` for named symbols, `docs_search` → `docs_get` for everything else — and hands over Total CMS vocabulary so a missed search can be retried usefully. |
+| `tcms_build_page` | `purpose` | Plan and build a Site Builder page: route, template, data, navigation. Leads with the fact that there is no build step. |
+| `tcms_explain_field` | `field_type` | Explain a schema field type from the reference index, with a copy-pasteable declaration and how to read the value in Twig. |
+| `tcms_twig_recipe` | `goal` | Find the right Twig function or filter and write a complete template, with signatures verified rather than guessed. |
+| `tcms_troubleshoot_mcp` | `symptom`, `site_url` (optional) | Diagnose an MCP connection failure, walking the known causes in the order they actually occur. |
+
+They're named `tcms_*` rather than `docs_*` deliberately. The tools are documentation operations; these are product workflows that *use* the documentation, and `tcms` is already this server's namespace (the `tcms://` resource URIs). The distinctive prefix also matters mechanically: a prompt in your `mcp-prompt` collection always wins over an extension-registered one of the same name, so a generic name like `explain_field` would let an operator's own prompt silently replace this one.
+
+Prompt access follows the tools. A prompt instructing an agent to call `docs_lookup` is useless to a caller who can't see `docs_lookup`, so both move together when you change the setting below.
+
+The prompt text lives in `prompts.json` inside the extension, not in its PHP. It ships as part of the package, so local edits are overwritten on update — to customise the wording for your site, create a prompt in the `mcp-prompt` collection with the same name and yours takes precedence.
+
+## Enabled by default, invisible to anonymous callers
+
+Unlike most bundled extensions (disabled until an operator opts in — see [Bundled Extensions](docs/extensions/bundled)), `totalcms/docs` ships `default_enabled: true`. A fresh install has all three tools live immediately, no admin action required.
+
+That does **not** mean they're public. The tools register at `authenticated` access by default: visible to the admin persona (API key) and to any OAuth-authenticated caller, but absent from `tools/list` for anonymous callers. Listing and calling are gated separately — resolving to the authenticated persona needs any `mcp:*` scope, while actually invoking a tool needs `mcp:tools`. A token carrying only `mcp:resources` therefore sees these tools listed and is refused when it calls one. Installing or updating to a version that ships this extension changes nothing about a site's *public* MCP surface — `mcp.publicAccess` and each collection's `mcp.access` setting still govern what an anonymous agent can reach. See [Three audiences, one endpoint](mcp/server#three-audiences-one-endpoint) for how the personas work.
+
+## Exposing the tools publicly
+
+Some sites — a Total CMS docs mirror, a support site, an agency's own marketing site for the product — want an anonymous AI agent to be able to read the documentation without a login. For that case, the extension carries one setting:
+
+**Admin → Extensions → Total CMS Docs → Settings → "Expose documentation tools to anonymous visitors"** (`publicTools`, default off).
+
+Turning it on switches all three tools' access from `authenticated` to `public` for every caller, including unauthenticated ones.
+
+Most sites should leave this off. Turn it on only if your site's actual anonymous audience is Total CMS builders — people who'd benefit from an AI agent being able to read your docs without logging in. On a typical customer site, there's no reason to widen the public MCP surface for a documentation corpus visitors don't need.
+
+## Turning it off entirely
+
+`totalcms/docs` is a normal bundled extension once installed — disable it like any other:
+
+**Admin → Extensions → Total CMS Docs → Disable**, or:
+
+```bash
+tcms extension:disable totalcms/docs
+```
+
+This removes `docs_search`, `docs_get`, and `docs_lookup` from every persona's tool catalog immediately — admin included. As with other bundled extensions, disabling doesn't uninstall it; there's no **Remove** button, since it ships with the package. Re-enable at any time to bring the tools back.
+
+Confirm the current state with:
+
+```bash
+tcms mcp:status
+```
+
+The tool list shown per persona reflects whether the extension is enabled and, if so, which access level it's currently registered at.
+
+## See also
+
+- [MCP Server](mcp/server) — personas, transport, the full core tool catalog
+- [Extending MCP](mcp/extensions) — how extensions register their own tools and resources
+- [Bundled Extensions](docs/extensions/bundled) — the bundled-extension model in general
+- [Extension Manifest Reference](docs/extensions/manifest) — the `default_enabled` field this extension uses
 
 ---
 
@@ -28087,14 +28314,25 @@ $context->registerMcpTool(
             'limit' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 50, 'default' => 10],
         ],
     ],
+    outputSchema: [
+        'type'     => 'object',
+        'required' => ['items'],
+        'properties' => [
+            'items' => ['type' => 'array', 'items' => ['type' => 'object']],
+        ],
+    ],
 );
 ```
 
-`access` controls which [persona](mcp/server#three-audiences-one-endpoint) sees the tool: `admin` (default), `public`, or `authenticated`.
+`access` controls which [persona](mcp/server#three-audiences-one-endpoint) sees the tool: `admin` (visible only to the admin persona), `public` (visible to everyone, including unauthenticated callers), or `authenticated` (visible to any OAuth-authenticated caller plus admin, but not anonymous callers). An unrecognised `access` value matches none of these and fails closed to admin-only visibility.
+
+**`outputSchema` is optional but recommended.** Declare a JSON Schema describing your handler's return shape — its root must be `{type: 'object', ...}`, same as `inputSchema`. It costs nothing at call time (T3 doesn't validate your handler's actual return against it), but SDK-aware MCP clients use it to pre-validate results and, more importantly, models reason better about a tool's output when they know its shape up front instead of inferring it from one example response. OpenAI's plugin-directory scanner specifically flags tools that omit it. Match the shape your handler actually returns — if it varies (an error object vs. a success object, say), use `oneOf` rather than picking one shape and hoping; see [Saved-Query Tools](mcp/saved-query-tools) or `src/Domain/Mcp/Tool/Discovery/ListCollectionsTool.php` for worked examples.
 
 **Important — `authenticated` is a Phase 4 capability.** Registering `access: 'authenticated'` for a tool, resource, or template causes it to be silently invisible to all clients until Phase 4 ships OAuth and scoped-token support. No error is raised; the tool simply never appears in `tools/list`. Use `'admin'` or `'public'` for all current deployments.
 
 The handler closure is invoked by the MCP SDK using PHP reflection on its named parameters — define typed `string` / `int` / `bool` / `array` params that map one-to-one with your `inputSchema` properties.
+
+The bundled [Documentation Tools](mcp/docs-tools) extension (`totalcms/docs`) is a real registration at `authenticated` access if you want a worked example beyond the snippet above.
 
 ## Registering a resource
 
@@ -28136,7 +28374,7 @@ $context->registerMcpResourceTemplate(
 
 Use a concrete resource when there's a fixed, enumerable URI (a dashboard view, an "all invoices" rollup). Use a template when the URI is parameterized by an id, slug, or other lookup key — templates avoid enumerating every possible URI in `resources/list` and are how core publishes `tcms://{collection}/{id}`.
 
-As with tools, `access: 'authenticated'` on a resource or template makes it invisible to all clients until Phase 4 ships. Use `'admin'` or `'public'` for current deployments.
+As with tools, `access: 'authenticated'` on a resource or template makes it visible to OAuth-authenticated callers and admin, but not to anonymous callers — same semantics as `registerMcpTool()`'s `access` parameter above.
 
 The template handler's named parameters map one-to-one with `{name}` placeholders in `uriTemplate`. `acme://invoices/{id}` → `fn (string $id)`. `acme://customers/{customerId}/orders/{orderId}` → `fn (string $customerId, string $orderId)`.
 
@@ -28334,6 +28572,26 @@ $context->registerMcpPrompt(
 ```
 
 The `\Mcp\Schema\Prompt` object carries the prompt's name, description, and argument definitions. The handler receives the resolved `array $arguments` and returns a `list<\Mcp\Schema\Content\PromptMessage>`. The SDK wraps the list in a `GetPromptResult` automatically — do not pre-wrap.
+
+Your handler is passed the caller's arguments as a single associative array keyed by the argument names you declared on the `Prompt` object — write it as `fn (array $arguments = [])`, not with one parameter per argument. Arguments you declared but the caller omitted are simply absent, so read them with `??` or `isset()` and decide whether to substitute a default or tell the agent to ask the user for the missing value.
+
+**Declare every argument on the `Prompt` object.** The `arguments` you pass to `new \Mcp\Schema\Prompt(...)` are what `prompts/list` advertises, and clients build their input form from that list — an argument you don't declare is one the caller has no way to send, and it will never reach your handler no matter what the user types. Declare each one with a `PromptArgument` carrying a name, a description (clients show it), and whether it's required:
+
+```php
+new \Mcp\Schema\Prompt(
+    name: 'audit_links',
+    description: 'Audit broken links on a page.',
+    arguments: [
+        new \Mcp\Schema\PromptArgument(
+            name: 'url',
+            description: 'The page to audit.',
+            required: true,
+        ),
+    ],
+)
+```
+
+Argument names must match `^[a-z][a-z0-9_]*$`. Anything else is dropped from the prompt with a warning in the log rather than being advertised.
 
 The `$access` parameter controls which callers can see and invoke the prompt:
 
@@ -28609,6 +28867,105 @@ For a production-quality reference implementation see the bundled **[Algolia Sea
 - [Extension Points](extensions/extension-points) — full catalog of `ExtensionContext` hooks
 - [Events](extensions/events) — dispatching custom events that listeners (including subscription listeners) can consume
 - [Algolia Search](extensions/algolia-search) — bundled search provider extension, complete working implementation
+
+---
+
+## Troubleshooting MCP Connections
+
+Most MCP connection failures don't originate in Total CMS — they happen in front of it, at a CDN or a web server that strips or blocks something before the request ever reaches PHP. That makes them invisible from inside the admin, and it's why the symptoms operators report ("Claude just won't connect", "the agent can't see anything") often don't match the actual cause.
+
+This page covers the three failure patterns behind nearly every real-world MCP support case, plus a reading guide to the **Test connection** panel (**Admin → Settings → MCP Server → Test connection**) that probes for them automatically.
+
+---
+
+## "Claude authenticates, then cannot connect"
+
+**Symptom:** The browser OAuth flow works fine — the user logs in, sees the consent screen, clicks Allow — and then the connector fails anyway with a generic error like "Couldn't connect to the server." Nothing in the T3 OAuth activity log shows a problem; the grant was issued.
+
+**Cause:** A CDN or WAF in front of your site is blocking the user-agent AI clients use for their actual tool traffic. The most common case is Cloudflare's AI-bot blocking rejecting the `Claude-User` user-agent with a 403 (Cloudflare error 1010). The browser step that just succeeded uses a normal browser user-agent, so it sails through — but claude.ai's backend performs the OAuth token exchange and the subsequent MCP requests (`initialize`, tool calls) as `Claude-User`, and that traffic dies at the CDN edge before it ever reaches Total CMS. From the operator's side this looks like nothing is wrong: the consent screen worked, the grant exists, and the failure reads as a vague client-side error because the client genuinely never got a response from your server.
+
+**The signature to watch for:** browser OAuth login/consent succeeds, then the connector fails immediately after with a generic connection error. That gap — auth worked, everything after it didn't — is the tell.
+
+**Diagnose it yourself with one curl command:**
+
+```bash
+curl -A "Claude-User" -X POST https://your-site.com/mcp
+```
+
+Compare that to the same request with curl's default user-agent (drop the `-A` flag). If the `Claude-User` request comes back 403 (often with a Cloudflare error page, "error code: 1010") while the default-UA request gets a normal response, you've confirmed a user-agent block.
+
+**Fix:**
+
+- **Cloudflare:** go to **Security → Bots** and allow AI bots / crawlers.
+- **Other WAFs:** add a skip rule for verified bots, or specifically allow the `Claude-User` and `ChatGPT-User` user-agents.
+- At minimum, exempt the MCP endpoint, `/oauth/*`, and `/.well-known/*` from user-agent filtering — those are the paths every MCP client touches during connection setup.
+
+The **Test connection** panel's **AI clients allowed** probe checks for exactly this and will fail with the same diagnosis if it finds a UA-based block — see [The Test connection panel](#the-test-connection-panel) below.
+
+---
+
+## "Connected but only sees public content"
+
+**Symptom:** An OAuth-authenticated MCP client connects without errors, but the agent behaves as if it's anonymous — it can only see content that's already publicly exposed, admin or write tools are missing, and nothing about the failure looks like an auth error.
+
+**Cause:** Apache running PHP as CGI or FastCGI does not pass the `Authorization` header through to PHP by default. The client is sending `Authorization: Bearer <token>` exactly as it should, but the web server drops the header before Total CMS ever sees it — so every Bearer-authenticated request silently degrades to an anonymous request. There's no error, no 401, nothing that looks broken; the request just quietly loses its identity.
+
+**Fix:** Total CMS ships the fix for this out of the box on affected hosts. The shipped `public/.htaccess` includes a passthrough idiom:
+
+```apache
+RewriteCond %{HTTP:Authorization} .
+RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+```
+
+This exports the header as `REDIRECT_HTTP_AUTHORIZATION` (Apache's rewrite-environment naming), and `AuthorizationHeaderMiddleware` restores it onto the request before any auth middleware runs. If you're on a host where this still isn't working — a custom vhost that bypasses `.htaccess`, or a non-Apache CGI setup — add the equivalent directive to your vhost config instead:
+
+```apache
+CGIPassAuth On
+```
+
+(Apache 2.4.13+.)
+
+**Verify it's working:** open **Admin → Settings → MCP Server**, click **Test connection**, and check the **Bearer auth reaches PHP** result. It sends a deliberately invalid Bearer token and expects a 401 back — if it gets a 200 instead, the header isn't reaching PHP and this is your fix.
+
+---
+
+## Subfolder installs (Stacks)
+
+**Symptom:** An install that lives under a subpath — most commonly a Stacks site, where Total CMS runs at something like `/rw_common/plugins/stacks/tcms` rather than the domain root — has MCP clients failing to connect, or connecting inconsistently depending on which URL was used to discover the server.
+
+**Cause and fix, two separate issues:**
+
+**1. The endpoint isn't at `/mcp` on the bare domain.** On a subpath install, the real MCP endpoint includes the install's base path — something like `https://your-site.com/rw_common/plugins/stacks/tcms/mcp`, not `https://your-site.com/mcp`. Don't guess or assume the short form. Copy the exact endpoint URL from **Admin → Settings → MCP Server** and paste it into the client's configuration verbatim.
+
+**2. Two discovery authorities can disagree.** The setup wizard's Server Config step offers an optional root catch-all rewrite for subpath installs — adding it lets short root-relative URLs and the RFC well-known discovery locations (`/.well-known/mcp.json`, `/.well-known/oauth-authorization-server`, etc.) resolve at the domain root in addition to the install's real subpath. That's convenient, but it means the site can now answer discovery requests two different ways — once from the root, once from the actual subpath — and if those two answers ever disagree on which endpoint to use, a client that discovers through one shape and connects through the other can fail in confusing, hard-to-reproduce ways.
+
+If the **Test connection** panel reports a **Single discovery authority** warning (meaning the root and subpath discovery documents advertise different endpoints), pin the canonical base explicitly by setting `api` in `config/tcms.php`:
+
+```php
+'api' => '/rw_common/plugins/stacks/tcms',
+```
+
+(Use an empty string `''` if you want the root shape to be canonical instead.) Pinning `api` also ensures that RFC discovery URLs (`/.well-known/oauth-authorization-server`, `/.well-known/mcp.json`, etc.) advertise a consistent issuer, which strict OAuth clients require — until it's pinned, root-shaped requests advertise a bare-host issuer that differs from subpath-shaped requests. This resolves the ambiguity without changing how the install actually serves requests — it just tells Total CMS which base path is the one true answer when it reports discovery metadata.
+
+---
+
+## The Test connection panel
+
+**Admin → Settings → MCP Server → Test connection** runs a set of outbound self-probes — Total CMS calling its own public URLs the way an external AI client would — and reports what it finds. Each probe below can show **pass**, **warn**, **fail**, **skip** (not applicable to this install), or **couldn't test**.
+
+**Endpoint** — Fetches the `/.well-known/mcp.json` discovery document and performs a JSON-RPC `initialize` call against the advertised MCP endpoint. A fail here means the MCP server itself isn't reachable or answering correctly — check that it's enabled and that nothing (maintenance mode, a WAF) is intercepting the endpoint before digging into anything more specific.
+
+**AI clients allowed** — Repeats the `initialize` call using the `Claude-User` and `ChatGPT-User` user-agents. A fail here is the [Cloudflare/WAF blocking case](#claude-authenticates-then-cannot-connect) above — a 403, 429, or 503 on an AI-client user-agent while the default user-agent passes. A pass means no *user-agent-based* blocking was detected — it does **not** rule out IP- or ASN-based blocking, which a self-probe run from your own server can never see, since your server isn't the one being blocked.
+
+**Bearer auth reaches PHP** — Sends a deliberately invalid Bearer token and expects a 401 back. A fail (getting 200 instead) is the [stripped-Authorization-header case](#connected-but-only-sees-public-content) above.
+
+**Root URL rewrite** — Subpath installs only. Checks whether `/.well-known/mcp.json` is reachable at the domain root, which only works if the setup wizard's optional root catch-all rewrite rules were added. A warn here doesn't mean the MCP server is broken — it still works fine at its full subpath URL — it means the shorter root-relative discovery path isn't available, which some MCP clients try first.
+
+**Single discovery authority** — Subpath installs with the root rewrite in place. Compares the endpoint advertised by the root-shape discovery document against the one advertised at the real subpath. A warn means the two disagree — see [Subfolder installs (Stacks)](#subfolder-installs-stacks) above for the fix.
+
+**OAuth discovery** — Checks that the JWKS endpoint (`/.well-known/jwks.json`) answers when OAuth is enabled. A fail usually means OAuth signing keys were never generated — run `tcms oauth:setup`.
+
+**"Couldn't test" is not a failure.** Every probe is wrapped so that a transport error — DNS failure, connection refused, timeout — reports as **unreachable** ("couldn't test"), never as a fail. This happens when the server can't reach its own public URL, which is common on shared hosts that block loopback requests to their own domain. It says nothing about whether external clients can reach your site; if you see this, test the same URLs from another machine instead of treating it as confirmation of a problem.
 
 ---
 
@@ -28957,6 +29314,38 @@ When `true`, the extension is excluded from the admin Extensions page and the `t
 Useful for bundled page-middleware extensions (like `protect`, `scheduled`, `maintenance`) that are enabled per-page via the Features field rather than globally via the Extension Manager. There's no toggle to show — the extension is always active; individual pages opt in.
 
 Hidden extensions can still be targeted by `tcms extension:enable` and `tcms extension:disable` if you know the ID.
+
+### `default_enabled`
+
+**Bundled extensions only.** Setting this in an extension you install has no
+effect — user-installed extensions always wait for an operator to enable them
+in **Admin → Extensions**, and no manifest can declare itself bundled.
+
+```json
+"default_enabled": true
+```
+
+For the first-party extensions shipped inside the T3 package, `true` means the
+extension is active on first discovery instead of waiting for someone to find
+the toggle. Defaults to `false`, which is what every bundled extension but one
+uses.
+
+Being bundled is derived purely from where `ExtensionDiscovery` found the
+manifest — `resources/extensions/` inside the package, versus
+`tcms-data/extensions/` for anything installed afterwards. The manifest is
+never consulted for it, so an extension in `tcms-data/extensions/` declaring
+`"default_enabled": true` stays disabled until an operator says otherwise.
+
+A saved state record always wins over the default, in both directions:
+disabling a `default_enabled` extension sticks, and it will not quietly turn
+itself back on. The default is consulted only when no record exists yet — a
+first boot, or a site that has never seen this extension ID.
+
+Use it sparingly. It exists for bundled features that are pointless to ship
+disabled: the [Total CMS Docs](docs/mcp/docs-tools) extension is the only one
+that does, because documentation tools nobody switches on help nobody. It is
+gated by `authenticated` MCP access rather than an enable toggle. See
+[Bundled Extensions](bundled.md) for the rest.
 
 ### `license`
 
@@ -31092,7 +31481,7 @@ tcms extension:remove acme/seo-pro --force
 
 ## Using Total CMS with AI
 
-Total CMS provides an MCP (Model Context Protocol) server that gives AI coding agents real-time access to the complete Total CMS documentation. Instead of relying on training data that may be outdated or incomplete, your AI agent can look up exact function signatures, filter syntax, field configuration options, and API endpoints on demand.
+Total CMS ships a built-in MCP (Model Context Protocol) server — and the official docs connector is just that server, running on [totalcms.co](https://totalcms.co) itself. Point your AI coding agent at it for real-time access to the complete Total CMS documentation. Instead of relying on training data that may be outdated or incomplete, your AI agent can look up exact function signatures, filter syntax, field configuration options, and API endpoints on demand.
 
 ## What is MCP?
 
@@ -31110,7 +31499,7 @@ Add to `~/.claude/mcp.json`:
 {
   "mcpServers": {
     "totalcms-docs": {
-      "url": "https://mcp.totalcms.co/"
+      "url": "https://totalcms.co/mcp"
     }
   }
 }
@@ -31124,7 +31513,7 @@ Add to your Cursor MCP settings (Settings > MCP Servers):
 {
   "mcpServers": {
     "totalcms-docs": {
-      "url": "https://mcp.totalcms.co/"
+      "url": "https://totalcms.co/mcp"
     }
   }
 }
@@ -31138,7 +31527,7 @@ Add to your VS Code settings (`.vscode/mcp.json` in your project, or user settin
 {
   "servers": {
     "totalcms-docs": {
-      "url": "https://mcp.totalcms.co/"
+      "url": "https://totalcms.co/mcp"
     }
   }
 }
@@ -31152,7 +31541,7 @@ Add to your Windsurf MCP configuration:
 {
   "mcpServers": {
     "totalcms-docs": {
-      "url": "https://mcp.totalcms.co/"
+      "url": "https://totalcms.co/mcp"
     }
   }
 }
@@ -31162,7 +31551,13 @@ No API key or authentication is required. The server is publicly accessible.
 
 ## Available Tools
 
-Once configured, your AI agent has access to these documentation lookup tools:
+Once configured, your AI agent has access to these documentation tools:
+
+| Tool | What it does |
+|---|---|
+| `docs_search(query, limit)` | Full-text search across all Total CMS documentation |
+| `docs_get(path)` | Full page markdown for a known documentation path |
+| `docs_lookup(kind, name)` | Reference lookup for Twig functions/filters, field types, API endpoints, schema config, CLI commands, extension API, and builder API |
 
 ### docs_search
 
@@ -31173,55 +31568,39 @@ docs_search("image watermark configuration")
 docs_search("how to filter collections by date")
 ```
 
-### docs_twig_function
+### docs_get
 
-Look up a specific Twig function by name. Returns the exact signature, parameters, return type, and usage examples.
-
-```
-docs_twig_function("cms.collection.objects")
-docs_twig_function("cms.render.image")
-docs_twig_function("selectOptions")
-```
-
-### docs_twig_filter
-
-Look up a Twig filter. Returns the signature, description, and examples.
+Fetch the full markdown for a documentation page by its path. Use it once `docs_search` has pointed you at a page and you need the complete content, not just an excerpt.
 
 ```
-docs_twig_filter("humanize")
-docs_twig_filter("truncateWords")
-docs_twig_filter("dateFormat")
+docs_get("site-builder/overview")
+docs_get("twig/functions")
 ```
 
-### docs_field_type
+### docs_lookup
 
-Look up field type configuration options and schema settings.
-
-```
-docs_field_type("image-gallery")
-docs_field_type("styled-text")
-docs_field_type("deck")
-```
-
-### docs_api_endpoint
-
-Look up a REST API endpoint. Returns the HTTP method, path, parameters, and response shape.
+Look up a specific reference entry by `kind`: Twig functions, Twig filters, field types, REST API endpoints, schema configuration keys, CLI commands, extension API, or builder API. Returns the exact signature, description, and usage examples. Omit `name` to list every entry of that kind.
 
 ```
-docs_api_endpoint("GET", "/collections")
-docs_api_endpoint("POST", "/collections/{collection}")
-docs_api_endpoint("GET", "/collections/{collection}/{id}")
+docs_lookup("twig_function", "cms.collection.objects")
+docs_lookup("twig_filter", "humanize")
+docs_lookup("field_type", "image-gallery")
+docs_lookup("api_endpoint", "GET /api/collections")
+docs_lookup("schema_config", "prettyUrl")
+docs_lookup("cli_command", "schema:list")
 ```
 
-### docs_schema_config
+Valid `kind` values: `twig_function`, `twig_filter`, `field_type`, `api_endpoint`, `schema_config`, `cli_command`, `extension_api`, `builder_api`.
 
-Look up schema and collection configuration options.
+### Resources
 
-```
-docs_schema_config("labelPlural")
-docs_schema_config("urlPattern")
-docs_schema_config("manualSort")
-```
+Resource-aware clients can also read documentation pages directly as MCP resources, addressed as `totalcms-docs://{group}/{page}` — for example `totalcms-docs://twig/functions`.
+
+## Your own site ships these same tools, matched to its own version
+
+`https://totalcms.co/mcp` always serves whatever's newest — useful while you're learning Total CMS generally, but it can drift from the exact version a given site is running. Every Total CMS 3.5+ install also ships `docs_search`, `docs_get`, and `docs_lookup` locally via the bundled `totalcms/docs` extension, reading straight out of that install's own `resources/docs/` — so if you're developing against a specific site, pointing your agent at *that site's* `/mcp` endpoint gets you documentation guaranteed to match the version it's actually running.
+
+These tools are enabled out of the box but require authentication (an API key or an OAuth-authenticated connection) unless the operator has opted in to public exposure — they're not a drop-in replacement for the always-public `totalcms.co` connector on every site. See [Documentation Tools](docs/mcp/docs-tools) for how to connect, how an operator can expose them publicly, and how to turn them off.
 
 ## How It Works
 
@@ -31231,10 +31610,11 @@ This complements the `llms.txt` file at `docs.totalcms.co/llms.txt`, which provi
 
 ## Tips for Best Results
 
-- **Be specific with function names.** `docs_twig_function("cms.collection.objects")` gives better results than searching for "objects".
+- **Be specific with function names.** `docs_lookup("twig_function", "cms.collection.objects")` gives better results than searching for "objects".
 - **Use search for broad questions.** `docs_search("pagination")` will find relevant pages across all documentation.
-- **Partial matches work.** If you search for `docs_field_type("image")`, it will suggest `image-gallery` as a match.
+- **Partial matches work.** If you look up `docs_lookup("field_type", "image")`, it will suggest `image-gallery` as a candidate match.
 - **Include the namespace.** Twig functions in the `cms.*` namespace should include the full path: `cms.collection.objects`, not just `objects`.
+- **List first, then look up.** Call `docs_lookup("cli_command")` with no `name` to see every command, then look up the one you need.
 
 ---
 
@@ -31245,7 +31625,9 @@ This complements the `llms.txt` file at `docs.totalcms.co/llms.txt`, which provi
 
 ## Bundled Extensions
 
-Total CMS ships a small set of **bundled extensions** in the package itself (under `resources/extensions/`). They're installed automatically — no `composer require`, no upload — but they're disabled by default. Enable the ones you want from **Admin → Extensions**.
+Total CMS ships a small set of **bundled extensions** in the package itself (under `resources/extensions/`). They're installed automatically — no `composer require`, no upload — and, with one exception, disabled by default. Enable the ones you want from **Admin → Extensions**.
+
+The exception is `totalcms/docs` (see the table below), which ships marked `default_enabled` in its manifest — see [`default_enabled`](manifest.md#default-enabled) for the mechanism and why it's bundled-only.
 
 ## Why bundled extensions?
 
@@ -31262,6 +31644,7 @@ This keeps core lean for sites that don't need a particular feature, while still
 |-----------|-------------|------|
 | `totalcms/ab-split` | Render an alternate page template at the same URL for a percentage of visitors (A/B testing). | [A/B Split →](docs/extensions/ab-split) |
 | `totalcms/algolia-search` | Pluggable search provider backed by Algolia. Routes MCP search tools through Algolia's hosted keyword + neural search. Pro edition. | [Algolia Search →](docs/extensions/algolia-search) |
+| `totalcms/docs` | Exposes this install's own documentation to AI agents as `docs_search`, `docs_get`, and `docs_lookup` MCP tools. Enabled by default (see below); tools stay `authenticated`-only unless you opt in to public exposure. | [Documentation Tools →](docs/mcp/docs-tools) |
 | `totalcms/geo-redirect` | Redirect visitors based on their country. Reads from CDN-injected headers (Cloudflare, Vercel, generic). Useful for compliance redirects and regional landing pages. | [Geo Redirect →](docs/extensions/geo-redirect) |
 | `totalcms/maintenance` | Per-page 503 maintenance mode. Take individual pages offline with a custom message while the rest of the site stays up. Admins bypass automatically. | [Maintenance →](docs/extensions/maintenance) |
 | `totalcms/protect` | Gate a page behind a numeric passcode. Visitors enter a code to unlock — cookie remembers them for 7 days. For client previews and soft launches. | [Protect →](docs/extensions/protect) |
@@ -35523,8 +35906,8 @@ Every other key under `auth` (`loginWith`, `collection`, `persistentLoginDays`, 
 
 return [
 	'datadir' => '/var/www/shared/tcms-data',
-	'dashboard' => [
-		'title' => "Joe's Bistro Admin",
+	'logger'  => [
+		'level' => Monolog\Level::Debug,
 	],
 	'cache' => [
 		'redis' => false,
@@ -35533,6 +35916,27 @@ return [
 ```
 
 The merge and type-safety handling lives in `TotalCMS\Support\Config`. Each settings block is validated with `is_array()` before it is applied, so a malformed override falls back to the default rather than breaking the app.
+
+### Precedence: the admin UI wins
+
+`config/tcms.php` is not the last word. Settings are merged in this order, each layer overriding the one above it:
+
+1. `config/defaults.php` — the shipped defaults
+2. **`config/tcms.php`** — your override file
+3. `DOCUMENT_ROOT/tcms.php` — installation-level overrides (mainly `datadir`)
+4. **`tcms-data/.system/settings.json`** — everything saved from the admin Settings pages
+
+Layer 4 is last, so **a setting saved in the admin beats the same key in `config/tcms.php`**. This is deliberate: a value an operator changed in the browser should not be silently reverted by a file they may not know exists.
+
+The practical rule: **if a setting has a control in the admin, change it there.** Setting it in `config/tcms.php` will appear to do nothing — the file still loads and its other keys still apply, so there is no error to notice, which makes this a genuinely confusing few minutes if you do not know the order.
+
+Precedence applies per key, not per block. `settings.json` contains only the fields the admin Settings pages actually expose and you have saved, so a nested key the UI doesn't manage still takes your file's value even when a sibling key does not. To find out whether a given setting is already UI-managed, look it up in your site's `tcms-data/.system/settings.json`:
+
+```bash
+grep -n publicIpPerMinute tcms-data/.system/settings.json
+```
+
+A hit means the admin owns that setting — go and change it there.
 
 ## What Lives in the Bootstrap File
 
@@ -35591,6 +35995,6 @@ Common scalar settings are also available directly on `cms`:
 
 ## Configuration Reference
 
-For the authoritative, fully-commented list of every setting and its default, read `config/defaults.php` in your installation. Anything you can set there can be overridden by returning the same key from `config/tcms.php`.
+For the authoritative, fully-commented list of every setting and its default, read `config/defaults.php` in your installation. Any key you find there can be overridden by returning the same key from `config/tcms.php` — with one exception worth remembering: if the admin UI exposes that setting and you have saved it there, the saved value wins. See [Precedence: the admin UI wins](#precedence-the-admin-ui-wins).
 
 ---

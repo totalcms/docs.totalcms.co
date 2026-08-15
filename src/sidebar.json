@@ -493,6 +493,10 @@
                 "slug": "mcp/server"
             },
             {
+                "label": "Connecting AI Clients",
+                "slug": "mcp/connect"
+            },
+            {
                 "label": "Editing with AI Agents",
                 "slug": "mcp/agent-editing"
             },
@@ -501,12 +505,20 @@
                 "slug": "mcp/saved-query-tools"
             },
             {
+                "label": "Documentation Tools",
+                "slug": "mcp/docs-tools"
+            },
+            {
                 "label": "Prompts",
                 "slug": "mcp/prompts"
             },
             {
                 "label": "Extending MCP",
                 "slug": "mcp/extensions"
+            },
+            {
+                "label": "Troubleshooting",
+                "slug": "mcp/troubleshooting"
             }
         ]
     },

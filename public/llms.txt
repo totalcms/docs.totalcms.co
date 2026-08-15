@@ -169,10 +169,13 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 
 ### MCP
 - [MCP Server](https://docs.totalcms.co/mcp/server/): Expose your Total CMS site as a Model Context Protocol server so AI agents (Claude, ChatGPT, custom integrations) can discover, query, and manage content.
+- [Connecting AI Clients](https://docs.totalcms.co/mcp/connect/): Copy-paste setup for connecting Claude, Cursor, and VS Code to your site's MCP server, with and without an API key.
 - [Editing with AI Agents](https://docs.totalcms.co/mcp/agent-editing/): The safe workflow for reading and writing site content through the MCP server: tool selection, the full-replace round-trip, and verification.
 - [Saved-Query Tools](https://docs.totalcms.co/mcp/saved-query-tools/): Define parameterized AI-callable query tools for a collection using JSON — no PHP required.
+- [Documentation Tools](https://docs.totalcms.co/mcp/docs-tools/): The bundled totalcms/docs extension exposes docs_search, docs_get, and docs_lookup MCP tools so AI agents can query this install's own documentation, matched to its own version.
 - [Prompts](https://docs.totalcms.co/mcp/prompts/): Define Twig-rendered AI prompt templates in the admin and expose them via the MCP server's prompts/list and prompts/get endpoints.
 - [Extending MCP](https://docs.totalcms.co/mcp/extensions/): Publish custom MCP tools and resources from a T3 extension — vendor-prefixed names, capability toggles, strict collision policy.
+- [Troubleshooting](https://docs.totalcms.co/mcp/troubleshooting/): Diagnose the connection failures operators can't see from the T3 side — CDN/WAF blocking AI clients, stripped Authorization headers, and subfolder-install discovery mismatches — plus a reading guide to the Test connection panel.
 
 ### Extensions & CLI
 - [Extensions Overview](https://docs.totalcms.co/extensions/overview/): Learn how to extend Total CMS with custom functionality using the extension system. Add Twig functions, CLI commands, admin pages, custom schemas, and more.
