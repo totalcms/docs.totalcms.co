@@ -664,7 +664,7 @@ You can edit these settings:
 2. **Direct File Edit** - Modify the `.meta.json` file directly
 3. **API** - Update via the collection management API
 
-### Accessing Collection Metadata in Twig
+### Accessing Collection Settings in Twig
 
 ```twig
 {# Get collection metadata #}
@@ -2695,7 +2695,7 @@ By default, required string and array fields are automatically validated:
 
 You can override this behavior by explicitly setting `minLength` or `minItems`.
 
-> **Conditional required?** The schema's top-level `required` array is a hard data invariant enforced on every save. If you need a field that is only required when another field has a particular value (e.g. "email required only when notifications toggle is on"), use the form-level `settings.required` option paired with `settings.visibility` instead. See [Required (Form-Level)](../fields/all-fields.md#required-form-level) in the All Fields docs.
+> **Conditional required?** The schema's top-level `required` array is a hard data invariant enforced on every save. If you need a field that is only required when another field has a particular value (e.g. "email required only when notifications toggle is on"), use the form-level `settings.required` option paired with `settings.visibility` instead. See [Required (Form-Level)](docs/fields/all-fields#required-form-level) in the All Fields docs.
 
 ## String Validation
 
@@ -3795,7 +3795,7 @@ Generates: `My Article (2025)`
 }
 ```
 
-**For ID-specific autogen features** (slugification, uniqueness checking, OID padding), see the [ID Settings](id.md) documentation.
+**For ID-specific autogen features** (slugification, uniqueness checking, OID padding), see the [ID Settings](docs/fields/id) documentation.
 
 ## Calc (Computed Fields)
 
@@ -4234,7 +4234,7 @@ This works transparently — no extra configuration beyond setting both `require
 
 All fields support validation rules like `pattern`, `minLength`, `maxLength`, `minimum`, `maximum`, `enum`, and more. These are added in the **Extra Schema Definitions** section of a property, not in Settings.
 
-For full details and examples, see [Schema Validation](../schemas/validation.md).
+For full details and examples, see [Schema Validation](docs/schemas/validation).
 
 ## Reference Schema: `totalcms`
 
@@ -6103,9 +6103,9 @@ If no options are checked, the user sees: *"Please select at least one option."*
 
 ### Schema-Level Required
 
-Both field types also respect the schema's top-level `required` array. For checklist specifically, an empty array (`[]`) is rejected by the schema validator at save time, mirroring the client-side "at least one" check. See [Schema Validation](../schemas/validation.md#required-fields) for details.
+Both field types also respect the schema's top-level `required` array. For checklist specifically, an empty array (`[]`) is rejected by the schema validator at save time, mirroring the client-side "at least one" check. See [Schema Validation](docs/schemas/validation#required-fields) for details.
 
-For conditional required scenarios — where the field is only required based on another field's value — use `settings.required` paired with `settings.visibility` and **leave the field out of the schema's `required` array**. See [Required (Form-Level)](all-fields.md#required-form-level).
+For conditional required scenarios — where the field is only required based on another field's value — use `settings.required` paired with `settings.visibility` and **leave the field out of the schema's `required` array**. See [Required (Form-Level)](docs/fields/all-fields#required-form-level).
 
 ---
 
@@ -6764,6 +6764,8 @@ Instead of `true` (scan the current collection), set `propertyOptions` to a name
 |--------|----------------|
 | `true` | Unique values of *this* field across the current collection's objects (the default). |
 | `"collectionIds"` | The IDs of all collections. |
+| `"viewIds"` | The IDs of all Data Views. |
+| `"collectionsAndViews"` | Collections and Data Views together, grouped under two headings. Values are bare ids, so a consumer decides how to resolve an id carried by both. |
 | `"collections"` | Unique category names across all collections. |
 | `"schemas"` | Unique category names across all schemas. |
 | `"schemaProperties"` | The property names defined on the current collection's object schema. |
@@ -7580,6 +7582,8 @@ Behavior:
 - URL-encodes param values automatically.
 - Optional third argument selects a different pages collection: `cms.builder.url('about', {}, 'my-custom-pages')`.
 
+`url()` returns a **relative** path. For canonical tags, `og:url` and redirects, use `cms.builder.canonicalUrl(page)` — it resolves scheme and domain from the site config, so no template needs a hard-coded host. See [cms.builder reference](docs/site-builder/twig).
+
 ### Draft vs Nav
 
 The `draft` and `nav` toggles serve different purposes:
@@ -7995,7 +7999,9 @@ The left sidebar is divided into two sections separated by a divider:
 
 ### Site Pages Section
 
-Lists all page objects from the `builder-pages` collection as a tree. Each page shows its title and links to the page edit form. Click a page to edit its metadata (title, route, template, image, status, page data, etc.).
+Lists all page objects from the `builder-pages` collection as a tree. Each page is labelled by its **route** — the short, unique thing that identifies it in the router — with its title shown on hover. Page titles are written for a browser tab and truncate to noise at sidebar width. Click a page to edit its metadata (title, route, template, image, status, page data, etc.).
+
+Pages with no route yet are labelled *(no route)*.
 
 Pages are displayed in the order defined by the order file (`tcms-data/{collection}/.order.json`) — see [Reordering Pages](#reordering-pages). Visual cues help you scan the tree quickly:
 
@@ -8018,7 +8024,7 @@ Each category is collapsible. Click any template to open it in the editor.
 
 ### Filter
 
-A search filter at the top of the sidebar matches against both **page titles** and **template filenames**. The filter narrows the visible tree as you type — folders with no matching descendants collapse out of view.
+A search filter at the top of the sidebar matches against the rendered labels — so **page routes** and **template filenames**. Search for a page by its URL rather than its title. The filter narrows the visible tree as you type — folders with no matching descendants collapse out of view.
 
 ### Footer Buttons
 
@@ -8828,6 +8834,21 @@ rollupOptions: {
 },
 ```
 
+## Core Total CMS Assets
+
+Before your own assets, your layout needs the ones Total CMS ships. `cms.assetsHead()` and `cms.assetsBody()` emit the core stylesheets and scripts that T3's own Twig output depends on — grid layout, galleries, pagination, icons, htmx, and the decoder behind the [`mailto`](docs/twig/filters) filter — plus anything registered by [extensions](docs/extensions/extension-points).
+
+```twig
+{{ cms.assetsHead() }}   {# in <head>, before your own CSS #}
+{{ cms.assetsBody() }}   {# just before </body> #}
+```
+
+These are separate from the `cms.builder.*` functions below. `cms.builder.css()` and `cms.builder.js()` load **your** files out of the builder assets directory; `cms.assetsHead()` / `cms.assetsBody()` load **Total CMS's**. A layout wants both.
+
+Leave them out and nothing errors — `{% cmsgrid %}` renders unstyled, galleries don't lay out, Load More doesn't fetch, and obfuscated email addresses never become links. See [Frontend Assets](docs/twig/overview) in the Twig overview for the full symptom table.
+
+Put `cms.assetsHead()` before your own stylesheet so your rules override the defaults.
+
 ## Layout Template Example
 
 A complete layout using all asset functions:
@@ -8841,6 +8862,9 @@ A complete layout using all asset functions:
     <title>{% block title %}{{ page.title }}{% endblock %}</title>
     <meta name="description" content="{{ page.description }}">
 
+    {# Total CMS core assets first, so your own CSS can override them #}
+    {{ cms.assetsHead() }}
+
     {{ cms.builder.preload('fonts/inter.woff2', 'font') }}
     {{ cms.builder.css('css/style.css') }}
 </head>
@@ -8851,6 +8875,7 @@ A complete layout using all asset functions:
 
     {% include 'partials/footer.twig' %}
 
+    {{ cms.assetsBody() }}
     {{ cms.builder.js('js/app.js', {module: true}) }}
 </body>
 </html>
@@ -8867,11 +8892,14 @@ public/assets/
 ```
 
 ```twig
+{{ cms.assetsHead() }}
 {{ cms.builder.css('style.css') }}
+
+{{ cms.assetsBody() }}
 {{ cms.builder.js('app.js') }}
 ```
 
-T3 adds `?v={mtime}` query strings for cache busting. No manifest, no build step — just files.
+T3 adds `?v={mtime}` query strings for cache busting. No manifest, no build step — just files. The core asset helpers are still required with or without a build tool.
 
 ## Alternatives to Vite
 
@@ -9064,6 +9092,67 @@ For deeply nested menus, use a Twig macro:
 </nav>
 ```
 
+## Links
+
+### url()
+
+Resolve a page's URL by `id`, filling any dynamic `{param}` placeholders. Use it instead of hard-coding routes — rename `/blog/{id}` to `/posts/{id}` later and every link rebuilds itself.
+
+```twig
+{# Static page #}
+<a href="{{ cms.builder.url('about') }}">About</a>
+
+{# Dynamic route — params fill the placeholders #}
+<a href="{{ cms.builder.url('blog-post', { id: post.id }) }}">{{ post.title }}</a>
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `pageId` | string | yes | The `id` of the page |
+| `params` | array | no | Values for `{param}` placeholders in the route |
+| `collection` | string | no | Custom collection ID (defaults to configured pages collection) |
+
+#### Behavior
+
+- Returns the route prefixed with `cms.api` (the site's base URL) — a **relative** path.
+- Missing pages, and pages with no route, return an empty string.
+- Unfilled placeholders are left in place (e.g. `/blog/{id}`) so a broken reference is visible at render time rather than at click time.
+- Param values are URL-encoded automatically.
+
+### canonicalUrl()
+
+The absolute form of `url()`, for canonical tags, `og:url` and redirects — anywhere a relative path will not do.
+
+```twig
+<link rel="canonical" href="{{ cms.builder.canonicalUrl(page) }}">
+<meta property="og:url" content="{{ cms.builder.canonicalUrl(page) }}">
+```
+
+Takes a page `id` **or** a whole page array, so a layout can pass the `page` it already has instead of digging out an id:
+
+```twig
+{{ cms.builder.canonicalUrl('pricing') }}
+{{ cms.builder.canonicalUrl('blog-post', { id: post.id }) }}
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `pageOrId` | string\|array | yes | Page `id`, or a page array carrying one |
+| `params` | array | no | Values for `{param}` placeholders in the route |
+| `collection` | string | no | Custom collection ID (defaults to configured pages collection) |
+
+#### Behavior
+
+- Scheme and domain come from the site config, so it stays correct on local and staging instead of hard-coding production into a template.
+- Everything `url()` does — base prefix, param filling, encoding — applies unchanged.
+- Returns an empty string wherever `url()` does. A missing or unrouted page never degrades to a bare domain, which would look like a working link to the homepage.
+
+> Linking to a collection object rather than a page? Use [`cms.collection.canonicalObjectUrl()`](docs/twig/object-linking), which does the same job for objects.
+
 ## Assets
 
 ### asset()
@@ -9218,6 +9307,11 @@ Templates don't change between development and production — the asset function
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{{ page.title }}{% endblock %}</title>
 
+    {# Total CMS core assets. These are not cms.builder.* functions -- they emit
+       T3's own CSS/JS (grid, galleries, pagination, htmx) plus any extension
+       assets. See docs/site-builder/frontend. #}
+    {{ cms.assetsHead() }}
+
     {{ cms.builder.preload('fonts/inter.woff2', 'font') }}
     {{ cms.builder.css('style.css') }}
 </head>
@@ -9228,6 +9322,7 @@ Templates don't change between development and production — the asset function
 
     {% include 'partials/footer.twig' %}
 
+    {{ cms.assetsBody() }}
     {{ cms.builder.js('app.js', {module: true}) }}
 </body>
 </html>
@@ -9311,6 +9406,50 @@ The most important Twig variable in Total CMS is `cms`, which fetches content fr
 ```
 
 For more information, check out the [Total CMS Content with Twig](docs/twig/totalcms) docs.
+
+## Frontend Assets
+
+Total CMS ships stylesheets and scripts that its own Twig output depends on — grid layout, galleries, pagination, icons, and the JavaScript that turns [`mailto`](docs/twig/filters) addresses into real links. Two helpers emit them, and every layout you write should call both:
+
+```twig
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}{% endblock %}</title>
+
+    {{ cms.assetsHead() }}
+    {# your own stylesheet goes after, so your rules win #}
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+    {% block content %}{% endblock %}
+
+    {{ cms.assetsBody() }}
+</body>
+</html>
+```
+
+`cms.assetsHead()` emits the core stylesheets and preload hints. `cms.assetsBody()` emits the core scripts, which belong at the end of the body. Both also render any assets registered by [extensions](docs/extensions/extension-points), so an extension that ships CSS or JS works without you changing your layout.
+
+Order matters in the head: put `cms.assetsHead()` **before** your own stylesheet so your rules override the defaults rather than the other way round.
+
+### What breaks without them
+
+Nothing errors. The page renders, the markup is correct, and things quietly look or behave wrong:
+
+| Missing asset | Symptom |
+|---|---|
+| `cms-grid.css` | `{% cmsgrid %}` renders as an unstyled stack |
+| `gallery.css` / `gallery.js` | galleries don't lay out, lightbox never opens |
+| `pagination.css` | [Load More](docs/twig/load-more) controls render unstyled |
+| `content.css` / `icons.css` | default content styles and icons are missing |
+| `content.js` | [`mailto`](docs/twig/filters) addresses stay inert text |
+| `htmx.min.js` | Load More and other interactive fragments never fetch |
+
+Because the symptom is "my grid looks wrong" rather than an error, this is worth checking first when a template misbehaves for no apparent reason.
+
+Don't hardcode these files yourself. The list changes between releases, and the helpers handle ordering, module type, preloading, and cache-busting for you.
 
 
 <!--
@@ -13077,7 +13216,7 @@ Use `excludeRemainder` to only return items that match the order array:
 {# Returns exactly 3 items (if they exist) in that order #}
 ```
 
-### Using Collection Metadata
+### Using Collection Settings
 
 Store sort orders in the collection's metadata for easy admin editing. Use the `collection` option to automatically look up the order:
 
@@ -13446,6 +13585,11 @@ Get the absolute canonical URL for an object, including scheme and domain.
 - `idOrObject` (string|array): Object ID or full object array
 
 **Returns:** Absolute URL (e.g., `https://example.com/blog/technology/my-post`)
+
+> **Linking to a page rather than an object?** Site Builder pages have their own
+> equivalent, `cms.builder.canonicalUrl(page)` — see
+> [Site Builder](site-builder/overview). Both resolve the domain from the site
+> config, so neither needs a hard-coded host in a template.
 
 ### cms.collection.redirectToCanonicalUrl()
 
@@ -14060,11 +14204,13 @@ Total CMS provides "load more" helpers that render the first page of results ser
 
 - **Edition**: Standard edition or higher (requires templates feature)
 - **Template file**: A Twig template that renders a single item (receives an `{{ object }}` variable)
-- **HTMX**: Include the HTMX script in your page or load from a CDN
+- **HTMX**: bundled with Total CMS and emitted by `cms.assetsBody()`, along with the `pagination.css` that styles the controls
 
-```html
-<script src="{{ cms.api }}/assets/htmx.min.js?v={{ cms.version }}"></script>
+```twig
+{{ cms.assetsBody() }}   {# just before </body>, with cms.assetsHead() in <head> #}
 ```
+
+If your layout already calls the [core asset helpers](docs/twig/overview), there is nothing more to add. Without them the button renders unstyled and clicking it fetches nothing, since htmx never loads.
 
 ## Collection Load More
 
@@ -14939,7 +15085,7 @@ Creates an obfuscated mailto link that protects email addresses from spam bots. 
 </span>
 ```
 
-**Note:** Requires `content.js` to be loaded on your pages for the JavaScript decoder to work.
+**Note:** the decoder lives in `content.js`, which is emitted by `{{ cms.assetsBody() }}`. If your layout doesn't call the [core asset helpers](docs/twig/overview), the address renders as plain text and never becomes a clickable link.
 
 ## Color Filters
 
@@ -21004,9 +21150,9 @@ Automations run a block of PHP you write — the **handler** — in response to 
 
 An automation is an object in the reserved `automations` collection. Each one has:
 
-- **Triggers** — one or more of `schedule`, `webhook`, or `event` (see [Triggers](triggers.md)).
-- **A handler** — the PHP that runs when a trigger fires (see [Writing Handlers](handlers.md)). The handler is stored in its own file alongside the object, so it's edited like any code field but never bloats the JSON.
-- **An optional error mailer** — a [Mailer](../notifications/mailer.md) object used to email you when the handler throws in production.
+- **Triggers** — one or more of `schedule`, `webhook`, or `event` (see [Triggers](docs/automations/triggers)).
+- **A handler** — the PHP that runs when a trigger fires (see [Writing Handlers](docs/automations/handlers)). The handler is stored in its own file alongside the object, so it's edited like any code field but never bloats the JSON.
+- **An optional error mailer** — a [Mailer](docs/notifications/mailer) object used to email you when the handler throws in production.
 - **A category** — groups automations in the admin sidebar (defaults to *Automations*).
 
 Manage them under **Automations** in the admin (or `tcms` on the CLI). The editor shows the handler, the trigger list, a run history, a **Run now** button, and a non-blocking advisory if the handler reaches for high-risk calls (`exec`, `shell_exec`, `eval`, …).
@@ -21037,10 +21183,10 @@ Every run is recorded (status, duration, return value or exception) and visible 
 
 ## Next steps
 
-- [Triggers](triggers.md) — schedule, webhook, and event configuration
-- [Writing Handlers](handlers.md) — the `AutomationContext` API
-- [Webhooks](webhooks.md) — authentication, sync vs. async
-- [Extension Automations](extensions.md) — ship automations from an extension
+- [Triggers](docs/automations/triggers) — schedule, webhook, and event configuration
+- [Writing Handlers](docs/automations/handlers) — the `AutomationContext` API
+- [Webhooks](docs/automations/webhooks) — authentication, sync vs. async
+- [Extension Automations](docs/automations/extensions) — ship automations from an extension
 
 ---
 
@@ -21050,7 +21196,7 @@ An automation's **triggers** decide *when* its handler runs. Each automation can
 
 ## Schedule
 
-Runs the handler on a cron schedule. Requires the [`automations:process` command](overview.md#scheduling-the-process-command) to be run by cron.
+Runs the handler on a cron schedule. Requires the [`automations:process` command](docs/automations/overview#scheduling-the-process-command) to be run by cron.
 
 | Field | Description |
 |-------|-------------|
@@ -21087,10 +21233,10 @@ POST /automations/{id}
 
 | Field | Description |
 |-------|-------------|
-| `auth` | `apiKey` (key scoped to `POST /automations`), `sameOrigin` (browser form posts from this site only), or `none` (public, rate-limited per IP). See [Webhooks](webhooks.md). |
+| `auth` | `apiKey` (key scoped to `POST /automations`), `sameOrigin` (browser form posts from this site only), or `none` (public, rate-limited per IP). See [Webhooks](docs/automations/webhooks). |
 | `sync` | When on, the request blocks and the response is the handler's return value. When off, the run is queued and the endpoint returns `202 Accepted` immediately. |
 
-Request query and body are passed to the handler as `$ctx->args`. See [Webhooks](webhooks.md) for authentication and payload details.
+Request query and body are passed to the handler as `$ctx->args`. See [Webhooks](docs/automations/webhooks) for authentication and payload details.
 
 ## Event
 
@@ -21187,7 +21333,7 @@ The handler is stored in its own `.php` file next to the automation object (an *
 
 | Property | What it is |
 |----------|------------|
-| `$ctx->mailer` | Send a [Mailer](../notifications/mailer.md) email — `sendEmail($mailerId, $data)` |
+| `$ctx->mailer` | Send a [Mailer](docs/notifications/mailer) email — `sendEmail($mailerId, $data)` |
 | `$ctx->config` | Core configuration |
 | `$ctx->logger` | PSR-3 logger writing to `jobs.log` (channel `automations`) |
 | `$ctx->trigger` | The trigger row that fired this run (e.g. `$ctx->trigger['type']`) |
@@ -21217,7 +21363,7 @@ return function ($ctx) {
 ## Return values and errors
 
 - **Return value** — whatever the closure returns is recorded on the run record and, for a synchronous webhook, becomes the HTTP response body. Return arrays/scalars (JSON-encodable).
-- **Throwing** marks the run **failed**. In development the error surfaces loudly; in production it's contained, optionally emailed via the automation's error mailer, and counts toward [auto-disable](overview.md#failure-handling).
+- **Throwing** marks the run **failed**. In development the error surfaces loudly; in production it's contained, optionally emailed via the automation's error mailer, and counts toward [auto-disable](docs/automations/overview#failure-handling).
 
 ## The handler advisory
 
@@ -21265,7 +21411,7 @@ or
 Authorization: Bearer tcms_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-Grant it when creating the key: in **Utilities → API Keys → New**, include **POST** in the methods, then under *Specific Endpoints* select **All Automations** (or grant all endpoints). A key that isn't scoped for `POST /automations` is rejected with `401`. See [API Keys](../apis/api-keys.md).
+Grant it when creating the key: in **Utilities → API Keys → New**, include **POST** in the methods, then under *Specific Endpoints* select **All Automations** (or grant all endpoints). A key that isn't scoped for `POST /automations` is rejected with `401`. See [API Keys](docs/apis/api-keys).
 
 ## Synchronous vs. asynchronous
 
@@ -21306,7 +21452,7 @@ The API key itself is read only from headers — it's never part of `$ctx->args`
 
 ## Server rewrite rules
 
-`POST /automations/{id}` is a root-level route. If your server needs explicit rewrite rules (e.g. a Stacks install), make sure the automations path is routed to `index.php` — see [Apache](../operations/apache.md) and [Nginx](../operations/nginx.md).
+`POST /automations/{id}` is a root-level route. If your server needs explicit rewrite rules (e.g. a Stacks install), make sure the automations path is routed to `index.php` — see [Apache](docs/operations/apache) and [Nginx](docs/operations/nginx).
 
 ---
 
@@ -21338,19 +21484,19 @@ public function register(ExtensionContext $context): void
 }
 ```
 
-The handler receives the same [`AutomationContext`](handlers.md#the-automationcontext) as a file-based automation.
+The handler receives the same [`AutomationContext`](docs/automations/handlers#the-automationcontext) as a file-based automation.
 
 ## How they differ from file automations
 
 - **Code, not content.** The handler is a closure held in memory, rebuilt from your extension's code each request — nothing is written to the `automations` collection.
 - **Read-only in the admin.** Operators can run or disable an extension automation, but they can't edit the closure (it lives in your code). They appear in the automations list tagged as extension-owned.
-- **Schedule + event only.** Extension automations participate in schedule and event dispatch. For HTTP, register a [public route](../extensions/extension-points.md#public-routes) instead of a webhook trigger — an extension automation's id (`vendor/name:id`) isn't a URL path.
+- **Schedule + event only.** Extension automations participate in schedule and event dispatch. For HTTP, register a [public route](docs/extensions/extension-points#public-routes) instead of a webhook trigger — an extension automation's id (`vendor/name:id`) isn't a URL path.
 
 ## The capability toggle
 
 Registering an automation surfaces the auto-detected **`automations`** capability for your extension. Operators can switch it off from the extension's permissions — that hides and stops dispatching all of the extension's automations without uninstalling it. It's also flagged on the pre-enable review screen, since automations run code on a schedule or content events.
 
-See [Extension Points → Automations](../extensions/extension-points.md#automations) for the reference, and the [extension starter](https://github.com/totalcms/extension-starter) for a working example.
+See [Extension Points → Automations](docs/extensions/extension-points#automations) for the reference, and the [extension starter](https://github.com/totalcms/extension-starter) for a working example.
 
 ---
 
@@ -22211,7 +22357,7 @@ Generate Nginx rewrite rules for pretty URLs.
 
 Build an HTMX-powered quick action button. The route is relative to the site
 base, so it can target any route — include the `/api` prefix for API routes,
-or point at a public route like an [automation webhook](../automations/webhooks.md).
+or point at a public route like an [automation webhook](docs/automations/webhooks).
 (A leading slash is optional; `/api/cache/clear` and `api/cache/clear` are
 equivalent.)
 
@@ -22443,7 +22589,7 @@ These operations replace the older HTTP method approach and provide clearer, mor
 
 Collections have two separate permission levels:
 
-#### Collection Metadata (`collectionsMeta`)
+#### Collection Settings (`collectionsMeta`)
 
 Controls access to managing collection definitions (creating/editing/deleting collections themselves):
 
@@ -22967,7 +23113,7 @@ Super admins bypass all access checks and have full access to everything.
    - `update` for modifying existing resources
    - `delete` for deleting resources
 
-3. **Distinguish Collections from Collection Metadata**:
+3. **Distinguish Collections from Collection Settings**:
    - Use `canAccessCollection()` for working with objects within a collection
    - Use `canAccessCollectionMeta()` for managing collection definitions
 
@@ -24914,7 +25060,7 @@ $totalcms = new TotalCMS\TotalCMS();
 <head>
     <meta charset="utf-8">
     <title>{{ cms.text('sitetitle') }} - My Site</title>
-    <link rel="stylesheet" href="{{ cms.api }}/assets/content.css?v={{ cms.version }}"/>
+    {{ cms.assetsHead() }}
 </head>
 <body>
 
@@ -24969,9 +25115,9 @@ $totalcms = new TotalCMS\TotalCMS();
     <p>Toggle: {% if cms.toggle('active') %}Enabled{% else %}Disabled{% endif %}</p>
     <div>{{ cms.styledtext('about') }}</div>
 
-    <!-- Total CMS Scripts -->
-    <script type="module" src="{{ cms.api }}/assets/content.js?v={{ cms.version }}"></script>
-    <script type="module" src="{{ cms.api }}/assets/gallery.js?v={{ cms.version }}"></script>
+    <!-- Total CMS core scripts. The matching {{ cms.assetsHead() }} call belongs
+         in <head> for the core stylesheets. See docs/twig/overview. -->
+    {{ cms.assetsBody() }}
 </body>
 </html>
 
@@ -24992,7 +25138,7 @@ $totalcms = new TotalCMS\TotalCMS();
 <html lang="en">
 <head>
     <title>{{ cms.text('sitetitle') }}</title>
-    <link rel="stylesheet" href="{{ cms.api }}/assets/content.css?v={{ cms.version }}"/>
+    {{ cms.assetsHead() }}
 </head>
 
 <?php
@@ -25003,6 +25149,7 @@ $totalcms->startBuffer();
 
 <body>
     <!-- Rest of page content... -->
+    {{ cms.assetsBody() }}
 </body>
 </html>
 
@@ -27020,6 +27167,16 @@ The same `/mcp` URL serves three personas; the tool surface scales per caller:
 
 Public access is **default-deny**. Anonymous requests get a 401 unless the operator explicitly flips `mcp.publicAccess` on in settings AND marks at least one collection's `mcp.access` as `public` in the schema editor.
 
+### Editions: reading everywhere, writing on Pro
+
+The MCP endpoint requires **Standard or Pro**. Lite does not include it. What differs between Standard and Pro is which personas are available to reach it.
+
+The public persona works everywhere, so any Total CMS site can expose collections for an AI agent to read. The other two personas depend on credentials that are Pro features — an API key for the admin persona, the OAuth server for the authenticated one — so **writing to your site from an agent requires Pro**, as does any access scoped to a particular user.
+
+That gate is enforced where the persona is decided, not only where credentials are issued. A key or token that outlives the licence which created it — after a trial lapses, a downgrade, or a restored backup — is treated as absent rather than honoured: the caller falls through to anonymous and still gets whatever is genuinely public.
+
+Two things degrade naturally below Pro rather than erroring: Data Views are a Pro feature, so `list_views` and `query_view` come back empty; and custom schemas are Pro, so only built-in schemas are exposed.
+
 ### The three-layer rule (scope, group, exposure)
 
 Every authenticated (OAuth) call to a collection or object has to clear three independent gates — think of them as three separate locks that all have to be open:
@@ -27078,7 +27235,7 @@ API keys and OAuth both authenticate `/mcp` requests, but they serve different t
 
 ### Prerequisites
 
-- **Pro edition** — OAuth is a Pro+ feature. Trials count.
+- **Pro edition** — the OAuth server is a Pro feature (trials count). The MCP endpoint itself is not gated; only this authenticated persona is.
 - **Keys generated.** Run `tcms oauth:setup` once if you haven't already.
 - **OAuth server enabled.** Toggle on in **Admin → Settings → OAuth Server**.
 - **Read the full OAuth setup guide** at [OAuth Server](docs/apis/oauth) before continuing — it covers key generation, client creation, scope definitions, and dynamic registration.
@@ -27236,7 +27393,7 @@ Operators control AI exposure via two layers of MCP config — one per **collect
 |---|---|---|
 | `access` | `"admin"` | Who can call `query_collection` / `search_collection` / `get_object` against this collection. `"admin"` requires an API key; `"public"` allows anonymous AI agents. |
 | `description` | empty | AI-targeted description shown in `list_collections` and the dynamic tool-description catalog. Falls back to the collection's general description if blank. |
-| `resource` | `true` | When true, the collection is exposed as a `tcms://{collection}/` resource and its objects via the `tcms://{collection}/{id}` template. Set to `false` if you want the collection in tools but not in `resources/list`. |
+| `resource` | `false` | When true, the collection is exposed as a `tcms://{collection}/` resource and its objects via the `tcms://{collection}/{id}` template. Off unless you turn it on — resources are a second way to reach data the tools already serve, so a collection stays out of `resources/list` until you ask for it. |
 
 The same `mcp` card lives on each **data view** (in the dataviews editor) with identical fields. A view marked `mcp.access: 'public'` shows up in `list_views` for anonymous callers and is fetchable at `tcms://view/{id}`.
 
@@ -27309,9 +27466,9 @@ Total CMS exposes three URI shapes:
 
 | URI | What it is | Registered when |
 |---|---|---|
-| `tcms://{collection}/` | Collection summary — recent items, capped at 50 | Every collection with `mcp.resource: true` (default) |
+| `tcms://{collection}/` | Collection summary — recent items, capped at 50 | Collections with `mcp.resource: true` (off by default) |
 | `tcms://{collection}/{id}` | Single object | Same; registered as a *template*, not enumerated per-object |
-| `tcms://view/{id}` | A data view's cached result | Every data view with `mcp.resource: true` |
+| `tcms://view/{id}` | A data view's cached result | Data views with `mcp.resource: true` (off by default) |
 
 Agents address these via three SDK transport methods:
 
@@ -27576,6 +27733,8 @@ https://yoursite.com/mcp
 ```
 
 That single URL is all most clients need. What a client can *see* through it depends on who it is: anonymous callers get whatever you've exposed publicly, and an API key unlocks admin-level access to schemas, templates, and content. See [MCP Server](mcp/server) for how those audiences differ.
+
+MCP requires **Standard or Pro** — Lite does not serve the endpoint at all. On Standard the anonymous read path below works: connect without a key and expose the collections you want readable. The API-key and OAuth options are Pro features.
 
 Everything below is copy-paste. Claude has no one-click install link, so the desktop extension is the closest equivalent; Cursor and VS Code do support install links, covered at the end.
 
@@ -28032,6 +28191,8 @@ The intended flow is `docs_search` → `docs_get`: search returns paths, `docs_g
 
 No MCP resource template ships for the docs corpus — only tools. `docs_search` + `docs_get` cover the same ground in one round trip, without adding an enumerable resource surface for a corpus nobody would browse by URI.
 
+These work on **Standard and Pro**. The extension ships with the package on every install, but its tools are served by the site's own MCP endpoint — which Lite does not include — so an agent can only reach them from Standard upwards.
+
 ## The five workflow prompts
 
 Tools give an agent the ability to read the docs; they don't tell it when to bother. The same extension registers five MCP prompts that do:
@@ -28219,10 +28380,20 @@ Each prompt has an **Access** setting:
 
 | Setting | Who can call the prompt |
 |---|---|
-| `(inherit from collection)` | Inherits the target collection's MCP access. Blank `targetCollection` defaults to `admin`. |
+| `(inherit from target)` | Inherits the MCP access of the collection or Data View named in **Target**. A blank target defaults to `admin`. |
 | `Admin only` | API-key authenticated callers only. |
 | `Authenticated` | OAuth Bearer token callers (and admin). |
 | `Public` | Anonymous AI agents (and all above). |
+
+### Targeting a collection or a Data View
+
+**Target** accepts either, in one picker — entries are labelled with their kind, because the two are separate namespaces and an id can exist in both.
+
+When an id does exist as both, it resolves to the **collection**. That order is deliberate rather than alphabetical: collections are filtered by access group, and Data Views are not — a view's own `mcp.access` is its entire gate, by design. Resolving a colliding id to the collection lands on the stricter of the two models; the other order would let a view named after a collection silently widen a prompt's reach.
+
+That difference is worth knowing whenever you inherit from a view. `authenticated` on a collection means "signed-in callers whose groups grant access to it"; `authenticated` on a view means "any signed-in caller", with no group filtering. If a prompt's reach should respect access groups, target a collection or set **Access** explicitly.
+
+One subtlety: whether the target *exists* as a collection decides which branch runs, not whether that collection sets `mcp.access`. A real collection with no MCP access configured resolves to `admin` and stops — it does not fall through to a same-named view.
 
 Persona enforcement runs at two points:
 
@@ -29124,10 +29295,10 @@ tcms extension:enable your-vendor/your-extension
 
 ## Next Steps
 
-- [Manifest Reference](manifest.md) -- all manifest fields explained
-- [Extension Points](extension-points.md) -- what extensions can do
-- [Events](events.md) -- subscribing to content events
-- [Schemas](schemas.md) -- providing schemas from extensions
+- [Manifest Reference](docs/extensions/manifest) -- all manifest fields explained
+- [Extension Points](docs/extensions/extension-points) -- what extensions can do
+- [Events](docs/extensions/events) -- subscribing to content events
+- [Schemas](docs/extensions/schemas) -- providing schemas from extensions
 
 ---
 
@@ -29203,13 +29374,13 @@ Short description of what the extension does.
 
 ### `reviewNote`
 
-A plain-language note shown to the operator on the [pre-enable review screen](safety.md#the-pre-enable-review). If your extension uses any sensitive capability (public routes, event listeners, container services, MCP tools/resources) or contains high-risk code patterns, the operator sees a review screen before enabling — and your `reviewNote` leads it.
+A plain-language note shown to the operator on the [pre-enable review screen](docs/extensions/safety#the-pre-enable-review). If your extension uses any sensitive capability (public routes, event listeners, container services, MCP tools/resources) or contains high-risk code patterns, the operator sees a review screen before enabling — and your `reviewNote` leads it.
 
 ```json
 "reviewNote": "Receives Stripe webhooks at a public endpoint to confirm payments, and watches new orders to send notifications. No data leaves your site except the Stripe calls you configure."
 ```
 
-Write it for the site owner, not a developer: say what the extension does and why it needs each sensitive capability, be specific about public endpoints and data access, and keep it to a sentence or two. Optional — but on an extension that uses sensitive capabilities, a clear note turns a nervous "Enable" into a confident one. See [Stability & Safety](safety.md) for the full picture.
+Write it for the site owner, not a developer: say what the extension does and why it needs each sensitive capability, be specific about public endpoints and data access, and keep it to a sentence or two. Optional — but on an extension that uses sensitive capabilities, a clear note turns a nervous "Enable" into a confident one. See [Stability & Safety](docs/extensions/safety) for the full picture.
 
 ### `requires`
 
@@ -29345,7 +29516,7 @@ Use it sparingly. It exists for bundled features that are pointless to ship
 disabled: the [Total CMS Docs](docs/mcp/docs-tools) extension is the only one
 that does, because documentation tools nobody switches on help nobody. It is
 gated by `authenticated` MCP access rather than an enable toggle. See
-[Bundled Extensions](bundled.md) for the rest.
+[Bundled Extensions](docs/extensions/bundled) for the rest.
 
 ### `license`
 
@@ -29381,9 +29552,9 @@ When an extension is enabled, the system runs a trial registration to discover w
 | `page-middleware` | `$context->addPageMiddleware(...)` | Per-page middleware |
 | `form-actions` | `$context->addFormAction(...)` | Custom form action types (Pro) |
 
-If a new version of an extension adds a capability it didn't have before, Total CMS detects it on update and adds it to the permissions list **turned off** — the operator opts into the new feature from the extension's settings. (For sideloaded extensions, an update whose code contains high-risk patterns disables the extension until the operator reviews it.) See [Stability & Safety](safety.md) for how the review and update protections work.
+If a new version of an extension adds a capability it didn't have before, Total CMS detects it on update and adds it to the permissions list **turned off** — the operator opts into the new feature from the extension's settings. (For sideloaded extensions, an update whose code contains high-risk patterns disables the extension until the operator reviews it.) See [Stability & Safety](docs/extensions/safety) for how the review and update protections work.
 
-For details on each capability and how to register it, see [Extension Points](extension-points.md).
+For details on each capability and how to register it, see [Extension Points](docs/extensions/extension-points).
 
 ---
 
@@ -29462,11 +29633,11 @@ Container definitions (`container`) are deliberately **not** flagged: extensions
 
 …or when a quick **static scan** of the extension's source finds high-risk calls (`shell_exec`, `eval`, raw network requests, `base64_decode`, and similar). The scan reads the code as text — it never runs the extension to check it.
 
-Bundled extensions (the ones that ship with Total CMS) are exempt from the source scan — they version with core and ship reviewed in the package. Their capability list still shows. For extension developers: persisting files through the [storage API](extension-points.md#file-storage) instead of raw `file_put_contents()` keeps your scan clean — the flag exists for unconstrained writes, not for state kept in the sanctioned per-extension directory.
+Bundled extensions (the ones that ship with Total CMS) are exempt from the source scan — they version with core and ship reviewed in the package. Their capability list still shows. For extension developers: persisting files through the [storage API](docs/extensions/extension-points#file-storage) instead of raw `file_put_contents()` keeps your scan clean — the flag exists for unconstrained writes, not for state kept in the sanctioned per-extension directory.
 
 The review screen has up to three parts:
 
-1. **From the developer** — a plain-language note (the extension's [`reviewNote`](manifest.md)) explaining what it does and why it needs the access it asks for.
+1. **From the developer** — a plain-language note (the extension's [`reviewNote`](docs/extensions/manifest)) explaining what it does and why it needs the access it asks for.
 2. **What this extension can access** — the sensitive capabilities, in neutral terms, with a reminder that you can disable individual features afterward.
 3. **Source-code patterns to review** — any high-risk calls the scan found, with file and line. These aren't proof of anything malicious — many legitimate extensions use them — but they're worth a look.
 
@@ -29495,12 +29666,12 @@ Clean updates that don't add capabilities install with no interruption at all.
 
 If you're building an extension, these features shape how operators experience it:
 
-- **Write a [`reviewNote`](manifest.md).** If your extension uses any sensitive capability, the operator *will* see the review screen — your note is your chance to explain, in plain language, what you do and why. A good note is the difference between a confident "Enable" and a nervous one.
+- **Write a [`reviewNote`](docs/extensions/manifest).** If your extension uses any sensitive capability, the operator *will* see the review screen — your note is your chance to explain, in plain language, what you do and why. A good note is the difference between a confident "Enable" and a nervous one.
 - **You see exactly what they see.** When you enable your own extension while testing, you get the same review screen — so you can preview how it reads.
 - **Capabilities you add in an update default to off** for existing users. They'll find the new capability in your extension's settings and opt into it. Plan for that: don't assume a capability added in a point release is immediately active for everyone.
 - **Keep high-risk calls intentional and explainable.** If your code legitimately needs `file_get_contents('https://…')` or `base64_decode`, that's fine — it'll show on the review screen, and your `reviewNote` can put it in context. Avoid surprising patterns you can't justify.
 
-See the [Manifest Reference](manifest.md) for the `reviewNote` field and the full capability list.
+See the [Manifest Reference](docs/extensions/manifest) for the `reviewNote` field and the full capability list.
 
 ---
 
@@ -29810,7 +29981,7 @@ Once registered, the field type can be used in schemas:
 
 ## Event Listeners
 
-Subscribe to content events. See [Events](events.md) for the full event reference.
+Subscribe to content events. See [Events](docs/extensions/events) for the full event reference.
 
 ```php
 public function register(ExtensionContext $context): void
@@ -29826,7 +29997,7 @@ public function register(ExtensionContext $context): void
 
 ## Automations
 
-Ship a server-side [automation](../automations/overview.md) as part of your extension. Like the user-authored automations in the admin, an extension automation runs on a **schedule** or a content **event** — but its handler is the closure you register here, held in memory (never written to disk). The handler receives an `AutomationContext` with pre-injected services (`objectFetcher`, `objectSaver`, `objectUpdater`, `objectRemover`, `indexReader`, `mailer`, `config`, `logger`) plus the run payload (`trigger`, `args`, `event`).
+Ship a server-side [automation](docs/automations/overview) as part of your extension. Like the user-authored automations in the admin, an extension automation runs on a **schedule** or a content **event** — but its handler is the closure you register here, held in memory (never written to disk). The handler receives an `AutomationContext` with pre-injected services (`objectFetcher`, `objectSaver`, `objectUpdater`, `objectRemover`, `indexReader`, `mailer`, `config`, `logger`) plus the run payload (`trigger`, `args`, `event`).
 
 ```php
 public function register(ExtensionContext $context): void
@@ -30984,6 +31155,38 @@ tcms object:create blog my-post.json --json    # echoes the saved object
 | `collection` | Yes | Collection ID |
 | `file` | Yes | Path to a JSON file holding one object, or `-` for stdin |
 
+### `object:patch`
+
+Merge changes into an existing object, leaving every field you don't mention untouched. Like `object:create`, it goes through the full save pipeline — validation runs, the collection index updates, and `object.updated` fires — so it stays consistent with the admin in a way that editing the JSON file by hand does not.
+
+Use this for a targeted change to one object. `object:create` only makes new objects, and `collection:import` works in bulk.
+
+```bash
+tcms object:patch blog my-post patch.json
+echo '{"title":"New Title"}' | tcms object:patch blog my-post -
+tcms object:patch blog my-post patch.json --json    # echoes the saved object
+```
+
+**The merge is shallow.** Patching a structured field from the top level replaces it wholesale, which will quietly discard the parts you didn't mention. Target the property instead to merge *into* it:
+
+```bash
+# Replaces the whole image field — name, size and dimensions are lost
+echo '{"image":{"alt":"A description"}}' | tcms object:patch image social -
+
+# Changes only alt, preserving everything else on the field
+echo '{"alt":"A description"}' | tcms object:patch image social - --property=image
+```
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `collection` | Yes | Collection ID |
+| `id` | Yes | Object ID |
+| `file` | Yes | Path to a JSON file holding the fields to merge, or `-` for stdin |
+
+| Option | Description |
+|--------|-------------|
+| `--property` | Merge into this property instead of the top level, preserving its other keys |
+
 ### `object:export`
 
 Export a single object as JSON or ZIP (with assets).
@@ -31627,7 +31830,7 @@ This complements the `llms.txt` file at `docs.totalcms.co/llms.txt`, which provi
 
 Total CMS ships a small set of **bundled extensions** in the package itself (under `resources/extensions/`). They're installed automatically — no `composer require`, no upload — and, with one exception, disabled by default. Enable the ones you want from **Admin → Extensions**.
 
-The exception is `totalcms/docs` (see the table below), which ships marked `default_enabled` in its manifest — see [`default_enabled`](manifest.md#default-enabled) for the mechanism and why it's bundled-only.
+The exception is `totalcms/docs` (see the table below), which ships marked `default_enabled` in its manifest — see [`default_enabled`](docs/extensions/manifest#default-enabled) for the mechanism and why it's bundled-only.
 
 ## Why bundled extensions?
 
@@ -35523,6 +35726,9 @@ Basic collection schemas available to all editions:
 * toggle
 * url
 
+**Features:**
+* Templates
+
 ## Standard
 
 Everything in Lite including:
@@ -35532,11 +35738,16 @@ Everything in Lite including:
 * depot
 
 **Features:**
+* Access groups
+* Barcodes
 * Image watermarks
 * Mailer form actions
+* MCP server (anonymous, read-only — see below)
+* Passkeys
 * QR codes
-* Templates
-* Access groups
+* RSS import
+* Text watermarks
+* Whitelabel templates
 
 ## Pro
 
@@ -35546,12 +35757,21 @@ Everything in Standard including:
 * Custom schemas
 
 **Features:**
-* Text watermarks
-* Webhook form actions
-* External REST API
-* Barcodes
-* Whitelabel templates
+* Algolia search
 * API keys
+* Automations
+* Bulk mailer
+* Data views
+* External REST API
+* OAuth server
+* Webhook form actions
+* Whitelabel Pro templates
+
+### MCP and AI access
+
+The MCP server is included from **Standard** upwards, so a Standard site can expose collections for an AI agent to read. Lite does not include it.
+
+What Pro adds is the ability for an agent to act as somebody. Both credentials that grant a non-anonymous MCP persona are Pro features — **API keys** for admin access and the **OAuth server** for per-user access — so writing to your site from an agent, and any access scoped to a particular user's permissions, requires Pro.
 
 ## Free Trial
 

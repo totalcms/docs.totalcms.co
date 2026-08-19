@@ -155,7 +155,7 @@ tcms extension:enable your-vendor/your-extension
 
 ## Next Steps
 
-- [Manifest Reference](manifest.md) -- all manifest fields explained
-- [Extension Points](extension-points.md) -- what extensions can do
-- [Events](events.md) -- subscribing to content events
-- [Schemas](schemas.md) -- providing schemas from extensions
+- [Manifest Reference](/extensions/manifest/) -- all manifest fields explained
+- [Extension Points](/extensions/extension-points/) -- what extensions can do
+- [Events](/extensions/events/) -- subscribing to content events
+- [Schemas](/extensions/schemas/) -- providing schemas from extensions

@@ -163,6 +163,67 @@ For deeply nested menus, use a Twig macro:
 </nav>
 ```
 
+## Links
+
+### url()
+
+Resolve a page's URL by `id`, filling any dynamic `{param}` placeholders. Use it instead of hard-coding routes — rename `/blog/{id}` to `/posts/{id}` later and every link rebuilds itself.
+
+```twig
+{# Static page #}
+<a href="{{ cms.builder.url('about') }}">About</a>
+
+{# Dynamic route — params fill the placeholders #}
+<a href="{{ cms.builder.url('blog-post', { id: post.id }) }}">{{ post.title }}</a>
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `pageId` | string | yes | The `id` of the page |
+| `params` | array | no | Values for `{param}` placeholders in the route |
+| `collection` | string | no | Custom collection ID (defaults to configured pages collection) |
+
+#### Behavior
+
+- Returns the route prefixed with `cms.api` (the site's base URL) — a **relative** path.
+- Missing pages, and pages with no route, return an empty string.
+- Unfilled placeholders are left in place (e.g. `/blog/{id}`) so a broken reference is visible at render time rather than at click time.
+- Param values are URL-encoded automatically.
+
+### canonicalUrl()
+
+The absolute form of `url()`, for canonical tags, `og:url` and redirects — anywhere a relative path will not do.
+
+```twig
+<link rel="canonical" href="{{ cms.builder.canonicalUrl(page) }}">
+<meta property="og:url" content="{{ cms.builder.canonicalUrl(page) }}">
+```
+
+Takes a page `id` **or** a whole page array, so a layout can pass the `page` it already has instead of digging out an id:
+
+```twig
+{{ cms.builder.canonicalUrl('pricing') }}
+{{ cms.builder.canonicalUrl('blog-post', { id: post.id }) }}
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `pageOrId` | string\|array | yes | Page `id`, or a page array carrying one |
+| `params` | array | no | Values for `{param}` placeholders in the route |
+| `collection` | string | no | Custom collection ID (defaults to configured pages collection) |
+
+#### Behavior
+
+- Scheme and domain come from the site config, so it stays correct on local and staging instead of hard-coding production into a template.
+- Everything `url()` does — base prefix, param filling, encoding — applies unchanged.
+- Returns an empty string wherever `url()` does. A missing or unrouted page never degrades to a bare domain, which would look like a working link to the homepage.
+
+> Linking to a collection object rather than a page? Use [`cms.collection.canonicalObjectUrl()`](/twig/object-linking/), which does the same job for objects.
+
 ## Assets
 
 ### asset()
@@ -317,6 +378,11 @@ Templates don't change between development and production — the asset function
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{{ page.title }}{% endblock %}</title>
 
+    {# Total CMS core assets. These are not cms.builder.* functions -- they emit
+       T3's own CSS/JS (grid, galleries, pagination, htmx) plus any extension
+       assets. See docs/site-builder/frontend. #}
+    {{ cms.assetsHead() }}
+
     {{ cms.builder.preload('fonts/inter.woff2', 'font') }}
     {{ cms.builder.css('style.css') }}
 </head>
@@ -327,6 +393,7 @@ Templates don't change between development and production — the asset function
 
     {% include 'partials/footer.twig' %}
 
+    {{ cms.assetsBody() }}
     {{ cms.builder.js('app.js', {module: true}) }}
 </body>
 </html>

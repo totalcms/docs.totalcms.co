@@ -15,9 +15,9 @@ Automations run a block of PHP you write — the **handler** — in response to 
 
 An automation is an object in the reserved `automations` collection. Each one has:
 
-- **Triggers** — one or more of `schedule`, `webhook`, or `event` (see [Triggers](triggers.md)).
-- **A handler** — the PHP that runs when a trigger fires (see [Writing Handlers](handlers.md)). The handler is stored in its own file alongside the object, so it's edited like any code field but never bloats the JSON.
-- **An optional error mailer** — a [Mailer](../notifications/mailer.md) object used to email you when the handler throws in production.
+- **Triggers** — one or more of `schedule`, `webhook`, or `event` (see [Triggers](/automations/triggers/)).
+- **A handler** — the PHP that runs when a trigger fires (see [Writing Handlers](/automations/handlers/)). The handler is stored in its own file alongside the object, so it's edited like any code field but never bloats the JSON.
+- **An optional error mailer** — a [Mailer](/notifications/mailer/) object used to email you when the handler throws in production.
 - **A category** — groups automations in the admin sidebar (defaults to *Automations*).
 
 Manage them under **Automations** in the admin (or `tcms` on the CLI). The editor shows the handler, the trigger list, a run history, a **Run now** button, and a non-blocking advisory if the handler reaches for high-risk calls (`exec`, `shell_exec`, `eval`, …).
@@ -48,7 +48,7 @@ Every run is recorded (status, duration, return value or exception) and visible 
 
 ## Next steps
 
-- [Triggers](triggers.md) — schedule, webhook, and event configuration
-- [Writing Handlers](handlers.md) — the `AutomationContext` API
-- [Webhooks](webhooks.md) — authentication, sync vs. async
-- [Extension Automations](extensions.md) — ship automations from an extension
+- [Triggers](/automations/triggers/) — schedule, webhook, and event configuration
+- [Writing Handlers](/automations/handlers/) — the `AutomationContext` API
+- [Webhooks](/automations/webhooks/) — authentication, sync vs. async
+- [Extension Automations](/automations/extensions/) — ship automations from an extension

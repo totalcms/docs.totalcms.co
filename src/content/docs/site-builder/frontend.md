@@ -237,6 +237,21 @@ rollupOptions: {
 },
 ```
 
+## Core Total CMS Assets
+
+Before your own assets, your layout needs the ones Total CMS ships. `cms.assetsHead()` and `cms.assetsBody()` emit the core stylesheets and scripts that T3's own Twig output depends on — grid layout, galleries, pagination, icons, htmx, and the decoder behind the [`mailto`](/twig/filters/) filter — plus anything registered by [extensions](/extensions/extension-points/).
+
+```twig
+{{ cms.assetsHead() }}   {# in <head>, before your own CSS #}
+{{ cms.assetsBody() }}   {# just before </body> #}
+```
+
+These are separate from the `cms.builder.*` functions below. `cms.builder.css()` and `cms.builder.js()` load **your** files out of the builder assets directory; `cms.assetsHead()` / `cms.assetsBody()` load **Total CMS's**. A layout wants both.
+
+Leave them out and nothing errors — `{% cmsgrid %}` renders unstyled, galleries don't lay out, Load More doesn't fetch, and obfuscated email addresses never become links. See [Frontend Assets](/twig/overview/) in the Twig overview for the full symptom table.
+
+Put `cms.assetsHead()` before your own stylesheet so your rules override the defaults.
+
 ## Layout Template Example
 
 A complete layout using all asset functions:
@@ -250,6 +265,9 @@ A complete layout using all asset functions:
     <title>{% block title %}{{ page.title }}{% endblock %}</title>
     <meta name="description" content="{{ page.description }}">
 
+    {# Total CMS core assets first, so your own CSS can override them #}
+    {{ cms.assetsHead() }}
+
     {{ cms.builder.preload('fonts/inter.woff2', 'font') }}
     {{ cms.builder.css('css/style.css') }}
 </head>
@@ -260,6 +278,7 @@ A complete layout using all asset functions:
 
     {% include 'partials/footer.twig' %}
 
+    {{ cms.assetsBody() }}
     {{ cms.builder.js('js/app.js', {module: true}) }}
 </body>
 </html>
@@ -276,11 +295,14 @@ public/assets/
 ```
 
 ```twig
+{{ cms.assetsHead() }}
 {{ cms.builder.css('style.css') }}
+
+{{ cms.assetsBody() }}
 {{ cms.builder.js('app.js') }}
 ```
 
-T3 adds `?v={mtime}` query strings for cache busting. No manifest, no build step — just files.
+T3 adds `?v={mtime}` query strings for cache busting. No manifest, no build step — just files. The core asset helpers are still required with or without a build tool.
 
 ## Alternatives to Vite
 
