@@ -255,14 +255,29 @@ TCMS_LAYOUT=root TCMS_STARTER=blog TCMS_FRONTEND=1 \
 
 ## Alternative: zip download
 
-If Composer isn't available — shared hosting, restricted environments, or you just prefer file uploads — install from a zip:
+If Composer isn't available — shared hosting, restricted environments, or you just prefer file uploads — install from a zip.
+
+Total CMS goes in a folder of its own inside your existing site. Your pages and assets stay outside it, and your document root does not move.
 
 1. Download the Total CMS zip from [totalcms.co](https://totalcms.co)
-2. Extract it to your server
-3. Point your web server's document root at the extracted `public/` directory
-4. Visit your site — the setup wizard starts automatically
+2. Extract it into a folder inside your site. `tcms/` is the convention:
 
-The zip workflow is otherwise identical to Composer: same wizard, same admin, same update flow.
+   ```
+   yoursite.com/            # your document root — unchanged
+   ├── index.php            # your pages
+   ├── styles/  images/     # your stylesheets, scripts, fonts, media
+   └── tcms/                # Total CMS lives here, and only here
+   ```
+
+3. Leave your document root pointing at your site — **not** at anything inside `tcms/`
+4. Visit `/tcms/` — the setup wizard starts automatically
+5. At the data-path step, take the default. `tcms-data/` belongs beside the `tcms/` folder, not inside it
+
+> **Nothing of yours goes inside `tcms/`.**
+>
+> An update replaces that folder's contents wholesale — it installs the new release's `config/`, `public/`, `resources/`, `src/` and `vendor/` over the old ones rather than merging file by file. A folder you add inside any of those is removed along with its parent. Your own stylesheets, scripts, fonts, images and video belong in your site, outside `tcms/`. See [Updates](https://docs.totalcms.co/operations/updates) for exactly what an update replaces and what it leaves alone.
+
+Apart from where the files sit, the zip workflow is identical to Composer: same wizard, same admin, same update flow.
 
 ## Setup wizard
 
@@ -351,7 +366,11 @@ After the wizard completes, you land in the admin dashboard. From here:
 
 ## Directory structure
 
-After installation:
+The application and your content are deliberately separate, and the shape differs slightly between the two install methods.
+
+### Composer install
+
+Total CMS owns the domain, and the document root points inside the application at `public/`.
 
 ```
 /var/www/example.com/
@@ -372,9 +391,24 @@ After installation:
     └── [collections]/        # Collection data (blog, gallery, etc.)
 ```
 
-The application (`my-site/`) and your content (`tcms-data/`) are deliberately separate.
+Composer installs update with `composer update totalcms/cms`, which resolves files individually — so the built-in updater's whole-directory replacement does not apply here.
 
-> **Updates only touch the application.** Your content is never affected.
+### Zip install
+
+Total CMS sits in a folder inside your site. Your document root stays on your own site, and `tcms-data/` sits beside the application rather than inside it.
+
+```
+/var/www/example.com/         # your document root
+├── index.php                 # your pages
+├── styles/  images/          # your stylesheets, scripts, fonts, media
+├── tcms/                     # Application — replaced wholesale on update
+│   ├── config/  public/  resources/  src/  vendor/
+│   ├── cache/  logs/  tmp/   # runtime, left alone by updates
+│   └── version.json
+└── tcms-data/                # Your content — never touched by updates
+```
+
+> **Everything of yours lives outside `tcms/`.** An update replaces that folder's contents, so it is not a place to keep anything you authored. See [Updates](https://docs.totalcms.co/operations/updates).
 
 ## Web server configuration
 
@@ -2731,13 +2765,53 @@ Enforce minimum and maximum string length.
 
 Validate strings against a regular expression.
 
+#### Named patterns (recommended)
+
+Total CMS ships a registry of ready-made patterns. Reference one by name and
+it expands to the real regex when the schema is saved:
+
 ```json
 {
-	"pattern": "^[a-zA-Z0-9_-]+$"
+	"release": {
+		"type": "string",
+		"field": "text",
+		"label": "Release",
+		"pattern": "patterns.version"
+	}
 }
 ```
 
-**Example - Slug field:**
+That stores `^\\d+\\.\\d+\\.\\d+$`, so `3.5.0` is accepted and `3.5`,
+`v3.5.0` and `junk-3.5.0-junk` are all rejected.
+
+These are the same names used by form fields, so a field and its schema stay
+on one definition. There are no backslashes to escape, and the expansion adds
+the `^` and `$` anchors for you.
+
+Frequently used names:
+
+| Name | Accepts |
+| --- | --- |
+| `patterns.version` | `3.5.0` |
+| `patterns.versionExtended` | `3.5.0`, `v3.5.1-rc.1`, `3.5.0+build.7` |
+| `patterns.slug` | `my-post-title` |
+| `patterns.uuid` | `123e4567-e89b-42d3-a456-426614174000` |
+| `patterns.hex` | `#aabbcc` |
+| `patterns.domain` | `totalcms.co` |
+| `patterns.integer` | `-42` |
+| `patterns.phone.usa` | `555-123-4567` |
+| `patterns.postCode.uk` | `SW1A 1AA` |
+
+Nested patterns use their dotted path, exactly as in Twig. See
+[Validation Patterns](docs/forms/patterns) for the full list.
+
+An unknown name is an error on save rather than a silently broken schema, so
+a typo like `patterns.verison` tells you immediately.
+
+#### Literal regex
+
+When no named pattern fits, write the regex yourself:
+
 ```json
 {
 	"slug": {
@@ -2754,6 +2828,16 @@ Validate strings against a regular expression.
 - **URL-safe slug**: `^[a-z0-9-]+$`
 - **Hex color**: `^#[0-9A-Fa-f]{6}$`
 - **Phone (US)**: `^\\d{3}-\\d{3}-\\d{4}$`
+- **Version (x.y.z)**: `^\\d+\\.\\d+\\.\\d+$`
+
+> **Backslashes must be doubled.** `\\d` is how you write `\d` in JSON — a
+> single `\d` is not a legal JSON escape. The schema editor's JSON field
+> repairs a lone `\d` for you on save, but the doubled form is what is stored.
+> Named patterns avoid the problem entirely.
+
+> **Anchor your literal patterns.** JSON Schema's `pattern` is a substring
+> match, not a full match. Without `^` and `$`, `\\d+\\.\\d+\\.\\d+` happily
+> accepts `junk-3.5.0-junk`. Named patterns are anchored for you.
 
 ### format
 
@@ -7608,6 +7692,8 @@ API routes always take priority over builder pages.
 
 The Site Builder isn't just for HTML pages. Any text-based file the web expects at a specific path — `robots.txt`, `llms.txt`, `ads.txt`, `security.txt`, `humans.txt`, `manifest.json`, custom RSS feeds — can be served as a builder page. Total CMS auto-detects the right `Content-Type` from the route's file extension.
 
+For feeds specifically, `cms.feed.rss()` builds the document for you rather than writing the XML by hand — see [Feeds](docs/twig/feeds).
+
 ### How It Works
 
 1. Create a builder page with a route like `/robots.txt`
@@ -7628,6 +7714,18 @@ The middleware inspects the route's extension and maps it to the appropriate MIM
 | `.csv` | `text/csv` |
 | `.svg` | `image/svg+xml` |
 | _(none / unknown)_ | `text/html` |
+
+There is one exception to the extension rule. A route whose last segment is
+exactly `rss` — `/changelog/rss`, or `/rss` — is served as
+`application/rss+xml` even though it has no extension, because feed URLs are
+conventionally written that way. The match is exact, so `/rss-help` is still
+an ordinary page, and no other type is matched this way: `/docs/css` and
+`/support/txt` stay HTML.
+
+That matters for more than the header. The Page Inspector overlay and the
+live-reload snippet are injected into every `text/html` response, so a feed
+that falls through to the HTML default gets that markup spliced into its XML
+when an admin is logged in.
 
 ### Example: robots.txt
 
@@ -10862,7 +10960,7 @@ This tag captures raw template content before Twig compiles it, preserving expre
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `for 'path'` | Yes | Template ID (without `.twig` extension) |
+| `for 'path'` | Yes | Template ID, without the `.twig` extension, relative to `builder/templates/`. `myblog` addresses `builder/templates/myblog.twig`; `grids/card` nests below it. A leading `templates/` is optional and ignored. |
 | `on 'url'` | Yes | Production API base URL |
 | `token 'token'` | No | Designer token for remote sync (required for production sync) |
 
@@ -10910,7 +11008,7 @@ The Designer API provides a public endpoint for remote template updates. This en
 #### Update Template
 
 ```http
-PUT /designer/templates/{path}
+PUT /api/designer/templates/{path}
 X-Designer-Token: your-token-here
 Content-Type: text/plain
 
@@ -10927,7 +11025,9 @@ Returns `200` with:
 }
 ```
 
-> The token can also be passed as a query parameter: `/designer/templates/path?token=your-token`
+> The token can also be passed as a query parameter: `/api/designer/templates/path?token=your-token`
+
+> The endpoint lives under the install's API prefix. On a subfolder install, prepend the install base path — e.g. `https://example.com/tcms/api/designer/templates/products/tile`.
 
 ### Multiple Designer Blocks
 
@@ -10964,7 +11064,7 @@ This is useful when prototyping templates that aren't ready for production yet.
 
 - Designer API endpoints are **public** (no session or API key required) but gated by the Designer Token
 - Each template has its own unique token — compromising one token does not affect other templates
-- Tokens are auto-generated UUIDs and cannot be edited manually
+- Tokens are auto-generated random strings and cannot be edited manually
 - The Designer toggle must be explicitly enabled per template
 - The API only allows updating template **content** — metadata (token, enabled status) cannot be changed via the Designer API
 
@@ -12098,6 +12198,136 @@ Only process content through markdown when necessary:
 - **Static Pages**: Content pages with complex formatting needs
 
 The markdown integration in Total CMS provides a powerful yet secure way to handle rich text content while maintaining the flexibility of Twig templating.
+
+---
+
+## Feeds
+
+`cms.feed.rss()` and `cms.feed.atom()` build a syndication feed from two
+arguments: the feed's own details, and a list of items. Everything about
+*which* objects go in and *how* each one looks stays in the template, where
+`|filter`, `|sortBy` and `|map` already live.
+
+## A complete feed
+
+Create a builder page with a route ending in `/rss` (or `.rss`), and a
+template like this:
+
+```twig
+{{ cms.feed.rss(
+  {
+    title:       'Total CMS Releases',
+    link:        cms.builder.canonicalUrl('changelog'),
+    self:        cms.builder.canonicalUrl('changelog-rss'),
+    description: 'New capabilities, refinements, and fixes.',
+  },
+  cms.collection.objects('changelog')|sortBy('date')|reverse|map(e => {
+    title:   e.version ~ ' — ' ~ e.title,
+    link:    cms.collection.canonicalObjectUrl('changelog', e),
+    id:      e.id,
+    date:    e.date,
+    content: e.changelog|markdown,
+  })
+) }}
+```
+
+That is the whole template — no layout, no XML boilerplate. Escaping, CDATA,
+RFC-2822 dates and the `atom:link` self reference are handled for you.
+
+The route's extension sets the `Content-Type`, so `/changelog/rss` and
+`/changelog/feed.rss` both serve `application/rss+xml`. See
+[Site Builder](docs/site-builder/overview) for how that works.
+
+## Feed details
+
+| Key | Required | Notes |
+| --- | --- | --- |
+| `title` | yes | |
+| `link` | yes | The page a reader should visit — not the feed's own URL |
+| `description` | yes | |
+| `self` | Atom only | The feed's own URL. Readers use it to re-fetch |
+| `language` | no | e.g. `en-us` |
+| `updated` | no | Defaults to the newest item's date |
+| `generator` | no | |
+| `copyright` | no | |
+
+`self` is required for Atom because readers use it to re-subscribe, and there
+is no safe value to guess — pointing it at `link` would hand every subscriber
+a URL for the HTML page instead of the feed.
+
+## Item details
+
+| Key | Notes |
+| --- | --- |
+| `title` | |
+| `link` | Made absolute against your domain if relative |
+| `id` | The item's identity. Defaults to `link` |
+| `date` | ISO string, timestamp, or `DateTime` |
+| `content` | HTML. Run Markdown fields through `\|markdown` first |
+| `summary` | Short form. RSS uses it in place of `content` if given |
+| `author` | A name, or `{name, email, uri}` |
+| `media` | An enclosure — see below |
+
+Items are emitted in the order you supply them, so sort before you map.
+
+### Why `id` matters
+
+A feed reader treats the id as the item's identity and re-announces anything
+whose id changes. Prefer something stable and independent of the URL — an
+object id is ideal:
+
+```twig
+id: e.id,
+```
+
+Atom is stricter: an entry id must be an IRI, so a short key like `v3-5-0`
+is not legal there. In an Atom feed the item link is used instead, which is
+what feed generators generally do.
+
+## Media and enclosures
+
+`media` attaches an enclosure — a podcast episode, a video, an image. The
+short form is a URL:
+
+```twig
+media: e.audio.link,
+```
+
+The type is guessed from the extension and the length reported as zero. For a
+podcast, give real values instead — image and file fields already carry
+`mime` and `size`:
+
+```twig
+media: {
+  url:    e.audio.link,
+  type:   e.audio.mime,
+  length: e.audio.size,
+},
+```
+
+Podcast clients use `length` for progress and buffering, so it is worth
+supplying. One enclosure per item — RSS 2.0 permits no more.
+
+## Atom
+
+Same arguments, different renderer:
+
+```twig
+{{ cms.feed.atom(meta, items) }}
+```
+
+Serve it from a route ending in `.xml`, and remember `meta.self`.
+
+## Compared with the built-in feed
+
+Total CMS also serves `/feed/rss/{collection}` without any template. That
+endpoint maps fields by name — which field is the title, which is the content
+— and that is its limit: it cannot build a title out of two fields, and it
+cannot run content through `|markdown`, so a Markdown field arrives at the
+subscriber as raw `- **like this**`.
+
+Use the endpoint when your collection already has a plain-text summary field
+and a usable title. Build the feed in Twig when you need control over either.
 
 ---
 
@@ -14240,7 +14470,7 @@ Works identically to the collection version but queries a DataView by its ID.
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `template` | string | **required** | Twig template file for rendering each item. Receives `{{ object }}` |
+| `template` | string | **required** | Twig template for rendering each item, resolved inside `builder/templates/`. Receives `{{ object }}` |
 | `limit` | int | `20` | Number of items per page |
 | `sort` | string | — | Sort field. Shorthand: `date` or `-date` (descending). Colon format: `date:asc`, `date:desc`, or `date:desc,title:asc` for multi-sort |
 | `include` | string | — | Include filter (e.g., `published:true,featured:true`) |
@@ -14252,6 +14482,8 @@ Works identically to the collection version but queries a DataView by its ID.
 | `transition` | bool | `false` | Enable HTMX view transitions |
 | `load` | bool | `false` | Render the first page of items server-side (SEO-friendly) |
 | `empty` | string | — | HTML to display when filters match zero items |
+
+> **Where templates live.** Template ids are relative to `builder/templates/` — `blog/card` addresses `tcms-data/builder/templates/blog/card.twig`. This is the same folder the admin Templates UI writes to and the same one `{% templatedesigner %}` syncs, so an id means the same file everywhere. A leading `templates/` is optional and ignored. The `.twig` extension is optional.
 
 ## Trigger Modes
 
@@ -14524,7 +14756,7 @@ If you pre-rendered items server-side, set `offset` to skip those:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `target` | string | **required** | CSS selector for the container to append items into |
-| `template` | string | **required** | Twig template for rendering each item |
+| `template` | string | **required** | Twig template for rendering each item, resolved inside `builder/templates/` |
 | `limit` | int | `20` | Items per page |
 | `offset` | int | `0` | Starting offset |
 | `load` | bool | `false` | Auto-fetch first batch on page load |
@@ -20925,6 +21157,8 @@ patterns.isbn                  # ISBN number
 patterns.currency              # Currency format
 patterns.latitudeLongitude     # Coordinates
 patterns.html                  # HTML content
+patterns.version               # Three-part version (3.5.0)
+patterns.versionExtended       # Full semver (v3.5.1-rc.1, 3.5.0+build.7)
 ```
 
 ## Post Code Patterns
@@ -20956,6 +21190,53 @@ patterns.phone.uk
 patterns.phone.france
 patterns.phone.international
 ```
+
+## Using These in Schema Validation
+
+The same patterns work in a schema. In a property's **Extra Schema
+Definitions**, set `pattern` to the pattern's name:
+
+```json
+{ "pattern": "patterns.version" }
+```
+
+On save this expands to the real regex, anchored:
+
+```json
+{ "pattern": "^\\d+\\.\\d+\\.\\d+$" }
+```
+
+Nested patterns use their dotted path, exactly as in Twig:
+
+```json
+{ "pattern": "patterns.phone.usa" }
+{ "pattern": "patterns.postCode.uk" }
+```
+
+Prefer this over pasting a regex. It is shorter, it keeps the form field and
+the schema on one definition, and there are no backslashes to escape.
+
+### Why the expansion adds anchors
+
+The patterns above are stored **unanchored**, because an HTML `pattern`
+attribute is anchored by the browser automatically.
+
+JSON Schema's `pattern` is a substring match instead, so a bare
+`\\d+\\.\\d+\\.\\d+` would accept `junk-3.5.0-junk`. The expansion wraps
+`^` and `$` so a schema and a form field sharing one pattern agree on what
+they accept.
+
+### Notes
+
+- **A literal regex is left alone.** Anything not starting with `patterns.` is
+  stored as typed — that is the escape hatch if you want unanchored matching.
+- **An unknown name is an error.** `patterns.verison` fails on save rather than
+  being stored as a literal regex, which would compile fine and reject every
+  value.
+- **`passwordMinLength(8)` is not available** in a schema. Dynamic patterns are
+  methods, not stored values, so they work only in Twig.
+- **`notBlank` means "no whitespace anywhere"**, not "not empty" — anchored,
+  `\S+` rejects `hello world`. Use `minLength` for a not-empty check.
 
 ## Dynamic Patterns
 
@@ -27532,7 +27813,8 @@ Settings live in **Admin → Settings → MCP Server** and serialize to `mcp.*` 
 | `mcp.allowedOrigins` | `[]` | CORS origin allow-list for **browser-rendered** AI clients. Empty = browsers blocked. See [CORS and browser AI clients](#cors-and-browser-ai-clients) below. |
 | `mcp.publicIpPerMinute` | `60` | Per-IP rate limit on anonymous requests, 60-second window. API key callers bypass. Set to `0` to disable. |
 | `mcp.toolPrefix` | `""` | Optional snake_case prefix prepended to every tool name (`bistro` → `bistro_list_collections`). Useful when an agent connects to multiple T3 sites simultaneously. |
-| `mcp.subscriptionsEnabled` | `true` | Master switch for resource subscriptions. When `false`, `resources/subscribe` still succeeds at the protocol level but T3 won't push `notifications/resources/updated` when content changes. See [Resource subscriptions](#resource-subscriptions). |
+| `mcp.subscriptionsEnabled` | `true` | Master switch for resource subscriptions. When `false`, `resources/subscribe` still succeeds at the protocol level but T3 won't push `notifications/resources/updated` when content changes, and `subscriptions/listen` is refused outright. See [Resource subscriptions](#resource-subscriptions). |
+| `mcp.subscriptionStreamSeconds` | `1` | How long one modern-era `subscriptions/listen` stream stays open, in seconds. Each open stream holds one PHP worker, so raise it only with headroom to spare. Clamped to 0.25-30. See [Protocol eras](#protocol-eras). |
 
 Changing any of these triggers a session invalidation — active agent sessions get "session not found" on their next request and auto-reconnect with the new surface.
 
@@ -27595,7 +27877,26 @@ Data views are the bounded exception to the "collection-level only" rule. Subscr
 
 ### Kill switch
 
-Set `mcp.subscriptionsEnabled: false` to disable push entirely. The SDK still accepts subscribe calls (so non-conformant clients that error on rejected subscriptions don't break) but T3 stops fanning out notifications. Useful when a noisy listener interferes with a deploy or migration.
+Set `mcp.subscriptionsEnabled: false` to disable push entirely. Handshake-era `resources/subscribe` calls are still accepted (so non-conformant clients that error on rejected subscriptions don't break) but T3 stops fanning out notifications. Modern-era `subscriptions/listen` is refused with a JSON-RPC error and HTTP 501 instead — that method is a long-lived stream, and accepting one only to deliver nothing would hold a worker for the full window. Useful when a noisy listener interferes with a deploy or migration.
+
+---
+
+## Protocol eras
+
+Total CMS serves two generations of the MCP specification from the same `/mcp` URL. Every request is classified once, on arrival, and routed to the matching dispatcher — clients do not choose an endpoint, and nothing needs configuring.
+
+| Era | Revisions | Shape |
+|---|---|---|
+| Handshake | `2025-03-26`, `2025-06-18`, `2025-11-25` | Client calls `initialize`, gets an `Mcp-Session-Id`, and reuses it. State lives in the session. |
+| Modern | `2026-07-28` | No handshake and no session. Every request carries the client's identity in `params._meta` and repeats its subject in `Mcp-Method` / `Mcp-Name` headers. |
+
+Tools, resources and prompts are identical across both — the same registry, the same persona filtering, the same authorization. Only the lifecycle differs.
+
+Two differences are worth knowing about:
+
+**Version negotiation.** A client states the revision it speaks; the server agrees when it supports it and counter-offers its own when it does not. A client asking for `2026-07-28` on a server that tops out earlier gets a supported revision back and decides for itself whether to continue.
+
+**Subscriptions.** The modern era removed `resources/subscribe`. Its replacement is `subscriptions/listen`, a single SSE stream on which the client names the resource URIs it wants and receives updates until the window closes. T3 filters that stream by the caller's persona, so a client only ever receives updates for resources it could read directly — naming a URI it has no access to is accepted but silently never delivers. Each stream holds one PHP worker for `mcp.subscriptionStreamSeconds`, and the site-wide `mcp.listeningStreamMaxConcurrent` cap bounds how many can be open at once; over the cap, callers get a JSON-RPC error and HTTP 503 and should retry.
 
 ---
 
@@ -35066,7 +35367,8 @@ On your **production** Total CMS instance:
 1. Go to **Utilities > API Keys**
 2. Create a new key with **GET** and **POST** permissions
 3. Under endpoints, choose **Specific endpoints** and tick **Sync Manager** — this grants the `/sync` routes that push (`POST /sync/import`) and pull (`GET /sync/export`) use, and nothing else
-4. Copy the generated API key
+4. If you will seed objects with `tcms push --objects`, also tick **Content Import (seeding)**. Seeded objects go to `POST /import/jumpstart`, a different route from the rest of a push, so a key granted only Sync Manager answers `401 Invalid API key or insufficient permissions` for that half while everything else succeeds
+5. Copy the generated API key
 
 ### 2. Configure Sync Settings
 
@@ -35421,7 +35723,21 @@ Total CMS includes a built-in update system that checks for new versions and app
 4. During the update, the site briefly enters maintenance mode
 5. The previous version is backed up for rollback if needed
 
-Updates only replace the application files (`tcms/`). Your content in `tcms-data/` is never touched.
+## What an update replaces
+
+An update installs the new release over the application folder **one top-level directory at a time**, not file by file. For each directory the release ships, the existing one is moved aside and the new one takes its place — so a folder you added inside one of them is removed along with its parent rather than merged.
+
+This is why nothing you author should live inside the Total CMS folder.
+
+| | On update |
+|---|---|
+| Anything **outside** the Total CMS folder — your pages, stylesheets, scripts, fonts, media | Never touched |
+| `tcms-data/` | Never touched, wherever it lives |
+| `.env`, `tcms.php`, `logs/`, `.git/` | Preserved, even inside the application folder |
+| `cache/`, `tmp/` | Left alone — the release does not ship them |
+| `config/`, `public/`, `resources/`, `src/`, `vendor/`, `autoload.php`, `.htaccess`, `.gitignore`, `version.json` | **Replaced in full** |
+
+If you have added your own files inside any of those replaced directories — a `public/my-assets/` folder, for example — move them out of the Total CMS folder before updating. See [Installation](https://docs.totalcms.co/get-started/installation) for the recommended layout.
 
 > This built-in updater applies to **zip installs**. Composer installs update through Composer — see below. The dashboard and `tcms update:apply` refuse to run on a Composer install and point you at `composer update`.
 
@@ -35504,9 +35820,17 @@ When an update is applied:
 5. The new files are extracted into place
 6. All caches are cleared
 7. Maintenance mode is disabled
-8. The update is logged to `tcms-data/.system/logs/totalcms.log` (channel `update`)
+8. The previous version is kept or discarded, and the update is logged to `tcms-data/.system/logs/totalcms.log` (channel `update`)
 
 The entire process typically takes a few seconds.
+
+### Keeping the previous version
+
+By default a successful update keeps one copy of the version it replaced, at `tcms-data/.system/backups/`. It costs roughly 60 MB, only the most recent is kept, and the Update Manager shows it with a button to remove it when you want the disk back.
+
+Untick **Keep a copy of the previous version** before updating — or pass `--no-backup` to `tcms update:apply` — if you would rather not spend the space.
+
+The copy is deliberately kept inside your data directory rather than beside the application. A directory sitting next to the application is inside the document root on most installs, and the previous release's PHP would be reachable over the web there. If your data directory is on a different filesystem — which the "above document root" option can mean — the copy cannot be moved there safely and is discarded instead; the update log says when that happens.
 
 ## Maintenance Mode
 
@@ -35516,7 +35840,7 @@ Admin routes continue to work during maintenance so the update action can comple
 
 ## Rollback
 
-If an update causes issues, you can roll back to the previous version:
+Rollback restores the previous version — either the copy a successful update kept, or the one left behind by an update that failed part-way through. If you turned the copy off, or it could not be kept, there is nothing to restore and `tcms update:rollback` reports that no backup was found.
 
 ### CLI
 
@@ -35528,7 +35852,7 @@ tcms update:rollback
 tcms update:rollback --force
 ```
 
-Rollback restores the backup directory that was created during the update. Only the most recent backup is available.
+Only the most recent previous version is available. A backup left behind by a failed update takes precedence over the retained copy, since that install is broken right now.
 
 ### Manual Rollback
 

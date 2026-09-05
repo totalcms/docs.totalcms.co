@@ -257,6 +257,10 @@
                         "slug": "twig/markdown"
                     },
                     {
+                        "label": "Feeds",
+                        "slug": "twig/feeds"
+                    },
+                    {
                         "label": "Factory",
                         "slug": "twig/factory"
                     },

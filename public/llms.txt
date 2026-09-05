@@ -103,6 +103,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Templates](https://docs.totalcms.co/twig/templates/): Create reusable Twig templates in Total CMS, organize them in folders, and use the Template Designer for seamless development-to-production sync.
 - [Conditionals](https://docs.totalcms.co/twig/conditionals/): Master Twig conditional statements in Total CMS for comparisons, existence checks, array and string tests, date logic, and CMS-specific conditions.
 - [Markdown](https://docs.totalcms.co/twig/markdown/): Convert markdown to HTML in Total CMS Twig templates using ParsedownExtra with block and inline rendering via the markdown filter.
+- [Feeds](https://docs.totalcms.co/twig/feeds/): Build RSS and Atom feeds in Twig with cms.feed.rss() and cms.feed.atom(), including enclosures for podcasts and media.
 - [Factory](https://docs.totalcms.co/twig/factory/): Generate realistic test data in Total CMS Twig templates using Faker-based factory functions for names, addresses, text, dates, and more.
 - [Collections](https://docs.totalcms.co/twig/collections/): Reference for the cms.collection namespace providing collection listing, object fetching, searching, URL generation, and navigation.
 - [Collection Filtering](https://docs.totalcms.co/twig/collection-filtering/): Filter and sort Total CMS collections in Twig using filterCollection and sortCollection with comparison operators, date ranges, and manual ordering.
