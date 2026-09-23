@@ -1,0 +1,615 @@
+---
+title: "SEO"
+description: "One Twig call emits the title, description, canonical, robots, Open Graph, Twitter and JSON-LD for any Site Builder page or collection object."
+since: "3.6.0"
+related:
+  - collections/sitemap-builder
+  - site-builder/twig
+  - site-builder/starters
+---
+Total CMS writes the `<head>` for you. One call in your layout emits the title, meta description, canonical link, robots directives, the site's icons, Open Graph and Twitter card tags, your own meta tags (verification and the like) and a JSON-LD `@graph` — for a Site Builder page, for a collection object, or for the site on its own.
+
+Nothing is generated ahead of time and there is no build step. Every value is resolved at render time from three places, in order: the **SEO card** on the record, the **collection's field mapping**, then the **site defaults** on the [Site SEO record](#seo-site-collection).
+
+## The One-Liner
+
+Put this in the `<head>` of your layout:
+
+```twig
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{ cms.seo.head(page|default(null)) }}
+    {{ cms.assetsHead() }}
+</head>
+```
+
+That is the whole integration. `page` is the Site Builder page record the router already put in scope; `|default(null)` keeps the call working on a template rendered outside the page router, where it falls back to the site defaults.
+
+For a page rendered from a starter, the output looks like this:
+
+```html
+<title>About | Bistro</title>
+<meta name="description" content="Where we came from and who cooks the food.">
+<link rel="canonical" href="https://example.com/about">
+<meta property="og:type" content="website">
+<meta property="og:title" content="About">
+<meta property="og:description" content="Where we came from and who cooks the food.">
+<meta property="og:url" content="https://example.com/about">
+<meta property="og:site_name" content="Bistro">
+<meta property="og:image" content="https://example.com/imageworks/...">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bistro">
+<meta name="google-site-verification" content="g123">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[…]}</script>
+```
+
+### No `|raw`
+
+`cms.seo.head()` returns markup, not a string — print it with plain `{{ }}`. Adding `|raw` is unnecessary, and every value inside it is escaped by Total CMS before it reaches the page, exactly like [`cms.assetsHead()`](/site-builder/frontend/).
+
+### Remove Your Own Tags
+
+`head()` emits `<title>` and `<meta name="description">`. If your layout already has its own, delete them — otherwise the page ships two of each and crawlers pick whichever they like.
+
+The four bundled [starter templates](/site-builder/starters/) already do this. Their layouts carry:
+
+```twig
+{% block seo %}{{ cms.seo.head(page|default(null)) }}{% endblock %}
+```
+
+in place of the old `{% block title %}` / `{% block description %}` pair, so a page template can override the whole block when it renders something other than the page record — see [Collection Objects](#collection-objects) below.
+
+## What You Get For Free
+
+Every value falls through the same three-step chain. The first non-empty one wins.
+
+| Value | 1. SEO card on the record | 2. Collection mapping | 3. Site default |
+|---|---|---|---|
+| **Title** | `seo.title` | the collection's Title Template, then the record's own `title` | Site Name |
+| **Description** | `seo.description` | the collection's Description Template, stripped to plain text | Default Description |
+| **Social description** | `seo.socialDescription` | the collection's Social Description Template, stripped to plain text | Default Social Description, then the description |
+| **Social image** | `seo.image` | the mapped image property, or the first image of a mapped gallery | Default Social Image |
+| **Canonical** | — | the record's own absolute URL | *(omitted)* |
+| **Robots** | `seo.noindex` / `seo.nofollow` | — | *(omitted)* |
+| **`og:type`** | — | `article` when the collection's type is Article | `website` |
+
+A few rules the chain applies on top:
+
+- **Title template.** The site's title template, `${title} | ${site}` by default, is the *default shape* of a title: it applies when the title is the record's own `title`. A title someone authored — the card's **Title** or the collection's **Title Template** — is the whole `<title>`, used as written; a collection template that wants the site name says `${site}` itself (`${title} | ${site}`). Otherwise a blog whose template is `YETI - ${title}` would render `YETI - Post | Yeti Bros`. A record with no title collapses to the site name; a site with no name leaves the raw title. No dangling separator either way.
+- **Description.** The collection's template renders over the record first — `${summary}`, or `${cuisine} in ${city}` to compose one out of several properties, with `${site}` for the site name and dot paths into cards. A single word with no `${}` is the property it names, so `summary` and `${summary}` mean the same thing; a value with a space in it is literal text, one description for every object in the collection. A template whose placeholders all come back empty falls through to the site default rather than emitting half a sentence. What it renders is as often markdown as it is HTML, so both are flattened: tags are stripped, entities decoded, then the markdown markers are removed — a link or an image keeps its text and loses its brackets and URL, `**bold**`, `_italic_` and `` `code` `` lose their wrappers, and a heading marker, a list bullet or a `>` at the start of a line goes. Ordinary prose comes back untouched: a lone `!`, a `$5 * 3` or a `my_var` is a sentence, not markdown, and is left alone. Whatever survives is then collapsed to single spaces. That cleanup and the 160-character cap are for the collection's templates only, which draw on properties that may hold a whole summary or article body. A description written on the card, or the site default, is emitted exactly as written, however long: search engines index the whole tag even though they display only the first 150 characters or so.
+- **Social title.** `og:title` always prints: the card's **Social Title** when it has one, otherwise the collection's **Social Title Template**, otherwise the title. The site's **Social Title Template** — `${title}` by default, so a share card carries the bare `About`, not `About | Bistro` — shapes it by the same rule as the title template: only when the title is the record's own `title`; an authored Title or Social Title is used as written. A share card and a browser tab want different shapes, which is why the template is separate from the title template; `${title} — ${site}` on a blog gives every post a share title of its own structure without touching `<title>`. A page with no record behind it collapses to the site name. `twitter:title`, `twitter:description` and `twitter:image` are declared explicitly with the same values as their `og:` counterparts — most scrapers fall back to Open Graph, but not all of them. A collection can shape it for every object with its own **Social Title Template**; the card's value wins over that.
+- **Social description.** `og:description` and `twitter:description` are the **Social Description** when there is one, and the description when there is not — so a site that never touches the field keeps exactly the tags it had before. The chain is the description's own: the card's **Social Description**, then the collection's **Social Description Template**, then the site's **Default Social Description**, then the resolved description. The collection template is rendered, stripped and capped like the Description Template; a value written on the card or as the site default is emitted as written. The meta description, the JSON-LD `description` and the RSS feeds are untouched by it — a share card sells the click, a search result describes the page, and the two want different copy.
+- **Image alt.** When the winning image carries alt text, it is emitted as `og:image:alt` and `twitter:image:alt`. The alt is read from whichever image actually won — the card's, the mapped property's, the first image of a mapped gallery, or the Site SEO default image's — so it always describes the picture on the card. An image with no alt simply omits both tags.
+- **`og:type`.** Decided by the **Structured Data Type**: the record's card, then the collection's setting, then Webpage. `Article` and `Blog post` emit `og:type: article` together with `article:published_time` (the object's `date`, else `created`) and `article:modified_time` (`updated`); `Webpage` emits `website`. The same value decides the JSON-LD node, so a page that is an article says so to social scrapers and search engines in the same breath.
+- **Twitter card.** `summary_large_image` when an image resolved, `summary` when none did.
+- **Robots.** The `<meta name="robots">` tag is emitted only when noindex or nofollow is on. No tag is the same as `index, follow`, and it is quieter.
+- **Canonical.** Built from the Base URL setting (falling back to the request's scheme on the site's domain). A Site Builder page whose route contains a `{placeholder}` gets no canonical — a route pattern is not an address. A collection object gets one only when the collection has its **URL** set. A record with **No Index** on gets none either — see [Sitemaps and `noindex`](#sitemaps-and-noindex). There is no per-record canonical field: a page's canonical is its own address, and a duplicate of another page is better kept out of the index with **No Index**. Syndicated content that must point at an original elsewhere is the one exception, and a template handles it by passing the [ad-hoc shape](#pages-the-router-did-not-render) with `url` set.
+
+## The SEO Card
+
+Every Site Builder page has an **SEO** section on its edit form. It holds the per-record overrides:
+
+| Field | What it does |
+|---|---|
+| **Title** | Replaces the derived title and is used as written — the site's title template does not apply to it. Supports `${placeholder}` substitution — see [Placeholders in the Title](#placeholders-in-the-title) below. |
+| **Social Title** | A shorter, punchier title for share cards. It replaces `og:title` and `twitter:title` only — `<title>` is untouched. It is used as written — neither site template applies to it. Leave it empty and the share cards use the page title. |
+| **Description** | Replaces the meta description for this record. |
+| **Social Description** | A punchier description for share cards. It replaces `og:description` and `twitter:description` only — `<meta name="description">` and the JSON-LD are untouched. Leave it empty and the share cards use the description. |
+| **Social Image** | The share image. 1200×630 is the recommendation; Total CMS crops to that ratio. |
+| **No Index** | Asks crawlers not to index this page. **Also removes it from the sitemaps.** |
+| **No Follow** | Asks crawlers not to follow the links on this page. |
+| **Structured Data Type** | `Automatic`, `Webpage`, `Article` or `Blog post`. For an object, Automatic is the collection's Structured Data Type; for a Site Builder page it is Webpage, because a page has no collection setting behind it. The other three override that for this one record, on `og:type` and in the JSON-LD alike: Article and Blog post add the matching node and the `article:` dates, Webpage opts a record out of a blog collection's default. |
+
+Leave the card entirely empty and nothing is lost — every field falls through to the mapping and the site defaults.
+
+### Builder Pages
+
+A Site Builder page used to carry its own **Meta Description** and **Page Image** at the top of the edit form, next to the title. Both are gone from the page: the SEO card is now the only place a page's description and share image live. `title` stays where it was — it names the page in the admin and the navigation, not only in the head.
+
+One card instead of two homes for the same value, and everything on this page applies to a builder page as it does to any other record: `${placeholder}` titles, **Social Title**, **No Index**, **Structured Data Type**.
+
+**Your pages are migrated for you.** On the first request to your site after updating — a Site Builder page counts, you do not have to open the admin — a one-time migration walks the pages collection and moves the old values onto the card: an existing page description into **Description** and an existing page image into **Social Image**, files and all (`builder-pages/{id}/image/` becomes `builder-pages/{id}/seo/image/`). Each migrated page is re-saved silently, then the pages index is rebuilt once — one rebuild for the whole batch instead of one per page. Because the saves are silent, nothing downstream is notified: if your search provider indexes `seo.description`, run `tcms search:reindex` afterwards. It runs once, it is safe to run again, and it never overwrites: a page whose card was already filled in keeps the card's value and is left alone entirely — its old top-level value stays in the stored JSON, and its old image files stay in `builder-pages/{id}/image/`, until the next time that page is saved. Neither is ever read again; the schema no longer declares those properties, so nothing can reach them.
+
+**Templates reading the old properties need one rename.** `page.description` and `page.image` no longer resolve — the schema does not declare them, so the page record does not carry them:
+
+```twig
+{# before #}
+{{ page.description }}
+{{ page.image.alt }}
+
+{# after #}
+{{ page.seo.description }}
+{{ page.seo.image.alt }}
+```
+
+A hero image is the case that needs a little more than a rename: the image is nested inside a card now, so `imagePath()` wants the dotted path — `{collection: 'builder-pages', property: 'seo.image'}`. See [Page Description and Image](/site-builder/overview/) for the full call.
+
+If your layout only calls `cms.seo.head(page)` there is nothing to rename at all — the head was already reading through the card. The bundled [starter templates](/site-builder/starters/) are already updated.
+
+### Placeholders in the Title
+
+The card's **Title** may compose a title out of the record rather than restate it. Anything in `${...}` is replaced with that property's value:
+
+```
+${name} — ${city}
+```
+
+on a record with `name: "Tony's"` and `city: "Austin"` gives `Tony's — Austin`, and that is the whole `<title>` — a card title is used as written, the site title template does not wrap it. Add `${site}` to the card if you want the site name: `${name} — ${city} | ${site}`.
+
+The same `${...}` syntax is the only one Total CMS uses: the card's Title and Social Title, all four of the collection's [templates](#collection-mapping) — Title, Social Title, Description and Social Description — and the Site SEO record's own templates, where `${title}` stands for the resolved title.
+
+- Any property of the record works — `${title}`, `${author}` — and dot paths reach inside a card or a deck item: `${hero.headline}`.
+- `${site}` is the site name. It wins even on a record that has its own property called `site`.
+- A property that holds something other than text — an image, a card, a deck — resolves to nothing rather than the literal word `Array`.
+- A title whose placeholders **all** come back empty falls through to the rest of the chain instead of emitting a half-built title with the punctuation still in it.
+
+### Adding the Card to Your Own Schema
+
+The card ships on `builder-page` only. Any custom schema can opt in by adding a `seo` card property that references the reserved `seo` schema:
+
+```json
+"seo": {
+    "$ref"      : "https://www.totalcms.co/schemas/properties/card.json",
+    "field"     : "card",
+    "schemaref" : "https://www.totalcms.co/schemas/seo.json",
+    "label"     : "SEO"
+}
+```
+
+Add `seo` to the schema's `formgrid` so it appears on the form — a section of its own reads best:
+
+```
+---SEO---
+seo seo
+```
+
+A card has to span the whole row. Give it half a row (`seo .`) and its own inner grid collapses — both schemas that ship the card use `seo seo`.
+
+And add `"seo"` to the schema's `index` array:
+
+```json
+"index": ["id", "title", "seo", "updated", "created"]
+```
+
+> **The index entry is not optional if you want noindex honoured in sitemaps.** The sitemap builders read the collection index, not the object files. Without `seo` in `index`, the card still drives the `<head>`, but a noindexed object stays in `/sitemap/{collection}`.
+
+## Collection Mapping
+
+Most collections already carry a headline, a description and an image under names of their own — `headline`, `summary`, `excerpt`, `hero`, `photo`. Rather than copy those values into an SEO card on every object, tell the collection which properties to read.
+
+Open **Collections → your collection → Settings** and fill in the **SEO** section:
+
+| Setting | What it does |
+|---|---|
+| **Structured Data Type** | `Automatic`, `Webpage`, `Article` or `Blog post`. What the objects are, for `og:type` and the JSON-LD node. The schema default is `Blog post` for blog and feed schemas and `Webpage` for everything else; pick `Webpage` to opt a blog collection out, or `Article` / `Blog post` to bring a custom collection in. A record's own card can override it. |
+| **Title Template** | Composes the title from the object's properties, with the same `${property}` placeholders as the card: `${title} \| Reviews`, `${name} — ${city}`, `${site}` for the site name. The result is the whole `<title>` — the site's title template does not apply on top of it, so include `${site}` here if you want the site name. Leave it empty to use the object's own `title`, which does go through the site template. |
+| **Social Title Template** | The same, for `og:title` and `twitter:title`, independent of the Title Template. Leave it empty to use the title. |
+| **Description Template** | Composes the meta description from the object's properties, with the same `${property}` placeholders as the titles: `${summary}`, `${cuisine} in ${city}`, `${site}` for the site name, dot paths into cards. A bare property name on its own is that property, so `summary` works as well as `${summary}`. Markup and markdown are stripped and the result is capped at 160 characters. Used when an object has no SEO description of its own. |
+| **Social Description Template** | The same, for `og:description` and `twitter:description`, independent of the Description Template. Leave it empty to use the description. |
+| **Image Property** | Which property supplies the social image. Point it at a **gallery** and its first image is used — handy for a collection whose objects carry a gallery instead of a single hero image. The gallery has to be a property of the object itself; one nested inside a card is not picked up. |
+
+Saving writes the mapping into the collection's `.meta.json`:
+
+```json
+"seo": {
+    "type": "blogposting",
+    "title": "${title} | Reviews",
+    "socialTitle": "",
+    "description": "${summary}",
+    "socialDescription": "",
+    "image": "image"
+}
+```
+
+### Defaults
+
+You do not have to configure anything for a blog — or for any other schema Total CMS ships with an obvious headline, description and image:
+
+| Collection | Type | Description | Image |
+|---|---|---|---|
+| Any collection using the `blog` schema | `blogposting` | `${summary}` | `image` |
+| Any collection using the `blog-legacy` schema | `blogposting` | `${summary}` | `image` |
+| Any collection using the `feed` schema | `blogposting` | `${content}` | `image` |
+| The Site Builder pages collection | `website` | *(none — the card)* | *(none — the card)* |
+| Everything else | `website` | *(none)* | *(none)* |
+
+No default carries a title template: with none set, the object's own `title` is the title. The saved block is merged **over** the default one key at a time, so a blog collection that maps only its image keeps `blogposting` and `summary` for the keys it left alone. Clearing a field means "use the default", not "map nothing".
+
+A collection with no mapping still gets a title, a canonical, Open Graph tags and the site's default description and image — the mapping only decides how the per-object title is composed and where the description and image come from. A title template is for collections that name their headline something else (`${headline}`) or want every object's title shaped the same way (`${title} | Reviews`).
+
+Site Builder pages are the one row with nothing to map for two of the three: a page has a `title` and an [SEO card](#builder-pages), and that is where its description and share image live. There is no second property for the mapping to point at.
+
+## SEO Site Collection
+
+Everything site-wide lives on one record in the **Site SEO** collection — a reserved single-object collection with the id `seo-site`. It is a collection rather than a settings panel so the two images are real uploads rather than URLs you paste, and so the record is readable in Twig like any other object.
+
+Open **Site SEO** in the collections sidebar and edit its one record. If it is not there, provision just that collection from the command line:
+
+```bash
+tcms collection:create seo-site
+```
+
+`seo-site` is a reserved id, so no `--schema` is needed — the collection is created with its shipped name and singleton flag, the same result **Project Setup → Setup Default Collections** gives but for that one collection instead of every default. Either route is safe on an existing site: both create what is missing and leave the rest alone. See the [CLI reference](/extensions/cli/) for the rest of `collection:create`.
+
+| Setting | Notes |
+|---|---|
+| **Site Name** | Used in titles, `og:site_name` and the WebSite / Organization JSON-LD. Leave it empty and Total CMS falls back to the General settings site name, then your domain. |
+| **Base URL** | The absolute origin for canonical URLs and JSON-LD ids, e.g. `https://example.com`. Defaults to the request's scheme on the site's domain (`https` when there is no request, as on the CLI); set it explicitly when a proxy hides TLS from PHP or to pin a `www`/apex choice. If you set it without a scheme, `https://` is assumed. The sitemaps use this same value. |
+| **Title Template** | The default shape of `<title>`, for a title that is the record's own `title` — an SEO card Title or a collection Title Template is used as written instead. `${title}` is the title and `${site}` the site name. Default: `${title} \| ${site}` |
+| **Social Title Template** | The same for `og:title` and `twitter:title`, independent of the Title Template. Same placeholders, same rule: it shapes the derived title only. Default: `${title}` — a share card carries the bare title. |
+| **Default Description** | Used when a record has no description of its own. |
+| **Default Social Description** | The same for `og:description` and `twitter:description`, independent of the Default Description. Leave it empty and the share cards use whatever description resolved. |
+| **Default Social Image** | An image **upload**, not a URL. The fallback share image, served through ImageWorks at 1200×630 and emitted as an absolute URL. |
+| **Twitter / X Handle** | With or without the `@`. Emitted as `twitter:site`. |
+| **Organization Name** | The publishing entity in the JSON-LD. Falls back to the site name. |
+| **Organization Logo** | An image **upload** too. Any aspect ratio, at least 112×112 — it is never cropped or upscaled, only bounded, and served through ImageWorks at up to 600px wide. |
+| **Social Profiles** | One absolute URL per line — X, Instagram, LinkedIn, GitHub. Emitted as `Organization.sameAs`. |
+| **Contact Email** / **Contact URL** | A public address and the page people should use to reach you (a support or contact page). Emitted as `Organization.email` and a `customer support` `ContactPoint` — a trust signal search engines and AI answer engines weigh. Leave both empty and nothing is emitted. |
+| **Icon** | A square PNG **upload**, 512×512 or larger — the tab icon, the bookmark icon, the icon Google shows beside the site in results, and `/favicon.ico`. See [Icons](#icons). |
+| **Touch Icon** | A square PNG, 180×180 or larger, with a solid background, for iOS home screens. Leave it empty and the Icon is used. |
+| **Icon (SVG)** | An optional SVG **file** upload, served at `/favicon.svg` and listed ahead of the PNG. |
+| **Theme Color** | The color of the browser chrome around the page on phones — usually the page background. Clear it and nothing is emitted. |
+| **Meta Tags** | Raw markup printed in the `<head>` exactly as written, after the SEO tags. Paste the verification tag a service gives you, or any other `meta`, `link` or `script` tag the site needs on every page — see [Meta Tags](#meta-tags). |
+| **Emit JSON-LD** | Off suppresses the `<script type="application/ld+json">` block entirely. |
+| **Emit Open Graph and Twitter tags** | Off suppresses both sets of social tags. |
+| **Emit generator tag** | On by default, prints `<meta name="generator" content="Total CMS">` — the tag Wappalyzer, BuiltWith and the CMS market-share surveys read to know what a site runs on. The name only, never a version number, so it tells a directory what it needs without telling a vulnerability scanner anything. Turn it off on a white-labeled site. |
+
+A site that has never opened this record still gets a full head: every value falls back to its default, the site name to the General settings name and then the domain, and the base URL to the request's scheme on the site's domain. Nothing has to be filled in for `cms.seo.head()` to work.
+
+The properties above are the ones the SEO output reads, and they are the whole list. `seo-site` is a *reserved* schema, so you cannot save over it — but you can present it differently, and you can add to it.
+
+To change how the shipped fields look, open **Collections → Site SEO → Settings → Schema Overrides** to relabel a field, rewrite its help text or swap its field type for this site, or **Object Specific Overrides** to do the same for the one record. Both override the schema's fields; neither adds new ones.
+
+### Adding Your Own Site-Wide Fields
+
+Site-wide values of your own — a tagline, a phone number, a footer blurb — can live on the same record, through schema inheritance. Three steps:
+
+> **Custom schemas are a Pro edition feature.** Creating one needs Pro or above; on a lower edition the schema routes are refused and this recipe is not available. Everything else on this page works on every edition.
+
+**1. Create a schema that inherits `seo-site`.** Give it your own id and only the properties you are adding; the reserved schema's fields come along:
+
+```json
+{
+    "id": "myseo",
+    "type": "object",
+    "inheritFrom": ["seo-site"],
+    "formgrid": "siteName baseUrl\ntitleTemplate socialTitleTemplate\ndefaultDescription defaultDescription\n---Social Sharing---\ndefaultSocialDescription defaultSocialDescription\ndefaultImage twitterHandle\n---Organization---\norganizationName organizationLogo\nsameAs sameAs\n---Meta Tags---\nmetaTags metaTags\n---Output---\nemitJsonLd emitSocial\n---Site---\ntagline .",
+    "properties": {
+        "tagline": {
+            "type": "string",
+            "field": "text",
+            "label": "Tagline"
+        }
+    }
+}
+```
+
+**`formgrid` is not inherited.** Properties are, but the layout is not — the child's own `formgrid` is kept as-is, and a schema without one renders every field as a flat single-column stack. Copy `seo-site.json`'s `formgrid` verbatim (above) and append rows for your new fields, or the Site SEO form loses its sections.
+
+**2. Point the `seo-site` collection at it.** On a new site, create the collection yourself: id `seo-site`, schema `myseo`, **Singleton** on.
+
+On a site that already has the collection, the admin cannot switch it: the **Schema** select is disabled when you edit an existing collection. Do one of these instead:
+
+- Delete the `seo-site` collection and recreate it with schema `myseo`, then re-enter the record. Export the record first (**Collections → Site SEO → Export**) if you would rather not retype it.
+- Or change the schema without the form: `PATCH /api/collections/seo-site` with `{"schema": "myseo"}`, or edit `schema` in `tcms-data/seo-site/.meta.json` directly. The objects keep their values; the extra properties simply start rendering.
+
+Either way the collection id stays `seo-site` — that is what the SEO output looks for. **Project Setup → Setup Default Collections** only creates the collection when it is missing, so it will leave yours alone.
+
+**3. Use the new fields.** They appear on the Site SEO form alongside the shipped ones, and the record reads in Twig like any other object:
+
+```twig
+{{ cms.collection.object('seo-site', 'seo-site').tagline }}
+```
+
+Core keeps reading only the fields it knows, so `cms.seo.head()` behaves exactly as before — your additions ride along on the same record.
+
+### Meta Tags
+
+Search Console, Bing Webmaster Tools and Pinterest each verify a site by handing you a tag to put in the `<head>`. Paste it into **Meta Tags**, a code editor on the Site SEO record, as given:
+
+```html
+<meta name="google-site-verification" content="AbC123_xyz" />
+<meta name="msvalidate.01" content="0123456789ABCDEF" />
+```
+
+The field is not limited to verification. Anything the site needs in the head of every page goes here — a `link` to a webmention endpoint, an analytics `script`, a `meta` tag for a service Total CMS has never heard of. It is printed exactly as written, unescaped, after the SEO tags and before the JSON-LD, on every page that calls `cms.seo.head()` or `cms.seo.meta()`. Editing the Site SEO record is the same trust as editing a template, which is why nothing is filtered: the people who can reach it are the people you gave that access to.
+
+### Icons
+
+Upload one square PNG as **Icon** and `head()` prints the whole set on every page:
+
+```html
+<link rel="icon" href="https://example.com/imageworks/seo-site/seo-site/icon.png?w=32&h=32&fit=crop-focalpoint&fm=png" type="image/png" sizes="32x32">
+<link rel="icon" href="…?w=192&h=192…" type="image/png" sizes="192x192">
+<link rel="icon" href="…?w=512&h=512…" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="…?w=180&h=180…" sizes="180x180">
+```
+
+Every size is cut from that one upload by ImageWorks, so 512×512 or larger is the only requirement, and `/favicon.ico` — which browsers and crawlers request whether or not the head names an icon — is served from the same 32px image, wrapped as an ICO. Google shows the icon beside the site in search results and asks for a square image in a multiple of 48px; the 192 and 512 sizes cover that and Android's home screen. Without an Icon nothing is emitted and `/favicon.ico` is a 404, as it was before.
+
+**Touch Icon** exists because of transparency. A tab icon is usually transparent; iOS paints transparent pixels black on the home screen. Leave the field empty and the Icon is used, inset by 20px on a tile filled with the **Theme Color**, so the home-screen tile matches the site's chrome and the mark does not run edge to edge — or on black when there is no Theme Color, which is what iOS would have shown anyway, only now on purpose. Upload a second PNG with its own background there when the tile should look different from the tab icon. The Touch Icon feeds nothing else: never the tab icon, never `/favicon.ico`. It is also served at `/apple-touch-icon.png`, the root path iOS requests on any page whose head has no touch-icon link — a page that never calls `head()`.
+
+**Icon (SVG)** is a `file` upload rather than an image, because the SVG is served as a file, at `/favicon.svg`, not embedded in the page. It is listed before the PNGs so a browser that can use it does; the rest fall back. It is optional and needs the PNG Icon alongside it — an SVG on its own emits nothing, since Safari, Google and the touch icon all want a raster.
+
+**Theme Color** is printed as `<meta name="theme-color">`, which tints the browser chrome around the page on phones — pick the page background, not the accent, so the chrome disappears into the page. The field is clearable: press **No color** and no tag is emitted.
+
+**A web app manifest is a page, not a setting.** Create a Site Builder page whose route is `/manifest.webmanifest` and give it a template that renders the JSON — the router already serves that extension as `application/manifest+json` — and `head()` adds `<link rel="manifest" href="/manifest.webmanifest">` on every page. The template can read the same values the head prints, so the manifest cannot disagree with it:
+
+```twig
+{%- set site = cms.seo.data().site -%}
+{
+    "name": {{ site.name|json_encode|raw }},
+    "icons": [{ "src": {{ site.icon|json_encode|raw }}, "sizes": "512x512", "type": "image/png" }],
+    "theme_color": {{ site.themeColor|json_encode|raw }},
+    "display": "standalone",
+    "start_url": "/"
+}
+```
+
+No page at that route means no link. A draft, a redirect, or a collection URL pattern that happens to swallow the path does not count.
+
+`cms.seo.icons()` prints just these tags — the icons, the manifest link and the theme color — for a layout that places the pieces itself.
+
+## Structured Data
+
+With **Emit JSON-LD** on, `head()` writes one `<script type="application/ld+json">` containing a single `@graph`. Nodes cross-reference each other by `@id`, which is what search engines expect over a pile of disconnected blocks.
+
+| Node | `@id` | When |
+|---|---|---|
+| `Organization` | `{base}/#organization` | Whenever an organization name (or site name) exists |
+| `WebSite` | `{base}/#website` | Always |
+| `WebPage` | `{url}#webpage` | When the page or object has a resolvable URL |
+| `BreadcrumbList` | `{url}#breadcrumb` | Alongside a WebPage: Home → collection → this page |
+| `Article` / `BlogPosting` | `{url}#article` | A page or object whose Structured Data Type resolves to Article or Blog post — a blog collection by default, or any record whose card says so |
+
+An `Article` node carries the headline, description, image, `datePublished` and `dateModified` from the object, an `author` Person built from the object's `author` value, and a `publisher` reference to the Organization. Set the card's **Structured Data Type** to `Webpage` to leave one object out, or to `Article` / `Blog post` to bring a Site Builder page in — a page has a title, a card description and image, and its `created` / `updated` dates, which is all the node needs.
+
+The JSON is encoded so that a `</script>` inside any value cannot break out of the tag.
+
+Validate what a page emits at [validator.schema.org](https://validator.schema.org/) — paste the page URL, or the JSON-LD block itself.
+
+### Adding Your Own Structured Data
+
+Core emits the five nodes above and stops there. A page that needs an FAQ, a product, an event or a software listing can hand its own nodes to `head()` — they join the same `@graph` rather than arriving in a second `<script>` block that describes an unrelated island:
+
+```twig
+{% set seo = cms.seo.data(page) %}
+
+{% set faq = {
+    '@type'     : 'FAQPage',
+    '@id'       : seo.canonical ~ '#faq',
+    'publisher' : { '@id': seo.site.baseUrl ~ '/#organization' },
+    'mainEntity': [
+        {
+            '@type'         : 'Question',
+            'name'          : 'Is there a build step?',
+            'acceptedAnswer': { '@type': 'Answer', 'text': 'No. Every value is resolved when the page renders.' }
+        },
+        {
+            '@type'         : 'Question',
+            'name'          : 'Can I host it myself?',
+            'acceptedAnswer': { '@type': 'Answer', 'text': 'Yes — any PHP 8.2 host with a writable data directory.' }
+        }
+    ]
+} %}
+
+{{ cms.seo.head(page, {jsonld: [faq]}) }}
+```
+
+`cms.seo.jsonld()` takes the same option, for a layout that places the script itself.
+
+A few rules:
+
+- **Your nodes land after the core ones**, and the first node for any `@id` wins. That is what makes `{ '@id': seo.site.baseUrl ~ '/#organization' }` above a *reference* — core's Organization node is already in the graph, so yours links to the real thing instead of replacing it with a stub. The three ids worth referencing are `{base}/#organization`, `{base}/#website` and `{url}#webpage`; [`cms.seo.data()`](#reusing-the-values) gives you both halves to build them from.
+- **A node that repeats a core `@id` is dropped**, for the same reason. To describe an entity core already describes, give it an id of its own.
+- **Every entry must be a hash, not a list.** `{jsonld: [faq]}` is a list of one hash — the outer `[...]` holds the nodes, each node is a `{...}`. An entry that is not a hash is ignored rather than written: a `[...]` where a node belongs (the easy mistake of wrapping one node in an extra pair of brackets) is dropped, and so is anything that is not an array at all.
+- **Nothing is interpolated.** Your nodes go through the same `json_encode` as core's, with the same `</script>` protection, so a value containing markup or a quote cannot break out of the tag. Write plain Twig values; do not pre-encode them.
+- **Off means off.** With **Emit JSON-LD** switched off on the Site SEO record, no script is written at all — your nodes included.
+
+## Collection Objects
+
+A Site Builder route like `/blog/{id}` renders one blog post, and the head should describe the post, not the page record that routes to it. Pass the object instead, and name its collection:
+
+```twig
+{% extends 'layouts/default.twig' %}
+
+{% set post = cms.collection.object('blog', params.id) %}
+
+{% block seo %}{{ post ? cms.seo.head(post, {collection: 'blog'}) : cms.seo.head(page|default(null)) }}{% endblock %}
+
+{% block content %}
+    <h1>{{ post.title }}</h1>
+    {{ post.content|markdown }}
+{% endblock %}
+```
+
+That single change is what gives the post its own title, its own canonical URL, its own share image and its Article markup. The fallback keeps a missing post on the page's own metadata rather than a blank head.
+
+Always pass `{collection: 'blog'}`. An object array does not carry the name of the collection it came from, and without it Total CMS cannot read the collection's mapping, resolve the object's URL or build the image.
+
+> **The reserved `blog` collection ships with no URL.** Set **URL** on the collection (e.g. `/blog/{id}`) to match the route your page uses, or objects in it get no canonical, no `og:url` and no Article node — all three are anchored to the object's address. See [Collection Settings](/collections/settings#url/).
+
+The same call works for any collection — products, events, team members — once its URL is set.
+
+## Granular Methods
+
+`head()` is the whole block. When you need to place pieces yourself, the same resolution is available one slice at a time. Every method takes the same two arguments as `head()`.
+
+| Method | Emits |
+|---|---|
+| `cms.seo.head(subject, options)` | Everything below, in document order |
+| `cms.seo.title(subject, options)` | `<title>` |
+| `cms.seo.meta(subject, options)` | `description`, `robots`, `generator` and the site's Meta Tags |
+| `cms.seo.og(subject, options)` | The Open Graph and Twitter card tags |
+| `cms.seo.canonical(subject, options)` | `<link rel="canonical">` |
+| `cms.seo.icons(subject, options)` | The icon links, the Apple touch icon, the manifest link and `theme-color` — see [Icons](#icons) |
+| `cms.seo.jsonld(subject, options)` | The `<script type="application/ld+json">` block |
+| `cms.seo.data(subject, options)` | Nothing — it returns the resolved values as an array instead of markup. See [Reusing the Values](#reusing-the-values) |
+
+```twig
+<head>
+    {{ cms.seo.title(post, {collection: 'blog'}) }}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{ cms.seo.meta(post, {collection: 'blog'}) }}
+    {{ cms.seo.canonical(post, {collection: 'blog'}) }}
+    {{ cms.seo.og(post, {collection: 'blog'}) }}
+    {{ cms.seo.jsonld(post, {collection: 'blog'}) }}
+</head>
+```
+
+Calling `cms.seo.head()` with no arguments at all is legitimate — a 404 template, a search results page, anything with no record behind it. You get the site's title, default description and the WebSite / Organization JSON-LD.
+
+## Pages the router did not render
+
+`page` is in scope only for templates the page router renders. A page served
+some other way — a Stacks page that Apache answers before Total CMS routes
+anything, a hand-written PHP front end — has no `page` and, with the call
+above, gets the site defaults. Two ways to give it a real head:
+
+**Keep a page record and ask the router for it.** `cms.builder.page()` returns
+whatever routes the current request (or a path you pass), or null. A Stacks
+site keeps one `builder-pages` record per page with the same route, purely as
+an SEO carrier — the router never serves it, because Apache answers first, so
+leave its **Page Template** empty — and the layout picks it up:
+
+```twig
+{{ cms.seo.head(cms.builder.page()) }}
+```
+
+The SEO card, the title placeholders and noindex all work as on any page, and
+the record is edited in the admin like any other. `/blog/index.php` and
+`/blog/` are the same address to the router, so a record routed at `/blog`
+answers under either spelling.
+
+A post page needs no record. When the request matches a collection's **URL**
+(`/blog/{id}` with pretty URLs on), `cms.builder.page()` returns the object
+itself, tagged with its collection, and the same call emits the article head:
+the collection's [mapping](#collection-mapping) picks the title,
+description and image, and the canonical is the object's URL. Do not also keep
+a page record routed at `/blog/{id}` — a page record wins over a collection
+URL, and you would get the record's head instead of the post's.
+
+**Or describe the page in the template.** Hand `cms.seo.head()` a literal array
+and it is treated as a page:
+
+```twig
+{{ cms.seo.head({
+    title: 'Pricing',
+    description: 'What Total CMS costs, per domain, once.',
+    image: '/images/pricing-card.png',
+    imageAlt: 'The three plans side by side',
+    url: '/pricing'
+}) }}
+```
+
+`title`, `description` and `socialDescription` are the page's own values; an
+`seo` key carries the same fields as the SEO card and overrides them (`{seo: {title: '…', noindex:
+true}}`). `url` sets the canonical — absolute, or site-relative and the base
+URL is prepended; leave it out and the current request path is used. `image`
+may be a URL string here, since there is no record for ImageWorks to resolve
+against; it is emitted as given. This is the shape a Stacks stack would render
+from fields the designer fills in per page. An array with an `id` is never
+treated this way — that is a collection object and needs its collection name.
+
+## Reusing the Values
+
+Sometimes the value is wanted in the body rather than the head — a share button that needs the title, a preview card that needs the image, a script tag of your own that needs the description. `cms.seo.data()` runs the same resolution and hands back a plain array instead of markup:
+
+```twig
+{% set seo = cms.seo.data(page) %}
+
+<img src="{{ seo.ogImage|e }}" alt="{{ seo.ogImageAlt|e }}">
+<a href="https://x.com/intent/post?text={{ seo.socialTitle|url_encode }}">Share</a>
+```
+
+Everything `head()` prints is in there, under its own name:
+
+| Key | What it holds |
+|---|---|
+| `title` | The final `<title>`, after the site title template |
+| `rawTitle` | The record's title before the template — the bare `About`, not `About \| Bistro` |
+| `socialTitle` | The share-card title: the card's **Social Title** or `rawTitle`, through the Social Title Template |
+| `description` | The resolved description (the collection's template is rendered, cleaned and capped at 160 characters; card and site-default text is verbatim) |
+| `socialDescription` | The share-card description: the card's **Social Description**, the collection's Social Description Template or the **Default Social Description**, else `description` |
+| `canonical` | The canonical URL, even on a noindex record where the tag is not printed |
+| `robots` | `''`, `noindex`, `nofollow` or `noindex, nofollow` |
+| `noindex` | The boolean on its own |
+| `ogType` | `website` or `article` |
+| `ogImage` / `ogImageAlt` | The absolute image URL and its alt, each `''` when there is none |
+| `twitterCard` | `summary_large_image` or `summary` |
+| `siteName`, `twitterHandle` | As resolved for the tags |
+| `metaTags` | The Site SEO record's **Meta Tags**, raw |
+| `site` | The Site SEO record's own values: `name`, `baseUrl`, `defaultImage`, `defaultImageAlt`, `organizationName`, `organizationLogo`, `sameAs`, `contactEmail`, `contactUrl` |
+
+**Escape them yourself.** These are plain, unescaped strings — not the `Markup` the other `cms.seo.*` methods return — and Total CMS runs Twig with autoescaping **off**, so a bare `{{ seo.ogImageAlt }}` puts whatever an operator typed into your page verbatim. Add `|e` wherever a value lands in markup, as in the example above. That difference is the whole point of the split: `cms.seo.head()` escapes every value inside its own `{% autoescape 'html' %}` block because it is building the tags itself, and `data()` cannot — it does not know whether you are about to drop the string into an attribute, a URL, or a JSON literal, each of which needs a different escape (`|e`, `|url_encode`, `|json_encode`).
+
+The common use is a JSON-LD node of your own that should say the same thing as the head rather than a hand-maintained copy of it:
+
+```twig
+{% set seo = cms.seo.data(page) %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": {{ seo.site.name|json_encode|raw }},
+    "description": {{ seo.description|json_encode|raw }},
+    "image": {{ seo.ogImage|json_encode|raw }},
+    "url": {{ seo.canonical|json_encode|raw }},
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Any"
+}
+</script>
+```
+
+`|json_encode` is what makes each value safe in that position — it quotes and escapes the string, so a description containing a quote or a backslash cannot break the JSON. Better still, hand the node to `head()` as [`options.jsonld`](#adding-your-own-structured-data) and let it join the core `@graph`, which is what a search engine would rather read.
+
+## Sitemaps and `noindex`
+
+A page or object whose SEO card has **No Index** on is dropped from the sitemap it would otherwise appear in — both `/sitemap/-pages` for Site Builder pages and `/sitemap/{collection}` for objects. A crawler receiving `noindex` in the head and the same URL in the sitemap is being told two different things; Total CMS only ever tells it one.
+
+The **Include in Sitemap** toggle is unchanged and independent. Off keeps a record out of the sitemap without asking anyone not to index it; **No Index** does both.
+
+**A noindexed page also gets no `<link rel="canonical">`.** Declaring a canonical URL is telling a crawler "this is the address to index"; asking not to be indexed at the same time is a mixed signal, and the two together are a documented way to have the directive ignored. So `head()` and `cms.seo.canonical()` both drop the tag when **No Index** is on. `og:url` still prints: it is an identity for a share card, not an instruction to a search engine.
+
+For collections other than the Site Builder pages, remember the [index requirement](#adding-the-card-to-your-own-schema) — the sitemap builder reads the collection index, so `seo` must be in the schema's `index` array. See [Sitemaps](/collections/sitemap-builder/).
+
+### robots.txt
+
+`robots.txt` is not managed for you. Add a Site Builder page routed at `/robots.txt` and point crawlers at the sitemap index:
+
+```
+User-agent: *
+Allow: /
+
+Sitemap: https://example.com/sitemap.xml
+```
+
+## IndexNow
+
+A sitemap tells crawlers what exists; IndexNow tells them what just changed, the moment it changes. Turn on **Submit changes with IndexNow** in the **SEO Site Collection** (Collections → Seo Site — the record that also holds the base URL and favicons; it is not in the admin Settings groups) and every publish, edit and delete of a sitemap-listed URL is submitted to the IndexNow network — one submission reaches Bing, Yandex, Seznam and Naver. **Google does not take part**, so this is a complement to the sitemap, not a replacement for it.
+
+What is submitted is exactly what the sitemap would list, decided by the same rules: the collection's sitemap must be on, its include/exclude filters must admit the object, and the SEO card must not say **No Index**. A draft stays out for the same reason it stays out of the sitemap — the collection's `exclude` filter — and a post moved back to draft, noindexed or deleted is submitted too, so the engines recrawl and drop it quickly rather than at the next scheduled visit.
+
+Imports count too: a CSV or JSON import that publishes a hundred posts submits their hundred URLs together when it completes. Submissions are queued, never sent during a save, and coalesced: every URL that changes between two runs of [`tcms jobs:process`](/extensions/cli#jobs-process/) — every minute under the standard cron — goes out as one request, up to the protocol's 10,000 URLs, and a record saved five times in that window is submitted once. A rate limit or outage puts the unsent URLs back for the next run; a rejected submission is logged once under `indexnow` and dropped. Clearing the job queue discards the pending submissions with it.
+
+The key the engines verify against is generated for you the first time the form is saved with the toggle on, and served at `/{key}.txt`. It is not an API key: IndexNow has no accounts, registration or vendor credentials. The key is a token this site made up, and hosting it at that address is the whole proof that the submissions come from here. If a submission is rejected, that file being unreachable is the usual reason — a rewrite rule or a static `.txt` handler in front of PHP.
+
+## What Is Not Included
+
+Core SEO covers the markup every site needs. It deliberately stops short of:
+
+- **A managed `robots.txt`** — it stays a Site Builder page you control, as above.
+- **hreflang and localized SEO** — a site serving several languages has to emit its own alternate links. Native internationalization is planned.
+- **Search Console / Bing Webmaster API integration** — their verification tags are pasted into Meta Tags; nothing is read back. Changed URLs *are* pushed, through [IndexNow](#indexnow), but that is a notification, not an account integration.
+- **Analysis and scoring** — no readability grade, keyword density, or per-page SEO report.
+- **More schema.org types** — Product, Event, FAQ, Recipe, LocalBusiness and the rest. Core generates none of them from your fields, though a template can write one itself and add it to the graph — see [Adding Your Own Structured Data](#adding-your-own-structured-data).
+- **404 and redirect management** beyond the Site Builder page `status` and `redirectTo` fields.
+
+The last three are the remit of the **SEO Pro** extension planned for 3.6.
+
+## See Also
+
+- [Sitemaps](/collections/sitemap-builder/)
+- [Builder Twig Reference](/site-builder/twig/)
+- [Starter Templates](/site-builder/starters/)

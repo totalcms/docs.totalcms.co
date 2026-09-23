@@ -309,6 +309,39 @@ Once registered, the field type can be used in schemas:
 }
 ```
 
+### The JavaScript side
+
+The PHP class renders the field's HTML. What happens in the browser — reading
+the value for a save, marking the form unsaved, validation, uploads — is a
+JavaScript class, and the admin bundle builds one for every field from its
+`data-type`. A type the bundle does not know falls back to the plain text
+field behaviour, so a field that needs more registers its own class:
+
+```js
+// assets/scripts/admin.js — registered with $context->addAdminAsset('js', 'scripts/admin.js')
+const { TotalField, registerFieldType } = window.TotalCMS;
+
+class ColorPickerField extends TotalField {
+	getValue() {
+		return this.input.value.toLowerCase();
+	}
+}
+
+registerFieldType('colorpicker', ColorPickerField);
+```
+
+`window.TotalCMS` carries `TotalForm`, `TotalField` and `registerFieldType`.
+Register at the module's top level: core admin scripts render before
+extension admin scripts, and module scripts run in document order, so the
+surface exists by the time your module runs and the registry is consulted
+when each form is built. Keep the script at its default `body` position — a
+`head` script runs before the core bundle and finds nothing to register with.
+A core type name (`text`, `image`, …) cannot be replaced; the built-in class
+wins before the registry is asked. `TotalField` is the base every core field
+extends: `this.container` is the field's wrapper, `this.input` its control,
+`getValue()` / `setValue()` / `clearValue()` / `validate()` are the methods a
+subclass overrides, and `this.changed()` marks the form unsaved.
+
 ## Event Listeners
 
 Subscribe to content events. See [Events](/extensions/events/) for the full event reference.
@@ -522,12 +555,37 @@ Extension assets are merged with Total CMS core assets and emitted by these Twig
 | Admin pages  | `{{ cms.adminAssetsHead() }}` | inside `<head>` (already wired by core admin templates) |
 | Admin pages  | `{{ cms.adminAssetsBody() }}` | just before `</body>` (already wired) |
 
-For the admin interface there's nothing to do — core admin templates already call the helpers. For public pages, your theme template needs to call `cms.assetsHead()` / `cms.assetsBody()` for extension frontend assets to render.
+`cms.adminAssetsHead()` also emits the dashboard accent setting as a `--totalform-accent` rule after its stylesheets, so the admin styles on your page use the configured brand color (`cms.adminAccentStyle()` returns just that rule for a layout that writes its own tags). `cms.adminAssetsBody()` also defines `window.TCMS_TRANSLATIONS` (the JS translation catalog for the current user's locale) and `window.TCMS_CONFIG` (the dashboard settings the admin scripts read, such as `confirmCountdown`) ahead of the script tags, so an admin page you build yourself gets the same globals the dashboard has. The public `cms.assetsBody()` never emits them.
+
+For the admin interface there's nothing to do — core admin templates already call the helpers. For public pages, your theme template needs to call `cms.assetsHead()` / `cms.assetsBody()` for extension frontend assets to render. A site can leave core frontend features it never renders out of those helpers, site-wide with `$settings['frontendAssets']['except']` or per call with `{except: [...]}` (see [Frontend Assets](/site-builder/frontend/)); extension assets always render.
 
 Within each helper, output ordering is:
 1. Stylesheets first.
 2. Preload hints (`<link rel="preload">` / `<link rel="modulepreload">`) — always emitted in the head regardless of the asset's own `position`.
 3. Script tags last.
+
+## Which admin surface?
+
+An extension has three ways to put something in front of an operator, and a
+fourth place for data that is not the operator's at all. Choosing the wrong
+one is the most common design mistake in a first extension.
+
+| Put it in… | When it is… | Examples |
+|---|---|---|
+| **Settings** (`settings_schema`) | configuration read at boot, changed rarely, with no screen of its own | API keys, feature toggles, default values, a webhook URL |
+| **An admin page** (`addAdminNavItem` + `addAdminRoutes`) | operational or per-item work that needs its own tables, forms or actions | a report, a review queue, a sync log with a retry button, anything an operator visits repeatedly |
+| **A dashboard widget** (`addDashboardWidget`) | a read-only glance at status | a score, a count, the last run time, a warning |
+| **A collection** (`installSchema` + a collection) | content that editors manage, or records that accumulate | redirects, testimonials, form submissions, audit entries |
+
+Two tests settle most cases. If an operator would change the value once and
+forget it, it is a setting. If the value has a lifecycle, a list, or a
+history, it is not a setting: it is a page over a collection. Settings are
+stored in a single JSON file per extension and rendered as one form, so a
+list that grows there becomes unmanageable quickly.
+
+Settings and pages are not exclusive. An extension that syncs with a
+service keeps its credentials in settings, shows its sync history on an
+admin page, and surfaces the last failure as a widget.
 
 ## Settings
 
@@ -695,3 +753,24 @@ public function register(ExtensionContext $context): void
 Provider ids must be unique across all extensions + the built-in `text` provider. The registrar logs and skips collisions during boot. When `isAvailable()` returns false, SearchService silently falls back to text search. Throwing from `search()` also triggers the fallback. Throwing from `index()` or `delete()` enqueues a retry job.
 
 See the bundled [Algolia Search extension](/extensions/algolia-search/) for a complete working example.
+
+## Agent Skill
+
+An extension can teach coding agents how to use it. Ship a `skill/` directory next to `extension.json`, in the layout the core skill uses:
+
+```
+acme/seo-pro/
+    extension.json
+    Extension.php
+    skill/
+        SKILL.md            # frontmatter (name, description) + the instructions
+        references/         # optional supporting files
+            twig.md
+```
+
+While the extension is enabled, `tcms skill:install` copies that directory to `.claude/skills/{vendor}-{name}/` in the project, next to the core skill in `.claude/skills/totalcms/`. Claude Code and other agents that read `.claude/skills/` then pick it up by its `description` line, the same way they pick up the core one. Enabling or disabling the extension in the admin or CLI installs or removes the folder at once; on a Composer install the plugin's post-update `skill:install` refreshes it with every `composer update`, and `skill:install --check` reports it stale exactly as it reports the core skill.
+
+The copy is stamped with a fingerprint of your source and with the extension id, so a later sync knows which folders are its own: a folder in `.claude/skills/` that the sync did not write — the operator's own skill, say, that happens to share the name — is never overwritten or removed.
+
+Write `SKILL.md` the way the core one is written: what the extension adds (Twig functions, CLI commands, settings, schemas), when to reach for each, and the mistakes an agent is likely to make. Paths such as `vendor/bin/tcms` are rewritten for zip installs on copy, so write for the Composer layout. There is no capability to declare and no permission toggle: the skill is text the agent reads, not code that runs. It is, though, instructions to an agent, which is why the [pre-enable review](/extensions/safety#the-pre-enable-review/) shows the full `SKILL.md` to the operator before they consent — write it to be read by them too.
+

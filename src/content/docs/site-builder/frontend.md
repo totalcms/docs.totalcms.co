@@ -239,7 +239,7 @@ rollupOptions: {
 
 ## Core Total CMS Assets
 
-Before your own assets, your layout needs the ones Total CMS ships. `cms.assetsHead()` and `cms.assetsBody()` emit the core stylesheets and scripts that T3's own Twig output depends on — grid layout, galleries, pagination, icons, htmx, and the decoder behind the [`mailto`](/twig/filters/) filter — plus anything registered by [extensions](/extensions/extension-points/).
+Before your own assets, your layout needs the ones Total CMS ships. `cms.assetsHead()` and `cms.assetsBody()` emit the core stylesheets and scripts that T3's own Twig output depends on — grid layout, galleries, pagination, icons, htmx, the form runtime behind `cms.form.*`, and the decoder behind the [`mailto`](/twig/filters/) filter — plus anything registered by [extensions](/extensions/extension-points/).
 
 ```twig
 {{ cms.assetsHead() }}   {# in <head>, before your own CSS #}
@@ -252,6 +252,28 @@ Leave them out and nothing errors — `{% cmsgrid %}` renders unstyled, gallerie
 
 Put `cms.assetsHead()` before your own stylesheet so your rules override the defaults.
 
+### Leaving out what you do not use
+
+The core set covers every feature Total CMS can render, but a given site rarely uses all of it. A marketing site with no `{% cmsgrid %}`, no rendered galleries, no pagination and no CMS icons still loads their stylesheets on every page. Name the features you never render in `tcms.php` and the helpers skip their files:
+
+```php
+$settings['frontendAssets'] = [
+	'except' => ['icons', 'cms-grid', 'gallery', 'pagination', 'htmx'],
+];
+```
+
+Names are features, not filenames: `gallery` drops both `gallery.css` and `gallery.js` (and the script's preload hint), so you never ship half a pair. The names are `icons`, `content`, `cms-grid`, `gallery`, `pagination`, `forms` and `htmx`. Keep `content` — it carries the styled-text styles and the decoder behind the `mailto` filter. `forms` is the stylesheet and script behind every `cms.form.*` form (see [What a public form needs](/forms/overview#what-a-public-form-needs/)); leave it out only on a site with no public forms. Extension assets are never affected, and a name that does not exist is ignored. This is an exclude list on purpose: enable an extension with frontend assets, or upgrade to a version that adds a core asset, and it still arrives.
+
+The same names work per call, for a Stacks site where the layout is written page by page and there is no config file to edit:
+
+```twig
+{{ cms.assetsHead({except: ['icons', 'gallery', 'htmx']}) }}
+…
+{{ cms.assetsBody({except: ['icons', 'gallery', 'htmx']}) }}
+```
+
+A call's `except` adds to the site setting. Give `assetsHead()` and `assetsBody()` the same list — a feature can be a stylesheet in the head and a script in the body, and the two calls do not know about each other.
+
 ## Layout Template Example
 
 A complete layout using all asset functions:
@@ -263,7 +285,7 @@ A complete layout using all asset functions:
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{{ page.title }}{% endblock %}</title>
-    <meta name="description" content="{{ page.description }}">
+    <meta name="description" content="{{ page.seo.description }}">
 
     {# Total CMS core assets first, so your own CSS can override them #}
     {{ cms.assetsHead() }}

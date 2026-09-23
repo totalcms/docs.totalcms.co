@@ -13,7 +13,7 @@ updated: 2026-08-27
 ---
 Every Total CMS site is an MCP server out of the box. Point Claude Code, Claude Desktop, ChatGPT, or any conformant MCP client at `https://your-site/mcp` and an AI agent can query your collections, fetch objects, search content, and (with an API key) manage schemas and collections.
 
-The MCP server is **Pro+ edition only** and shipped with Total CMS 3.5.
+The MCP server ships with Total CMS 3.5 and is available on **Standard and Pro** (Lite does not include it). Reading works on both; the personas that write to the site depend on Pro credentials — see [Editions](#editions-reading-everywhere-writing-on-pro).
 
 ---
 
@@ -74,9 +74,24 @@ This is launch semantics for the AUTHENTICATED tier, not a migration: MCP had no
 
 ---
 
+## What the agent is told on connect
+
+The initialize response carries `instructions`, and every MCP client keeps
+that text in context for the conversation. Total CMS uses it to hand the agent
+the judgment a human editor would bring: discover collections and read the
+schema's help text before acting, look things up with the `docs_*` tools
+instead of guessing, patch objects rather than replace them, respect field
+shapes, never invent ids, and — on an admin connection — how to model a
+schema well (start from the `totalcms` reference schema, help text on every
+property, the SEO card on anything that becomes a page). The text is
+persona-aware: a read-only connection is told it can only read and what
+writing needs, not how to write. Together with the `tcms_*` prompts this is
+the equivalent of the terminal agent skill for people who reach Total CMS
+only through claude.ai, Claude Desktop or ChatGPT.
+
 ## Enabling the MCP server
 
-1. **Check your edition.** MCP requires Pro or higher. Trial counts as Pro for testing.
+1. **Check your edition.** MCP requires Standard or Pro. Trial counts as Pro for testing, which also unlocks the API-key and OAuth personas.
 2. **Verify it's enabled.** In **Admin → Settings → MCP Server**, `Enabled` should be checked (default true on fresh install).
 3. **Confirm with the CLI:**
    ```bash

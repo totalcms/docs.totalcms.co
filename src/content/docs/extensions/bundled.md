@@ -25,9 +25,11 @@ This keeps core lean for sites that don't need a particular feature, while still
 | `totalcms/docs` | Exposes this install's own documentation to AI agents as `docs_search`, `docs_get`, and `docs_lookup` MCP tools. Enabled by default (see below); tools stay `authenticated`-only unless you opt in to public exposure. | [Documentation Tools →](/mcp/docs-tools/) |
 | `totalcms/geo-redirect` | Redirect visitors based on their country. Reads from CDN-injected headers (Cloudflare, Vercel, generic). Useful for compliance redirects and regional landing pages. | [Geo Redirect →](/extensions/geo-redirect/) |
 | `totalcms/maintenance` | Per-page 503 maintenance mode. Take individual pages offline with a custom message while the rest of the site stays up. Admins bypass automatically. | [Maintenance →](/extensions/maintenance/) |
+| `totalcms/podcast` | Host a podcast from two collections: the `podcast` and `podcast-episode` schemas, a feed the directories accept at its own address, and a `podcast_feed()` Twig function. Standard edition and above. | [Podcast →](/extensions/podcast/) |
 | `totalcms/protect` | Gate a page behind a numeric passcode. Visitors enter a code to unlock — cookie remembers them for 7 days. For client previews and soft launches. | [Protect →](/extensions/protect/) |
 | `totalcms/pushover` | Send push notifications via Pushover when forms are submitted. Supports Twig templates, image attachments, and delivery groups. Pro edition. | [Pushover →](/extensions/pushover/) |
 | `totalcms/scheduled` | Time-window gating. Only renders a page between configured start/end timestamps. For holiday campaigns, embargoed announcements, and time-limited sales. | [Scheduled →](/extensions/scheduled/) |
+| `totalcms/webmcp` | Make your forms and public collections callable by a browser AI agent inside the visitor's own session (Chrome 149+ origin trial). `webmcp_form()` annotates a form; listed collections are offered through `search_content`/`get_content` read tools (collection as an enum; visitors see public-read ones, a signed-in operator all). Experimental, off by default. | [WebMCP →](/extensions/webmcp/) |
 
 ## How to enable / disable
 

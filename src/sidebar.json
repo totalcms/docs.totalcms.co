@@ -28,6 +28,10 @@
                 "slug": "collections/settings"
             },
             {
+                "label": "Storage Format",
+                "slug": "collections/storage-format"
+            },
+            {
                 "label": "Form Settings",
                 "slug": "collections/form-settings"
             },
@@ -40,12 +44,20 @@
                 "slug": "collections/import"
             },
             {
+                "label": "Migrating from another CMS",
+                "slug": "collections/migrate"
+            },
+            {
                 "label": "Exporting Data",
                 "slug": "collections/export"
             },
             {
                 "label": "Sitemap Builder",
                 "slug": "collections/sitemap-builder"
+            },
+            {
+                "label": "Podcasts",
+                "slug": "collections/podcast"
             }
         ]
     },
@@ -76,6 +88,10 @@
             {
                 "label": "Field Types",
                 "items": [
+                    {
+                        "label": "Choosing a Field",
+                        "slug": "fields/choosing-a-field"
+                    },
                     {
                         "label": "All Fields",
                         "slug": "fields/all-fields"
@@ -155,6 +171,10 @@
                     {
                         "label": "Text Inputs",
                         "slug": "fields/text-inputs"
+                    },
+                    {
+                        "label": "Video",
+                        "slug": "fields/video"
                     }
                 ]
             },
@@ -211,6 +231,10 @@
             {
                 "label": "Builder Twig Reference",
                 "slug": "site-builder/twig"
+            },
+            {
+                "label": "SEO",
+                "slug": "site-builder/seo"
             }
         ]
     },
@@ -291,6 +315,18 @@
                     {
                         "label": "Load More",
                         "slug": "twig/load-more"
+                    },
+                    {
+                        "label": "HTMX Recipes",
+                        "slug": "twig/htmx"
+                    },
+                    {
+                        "label": "Twig Recipes",
+                        "slug": "twig/recipes"
+                    },
+                    {
+                        "label": "Twig Playground",
+                        "slug": "twig/playground"
                     }
                 ]
             },
@@ -585,6 +621,10 @@
                         "slug": "extensions/maintenance"
                     },
                     {
+                        "label": "Podcast",
+                        "slug": "extensions/podcast"
+                    },
+                    {
                         "label": "Protect",
                         "slug": "extensions/protect"
                     },
@@ -595,6 +635,10 @@
                     {
                         "label": "Scheduled",
                         "slug": "extensions/scheduled"
+                    },
+                    {
+                        "label": "WebMCP",
+                        "slug": "extensions/webmcp"
                     }
                 ]
             }
@@ -632,12 +676,16 @@
                 "slug": "operations/filesystem"
             },
             {
-                "label": "Sharing One Data Folder",
-                "slug": "operations/shared-data-cache"
+                "label": "Shared Data",
+                "slug": "operations/shared-data"
             },
             {
                 "label": "Sync",
                 "slug": "operations/sync"
+            },
+            {
+                "label": "Backups",
+                "slug": "operations/backups"
             },
             {
                 "label": "Git-First Templates",

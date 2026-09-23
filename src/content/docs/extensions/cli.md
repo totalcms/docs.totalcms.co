@@ -169,6 +169,28 @@ tcms collection:get blog --json
 |----------|----------|-------------|
 | `id` | Yes | Collection ID |
 
+### `collection:create`
+
+Create one collection. When the ID is a reserved collection (`seo-site`, `automations`, `mailer`, …) leave `--schema` off — the collection is provisioned with its shipped name and singleton flag, exactly as **Project Setup → Setup Default Collections** would, but for that one collection only. That is the point of this command on an existing site: `tcms collection:create seo-site` provisions just that collection, where Setup Default Collections would create every default. Any other ID is a custom collection and needs `--schema`.
+
+```bash
+tcms collection:create seo-site
+tcms collection:create recipes --schema=blog --name="Recipes"
+tcms collection:create about --schema=text --singleton --json
+```
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `id` | Yes | Collection ID |
+
+| Option | Description |
+|--------|-------------|
+| `--schema` | Schema ID — required unless the collection ID is a reserved collection |
+| `--name` | Display name (defaults to the collection ID). Ignored for a reserved collection — it keeps its shipped name |
+| `--singleton` | Create as a single-object collection. Ignored for a reserved collection — its shipped singleton setting wins |
+
+Exits `1` when the collection already exists, when a non-reserved ID is given without `--schema`, or when the schema is unknown or is a reference schema (`totalcms`, `totalcms-item`).
+
 ### `collection:query`
 
 Query a collection's index with filtering, searching, sorting, and pagination.
@@ -245,6 +267,25 @@ tcms collection:import blog posts.json --format=json --json
 |--------|-------------|
 | `--format, -f` | Import format: `json` or `csv` (auto-detected from extension) |
 | `--update` | Update existing objects instead of skipping |
+
+### `collection:convert`
+
+Convert a collection between `json` and `markdown` object storage; see [Storage Format](/collections/storage-format/) for how the conversion works and how to read its output.
+
+```bash
+tcms collection:convert docs --to=markdown
+tcms collection:convert docs --to=markdown --dry-run
+tcms collection:convert docs --to=json --json
+```
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `collection` | Yes | Collection ID |
+
+| Option | Description |
+|--------|-------------|
+| `--to` | Target format: `json` or `markdown` |
+| `--dry-run` | Report what would change without writing anything |
 
 ---
 
@@ -696,6 +737,47 @@ tcms mcp:test query_collection --params='{"collection":"blog"}' --persona=public
 
 ---
 
+## Backup Commands
+
+Every object save keeps the version it replaced and every delete keeps the final state, under `tcms-data/.system/backups/objects/`. These two commands read that history back. See [Backups](../operations/backups) for what is kept and for how long.
+
+### `backup:list`
+
+List the snapshots kept for one object, newest first. The `Snapshot` column is the filename `backup:restore` takes. A deleted object still lists — its history survives the delete.
+
+```bash
+tcms backup:list blog my-post
+tcms backup:list blog my-post --json
+```
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `collection` | Yes | Collection ID |
+| `id` | Yes | Object ID |
+
+### `backup:restore`
+
+Put a snapshot back as the live record. This is an ordinary save: the index rebuilds, listeners fire, and the state being replaced is snapshotted first — so a restore can itself be undone by restoring one entry back. Restoring a deleted object recreates it.
+
+```bash
+tcms backup:restore blog my-post my-post-20260919-091500.json
+tcms backup:restore blog my-post --latest
+tcms backup:restore blog my-post --latest --force
+```
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `collection` | Yes | Collection ID |
+| `id` | Yes | Object ID |
+| `snapshot` | No | Snapshot filename from `backup:list` (omit with `--latest`) |
+
+| Option | Description |
+|--------|-------------|
+| `--latest` | Restore the newest snapshot |
+| `--force, -f` | Skip the confirmation prompt (required for non-interactive/CI use) |
+
+---
+
 ## Maintenance Commands
 
 ### `repair:index`
@@ -792,11 +874,14 @@ tcms extension:list --json
         "id": "acme/seo-pro",
         "name": "SEO Pro",
         "version": "1.2.0",
+        "source": "composer",
         "enabled": true,
         "error": null
     }
 ]
 ```
+
+`source` is where the extension was found: `bundled` (ships with Total CMS), `composer` (a `totalcms-extension` package in `vendor/`), `project` (the site's `extensions/` directory) or `user` (`tcms-data/extensions/`).
 
 ### `extension:enable`
 
@@ -833,6 +918,8 @@ tcms extension:remove acme/seo-pro
 tcms extension:remove acme/seo-pro --force
 ```
 
+Only an extension in `tcms-data/extensions/` can be removed this way. A bundled extension ships with Total CMS, a project extension belongs to source control, and a Composer extension is removed with `composer remove <package>`; the command refuses each and names the alternative. `extension:disable` works for all of them.
+
 | Argument | Required | Description |
 |----------|----------|-------------|
 | `id` | Yes | Extension ID (e.g. `vendor/extension-name`) |
@@ -840,3 +927,66 @@ tcms extension:remove acme/seo-pro --force
 | Option | Description |
 |--------|-------------|
 | `--force, -f` | Skip confirmation prompt |
+
+---
+
+## Agent Skill
+
+### `skill:install`
+
+Install or refresh the bundled Total CMS agent skill into `.claude/skills/totalcms/`, so Claude Code and other coding agents pick up the conventions that ship with your version of the CMS.
+
+```bash
+tcms skill:install
+tcms skill:install --json
+```
+
+Composer installs run this for you on every `composer install` and `composer update`, so the skill always matches the installed `totalcms/cms`.
+
+Zip installs run it by hand — once from the app folder after unpacking, and again after each update, since an update replaces `resources/`:
+
+```bash
+php resources/bin/tcms skill:install
+```
+
+The skill's paths are rewritten to match the layout it is installed into. Composer installs get `vendor/bin/tcms` and `vendor/totalcms/cms/resources/docs/`; zip installs get `php resources/bin/tcms` and `resources/docs/`.
+
+Installing overwrites the existing copy — the skill is core-owned, so keep local notes outside `.claude/skills/totalcms/`.
+
+The same run installs the skill of every enabled extension that ships one (a `skill/` directory next to its manifest — see [Agent Skill](/extensions/extension-points#agent-skill/)) into `.claude/skills/{vendor}-{name}/`, and removes the folder of any extension that has since been disabled or removed. Only folders the command wrote are ever touched. `--check` covers them too, and exits `1` when any is stale.
+
+#### Checking whether the installed skill is stale
+
+An agent loads the skill text once, at the start of a session, so a copy that has fallen behind keeps steering the agent with old conventions. `--check` compares the installed copy against the shipped source and writes nothing:
+
+```bash
+tcms skill:install --check
+tcms skill:install --check --json
+```
+
+Freshness is a **content hash**, not a version number: the install stamps a sha256 of the shipped skill files into `.claude/skills/totalcms/.skill-manifest.json` and into `SKILL.md`'s frontmatter. A CMS release that does not touch the skill leaves the check passing, and editing one reference file flags exactly that file.
+
+Exit codes make it scriptable:
+
+| Exit | Meaning |
+|---|---|
+| `0` | The installed skill matches the shipped source |
+| `1` | Stale, or not installed at all |
+
+After re-installing, start a new agent session — the skill text already loaded cannot replace itself.
+
+Optionally, have Claude Code run the check for you at the start of every session with a `SessionStart` hook in `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "vendor/bin/tcms skill:install --check" }
+        ]
+      }
+    ]
+  }
+}
+```

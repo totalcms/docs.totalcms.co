@@ -57,6 +57,41 @@ Images stored inside a `card` or `deck` field are addressed through the `propert
 
 `cms.render.alt()` accepts the same `property: 'parent.child'` syntax. See [cms.media → Nested images](/twig/media#nested-images-cards-and-decks/) for the underlying URL convention.
 
+### picture()
+
+Render a responsive `<picture>`: one `<source>` per modern format, each carrying a `srcset` of ImageWorks candidates, then an `<img>` fallback in the image's own format. The fallback carries the same `srcset`, so a browser that ignores `<picture>` still picks a sensible size.
+
+Same three arguments as `image()`: the object, then **ImageWorks transforms**, then collection/render context. The transforms are applied to every candidate in every `srcset` — the only thing that varies between candidates is `w`, which `picture()` sets itself.
+
+```twig
+{# Defaults: 480/768/1024/1440/1920 candidates, AVIF + WebP sources, sizes="100vw" #}
+{{ cms.render.picture('hero') }}
+
+{# An image that never spans the viewport — tell the browser, or it downloads for 100vw #}
+{{ cms.render.picture(post, {}, {sizes: '(min-width: 60em) 50vw, 100vw', collection: 'blog'}) }}
+
+{# Your own candidate widths and a single format #}
+{{ cms.render.picture(post, {}, {widths: [400, 800, 1200], formats: ['webp']}) }}
+
+{# The transforms apply to every candidate; w there is a ceiling, not a candidate #}
+{{ cms.render.picture(post, {w: 1200, h: 675, fit: 'crop-focalpoint', q: 75}) }}
+```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `idOrObject` | string\|array\|null | required | Object ID or full object data |
+| `imageworks` | array | `[]` | ImageWorks transforms applied to **every** candidate — `h`, `fit`, `q`, a preset `p`, and so on. Two keys behave differently from `image()`: `w` is a ceiling on the largest candidate rather than a candidate itself, and `fm` is ignored, because each `<source>` sets its own format from the `formats` option |
+| `options` | array | `[]` | The picture options below, plus the same context as `image()`: `collection` (default `'image'`), `property` (default `'image'`, dotted for card/deck-nested), `loading` (default `'lazy'`) and `class` |
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `widths` | int[] | `[480, 768, 1024, 1440, 1920]` | Candidate widths for every `srcset`. Any wider than the source are dropped and the source width joins as the largest — ImageWorks never upscales, so a wider candidate would deliver the source's own width and mis-report it |
+| `formats` | string[] | `['avif', 'webp']` | One `<source>` per format, in order, best first. A format equal to the image's own is skipped as redundant. Any of `jpg`, `png`, `webp`, `avif` |
+| `sizes` | string | `'100vw'` | The `sizes` attribute on every `<source>` and the `<img>`. `100vw` is what a browser assumes without it, so narrow it per call |
+| `collection`, `property`, `loading`, `class` | | as `image()` | Collection context, dotted nested `property`, lazy loading, extra class |
+
+Every `w` descriptor is the width ImageWorks will actually deliver for that candidate, after `h` and `fit` are applied — never the requested number. Two requested widths that clamp to one delivered width collapse into one candidate. A GIF gets no `<source>` children at all, since re-encoding to a still format would drop its animation. Change the defaults site-wide under `imageworks.picture` in `config/tcms.php`; see [Format & Quality](/twig/imageworks#format--quality/) for the format list.
+
 ### alt()
 
 Get the alt text for an image. Falls back through alt text, EXIF data, then filename.
@@ -68,6 +103,54 @@ Get the alt text for an image. Falls back through alt text, EXIF data, then file
 {# Card child #}
 {{ cms.render.alt('post-1', {property: 'mycard.image'}) }}
 ```
+
+## Video
+
+### cms.render.video()
+
+Render a `video` field property (or a local `file`-field video upload) as an
+embed, a `<video>` element, or a click-to-play facade — whichever fits the
+provider.
+
+```twig
+{# An object from the ready-made video collection: collection and property both default to "video".
+   Hosted providers render as a click-to-play facade (poster + play button) by default. #}
+{{ cms.render.video('intro') }}
+
+{# Hosted provider (YouTube, Vimeo, Livid, Bunny, Cloudflare, Loom, Wistia, Publitio, Jet-Stream) on your own schema #}
+{{ cms.render.video(post, {property: 'promo'}) }}
+
+{# An eager iframe instead of the facade #}
+{{ cms.render.video(post, {property: 'promo', facade: false}) }}
+
+{# Direct file URL (the `file` provider) — a muted looping background clip #}
+{{ cms.render.video(post, {property: 'trailer', autoplay: true, muted: true, loop: true}) }}
+
+{# Facade options carry into the embed built on click #}
+{{ cms.render.video(post, {property: 'promo', muted: true}) }}
+
+{# The uploaded poster resized through ImageWorks — the trailing argument, since video options lead in a video API #}
+{{ cms.render.video(post, {property: 'promo'}, {w: 1200}) }}
+
+{# A file-field value (mime starting video/) streams through the same call #}
+{{ cms.render.video(post, {property: 'localClip'}) }}
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `collection` | string | `'video'` | Collection identifier |
+| `property` | string | `'video'` | Property name |
+| `autoplay` | bool | `false` | Autoplay (subject to browser muted-autoplay rules) |
+| `loop` | bool | `false` | Loop playback |
+| `muted` | bool | `false` | Mute |
+| `controls` | bool | `true` | Show player controls (`file` provider only) |
+| `class` | string | `''` | Extra CSS class on the wrapper |
+| `poster` | string | `''` | Override poster URL — otherwise resolved via `cms.media.videoPoster()` |
+| `facade` | bool | `true` | Click-to-play poster with a play button; the iframe loads on click. Set `false` for an eager iframe. Ignored for the `file` provider, and for any value where no poster or thumbnail resolves, which renders the eager iframe instead (an `unknown` URL has no vendor thumbnail, so the poster must be uploaded) |
+
+An `unknown` provider URL is never modified — it renders as a generic iframe
+with the author's URL exactly as pasted. See [Video](/fields/video/) for
+the full provider table and field settings.
 
 ## Galleries
 
@@ -114,6 +197,15 @@ Render a complete gallery grid with LightGallery lightbox support.
 | `download` | bool | `true` | Show download button in lightbox |
 | `counter` | bool | `true` | Show image counter |
 | `plugins` | array | `['zoom','thumbnail','fullscreen']` | LightGallery plugins |
+| `zoomFromOrigin` | bool | `true` | Animate the lightbox open and close from the clicked thumbnail. Set `false` when thumbnails are cropped to a different shape than the originals — see below |
+
+Every option that is not one of Total CMS's own (`collection`, `property`, `captions`, `gridCaptions`, `sort`, `class`, `maxVisible`, `viewAllText`, `featuredOnly`) is passed straight through to [LightGallery's settings](https://www.lightgalleryjs.com/docs/settings/), so `loop`, `download`, `counter`, `zoomFromOrigin`, `speed`, `mode` and the rest all work as documented there.
+
+**Cropped thumbnails and the zoom animation.** LightGallery's opening animation grows the thumbnail into the full image. It assumes both have the same proportions: when the grid is square crops of landscape or portrait photos (`{w: 300, h: 300, fit: 'crop'}`), the thumbnail is stretched to the full image's shape during the zoom and snaps back once the image loads ([lightGallery #1698](https://github.com/sachinchoolur/lightGallery/issues/1698)). Turn the thumbnail zoom off for those galleries and the full image fades in instead:
+
+```twig
+{{ cms.render.gallery('vacation', {w: 300, h: 300, fit: 'crop'}, {}, {zoomFromOrigin: false}) }}
+```
 
 For caption templates and sorting details, see [totalcms.md](/twig/totalcms/).
 
@@ -298,6 +390,45 @@ Generate a standalone HTMX button for paginated DataView loading into an externa
     template: 'cards/item.twig',
     limit: 20
 }) }}
+```
+
+## Fragment URLs
+
+The HTML-fragment endpoints behind Load More, exposed for your own `hx-get`
+and `hx-post` attributes. Each returns a raw URL; Twig's autoescape handles it
+inside an attribute. See [HTMX Recipes](/twig/htmx/) for complete examples.
+
+### queryUrl()
+
+```twig
+{{ cms.render.queryUrl('blog', {template: 'blog/card', limit: 12, search: 'php'}) }}
+```
+
+Options: `template` (required), `limit`, `offset`, `sort`, `include`, `exclude`, `search`, `mode`.
+
+### viewQueryUrl()
+
+```twig
+{{ cms.render.viewQueryUrl('recent-posts', {template: 'cards/item', limit: 10}) }}
+```
+
+### objectFragmentUrl()
+
+```twig
+{{ cms.render.objectFragmentUrl('products', product.id, {template: 'products/quick-view'}) }}
+```
+
+### saveUrl()
+
+```twig
+{{ cms.render.saveUrl('contact', {template: 'forms/thanks'}) }}          {# hx-post target #}
+{{ cms.render.saveUrl('posts', {id: post.id, template: 'posts/card'}) }} {# hx-put / hx-patch target #}
+```
+
+### incrementUrl()
+
+```twig
+{{ cms.render.incrementUrl('posts', post.id, 'likes') }}
 ```
 
 ## Depot Browser

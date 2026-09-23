@@ -159,6 +159,24 @@ When enabled:
 
 ---
 
+### format
+
+**Type:** `string`
+**Required:** No
+**Default:** `"json"`
+
+The file format objects in this collection are stored in: `json` (each object is `{id}.json`) or `markdown` (each object is `{id}.md`, YAML frontmatter plus a body from the schema's `content` property).
+
+```json
+{
+    "format": "markdown"
+}
+```
+
+**Fixed after creation.** Choose the format when creating the collection; the setting shows disabled in the form afterwards, with a hint pointing at `tcms collection:convert`. Posting a changed `format` through the API is rejected with a 400 — the setting and the files on disk must always agree, and only the convert command changes both. See [Storage Format](/collections/storage-format/) for the file layout, body rules, and the convert command.
+
+---
+
 ## URL Settings
 
 ### url
@@ -363,6 +381,7 @@ Operations that unauthenticated users can perform on this collection via the API
 - `create` without authentication can lead to spam
 - `update` and `delete` are rarely appropriate for public access
 - Consider rate limiting for public endpoints
+- Public counters (likes, "was this helpful") are not a collection operation: set `publicIncrement: true` on the number field instead — see [Number and Range Fields](/fields/number-range/)
 
 **Common patterns:**
 ```json
@@ -371,6 +390,7 @@ Operations that unauthenticated users can perform on this collection via the API
 
 // Public form submissions (contact forms)
 {"publicOperations": ["create"]}
+
 
 // Fully protected (admin-only)
 {"publicOperations": []}

@@ -182,6 +182,7 @@ Simple `true`/`false` for features without granular control:
 - **`playground`** - Access to Twig playground
 - **`dataviews`** - Access to Data Views
 - **`docs`** - Access to documentation
+- **`inlineEdit`** - May edit values in place (the pencil in collection tables). Also requires `update` on the collection, and the site-wide **Settings → Dashboard → Inline Editing** switch. Groups saved before this permission existed read as `true`, so nothing changes on upgrade
 
 ## Twig Helper Functions
 
@@ -326,7 +327,7 @@ Total CMS provides helper functions to check permissions in your templates, allo
 **Check playground access:**
 ```twig
 {% if cms.auth.canAccessPlayground() %}
-    <a href="/admin/utils/twig-playground">Twig Playground</a>
+    <a href="/admin/playground">Twig Playground</a>
 {% endif %}
 ```
 

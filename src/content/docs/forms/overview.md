@@ -17,6 +17,29 @@ All form functionality in Total CMS is accessed through the `cms.form` object:
 
 **Note:** The old method of importing form macros (`{% import "totalform.twig" as form %}`) is deprecated. Always use `cms.form` for accessing form functionality.
 
+## What a public form needs
+
+`cms.form.*` renders the form's markup on the server. Validation, file uploads, the save request and the post-save actions come from Total CMS's form script, which ships as the `forms` core frontend feature: a stylesheet and a small module that `cms.assetsHead()` and `cms.assetsBody()` already emit. A public form needs nothing beyond the two helpers every layout has:
+
+```twig
+<head>
+    {{ cms.assetsHead() }}        {# core frontend assets, forms.css among them #}
+    …
+</head>
+<body>
+    …
+    {{ cms.form.builder('members', {register: true}) }}
+    …
+    {{ cms.assetsBody() }}        {# forms.js, and the globals it reads #}
+</body>
+```
+
+`forms.js` carries the form runtime and the light field classes a public form is made of — text, textarea, number, select, checkbox, toggle, radio, date, color, password. A heavier field (styled text, image and file uploads, code, lists, decks) loads its own module the first time a form on the page renders it, so a contact form never downloads the editor a blog post needs. The whole feature is under 50 KB compressed; the admin bundle it replaces on public pages is around 300 KB.
+
+The CSRF token travels in the hidden field every form carries, so no `<meta>` tag is needed. `cms.assetsBody()` defines the translation catalog and settings the script reads whenever the feature is on the page. A site with no public forms leaves the pair out with `forms` in `frontendAssets.except` (see [Frontend Assets](/site-builder/frontend/)); a customer admin page that calls both the frontend and the admin helpers gets one form runtime, since `forms.js` stands down when `admin.js` is present.
+
+Before 3.6 a public form needed `cms.adminAssetsHead()` and `cms.adminAssetsBody()` in its layout. Those calls still work, and a page that keeps them keeps working; they are simply no longer needed for forms.
+
 ## Default Field Arguments
 
 ```
