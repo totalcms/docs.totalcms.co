@@ -5458,7 +5458,7 @@ Read a color with `cms.data.color('id')` (or the `cms.color('id')` shorthand) an
 
 ## Smart Date Defaults
 
-Use the following settings can be used for a date field to auto-populate it when an
+Use the following settings on a date field to auto-populate it when an
 object is created or updated.
 
 ```json
@@ -5472,6 +5472,11 @@ object is created or updated.
   "onCreate" : true
 }
 ```
+
+- `onCreate` fills the date on the first save, when it is still empty, and never changes it after that.
+- `onUpdate` stamps the date on every save, including the first one. For a "last modified" field, `onUpdate` on its own is enough.
+
+If a field sets both, `onUpdate` wins: the date is re-stamped on every save.
 
 ---
 
@@ -7335,26 +7340,14 @@ The following can be used on text fields to limit the number of characters.
 
 ### Auto-grow
 
-Textareas auto-grow as the user types, expanding to fit content up to a
-`max-height` of 60vh (after which the internal scrollbar takes over). The
-`rows` setting controls the *initial* height; the field grows beyond that
-as content is added.
+A textarea sizes itself to its content as the user types, growing and shrinking with the text. The `rows` setting is the floor: the field never gets shorter than that many lines, so an empty field still shows its full height. It stops growing at a `max-height` of 60vh, after which the internal scrollbar takes over.
 
-On desktop, the corner resize handle still works — drag it to make the
-field larger and that manual size is preserved across subsequent edits.
-The textarea never auto-shrinks once expanded, avoiding layout jitter
-when content is deleted. This is the same behavior Slack, Gmail, and
-GitHub use for comment fields.
-
-On touch devices (iPad, iPhone), the corner handle is hard to grab
-precisely, so auto-grow is the primary way the field expands. This is
-what fixes the long-standing "can't make my textarea taller on iPad"
-complaint.
+This is plain CSS, the `field-sizing: content` property, so it works on public forms and in the admin with no script. On desktop the corner resize handle still works: drag it and the field keeps the size you chose. On touch devices, where the handle is hard to grab, growing with the content is how the field gets taller.
 
 ### Disabling auto-grow
 
 Set `autoGrow: false` in the settings object when you want a strictly
-fixed-height textarea with an internal scrollbar (e.g., a "short summary"
+fixed-height textarea, exactly `rows` lines tall, with an internal scrollbar (e.g., a "short summary"
 field where you want to discourage long content).
 
 ```json
@@ -9289,7 +9282,7 @@ The `×` button in the chip sets the `tcms_inspector_hidden` cookie for 30 days,
 
 The inspector is only injected when:
 
-1. The visitor has an active admin session
+1. The visitor is signed in as someone who edits pages: a super admin, or a user whose access groups grant the **Site Builder** permission. Members signed into another auth collection, such as a portal's, never see it
 2. The response is HTML (`text/html`)
 3. The dismiss cookie isn't set
 
@@ -29218,7 +29211,7 @@ Both authenticate requests to T3's REST API and MCP endpoint. Choose based on th
 |---|---|
 | Your own server-side scripts, cron jobs, CI pipelines | **API key** — simpler, no consent flow |
 | Third-party app that needs access to your site | **OAuth** — scoped, revocable, audited |
-| AI client (Claude Desktop, Cursor) connecting to your site | **OAuth** — self-registers automatically once you enable dynamic registration |
+| AI client (Claude Desktop, Cursor) connecting to your site | **OAuth** — self-registers automatically (dynamic registration is on by default) |
 | ActivePieces, Zapier, n8n workflows | **OAuth** — pre-register a static client in the admin |
 
 The two methods coexist. The same REST and MCP endpoints accept either an `X-API-Key` header or a Bearer token — you don't have to pick one globally.
@@ -29312,7 +29305,7 @@ Zapier's test step triggers the consent flow. Approve it from a T3 admin session
 
 ## Connecting Claude Desktop or Cursor
 
-AI clients that follow the MCP spec auto-discover everything — provided you have turned on **Allow Dynamic Registration**, which is **off by default** and must be enabled first.
+AI clients that follow the MCP spec auto-discover everything through **Allow Dynamic Registration**, which is on by default.
 
 In Claude Desktop, add a remote MCP server and paste your site URL:
 
@@ -29326,11 +29319,11 @@ In Claude Desktop, add a remote MCP server and paste your site URL:
 }
 ```
 
-Dynamic registration is **off by default** (see [Dynamic registration toggle](#dynamic-registration-toggle)), so enable it first if you want this zero-touch flow. With it on, Claude Desktop fetches `/.well-known/oauth-authorization-server`, self-registers as a client via RFC 7591, and opens the consent screen in your browser. You log in as a T3 admin, review the requested scopes, and approve. Claude Desktop saves the tokens and reconnects automatically on expiry.
+With dynamic registration on (the default — see [Dynamic registration toggle](#dynamic-registration-toggle)), Claude Desktop fetches `/.well-known/oauth-authorization-server`, self-registers as a client via RFC 7591, and opens the consent screen in your browser. You log in as a T3 admin, review the requested scopes, and approve. Claude Desktop saves the tokens and reconnects automatically on expiry.
 
 Cursor and other conformant MCP clients follow the same pattern. No manual client setup, no secret to paste.
 
-If dynamic registration is left off, you must create a static client in the admin first and configure the MCP client with those credentials manually — the self-registration step gets a 403.
+If you turn dynamic registration off, you must create a static client in the admin first and configure the MCP client with those credentials manually — the self-registration step gets a 403.
 
 ---
 
@@ -29398,16 +29391,20 @@ Connected apps can revoke their own tokens at `POST /oauth/revoke`. This is the 
 
 ## Dynamic registration toggle
 
-**Admin → Settings → OAuth Server → Allow Dynamic Registration** (default: off) controls whether `POST /oauth/register` is accessible.
+**Admin → Settings → OAuth Server → Allow Dynamic Registration** (default: on) controls whether `POST /oauth/register` is accessible.
 
 | State | Effect |
 |---|---|
-| **Off** (default) | `/oauth/register` returns 403. Every integration requires a manually-created static client |
-| **On** | AI clients (Claude, Cursor) auto-register and connect without manual setup |
+| **On** (default) | AI clients (Claude, ChatGPT, Cursor) auto-register and connect without manual setup |
+| **Off** | `/oauth/register` returns 403. Every integration requires a manually-created static client |
 
-Dynamic registration is **off by default** because `/oauth/register` is an unauthenticated endpoint that writes persistent server state. Note that self-registration alone never grants data access — a registered client still can't get a token until a logged-in admin approves its consent screen — but leaving the endpoint open lets anyone create client records and invites consent-phishing attempts. Turn it **on** when you want the zero-touch AI client flow (type your URL into Claude Desktop and it self-registers); leave it off and create static clients in the admin for each integration otherwise.
+`/oauth/register` is an unauthenticated endpoint that writes persistent server state, but self-registration alone never grants data access — a registered client still can't get a token until a logged-in admin approves its consent screen. Three safeguards keep the open endpoint in check:
 
-Dynamic registration is rate-limited by default (10 registrations/hour per IP) to prevent client-record flooding even when enabled. Adjust in **Settings → OAuth Server → Dynamic Registration Rate Limit**.
+- **The consent screen shows where approval sends you.** A self-registered client chooses its own name, so anyone could register one called "Claude". The consent screen marks such clients as *Self-registered* and names the host the authorization code goes to (for example *claude.ai*). When that host isn't a known AI client, it shows a warning — only approve if you started the connection yourself. Codes sent to `localhost` or an app scheme such as `cursor://` are described as going to an app on this computer.
+- **Rate limiting.** 60 registrations per hour per IP by default. Hosted clients like claude.ai register from their provider's shared servers and register again on every connect attempt, so a much lower limit locks connectors out after a few retries. Adjust in **Settings → OAuth Server → Dynamic Registration Rate Limit**.
+- **Pruning.** Self-registered clients with no grant are removed after 24 hours (see [Pruning expired grants and stale clients](#pruning-expired-grants-and-stale-clients-with-oauthgc)).
+
+Turn it **off** if you would rather create a static client in the admin for each integration.
 
 ---
 
@@ -29554,12 +29551,12 @@ Settings live in **Admin → Settings → OAuth Server**.
 | Key | Default | Effect |
 |---|---|---|
 | `oauth.enabled` | `true` | Master switch. Off = every OAuth endpoint and discovery document returns 404 — see [Running public-only MCP](#running-public-only-mcp) |
-| `oauth.dynamicRegistration` | `false` | Enable RFC 7591 self-registration at `/oauth/register` (off by default — unauthenticated endpoint) |
+| `oauth.dynamicRegistration` | `true` | RFC 7591 self-registration at `/oauth/register`. `false` = static clients only |
 | `oauth.accessTokenTtl` | `PT1H` | PHP DateInterval — access token lifetime |
 | `oauth.refreshTokenTtl` | `P30D` | PHP DateInterval — refresh token lifetime |
 | `oauth.authCodeTtl` | `PT10M` | PHP DateInterval — authorization code lifetime (should stay short) |
 | `oauth.tokenEndpointLimit` | `60` | `/oauth/token` rate limit per IP per minute. `0` = disabled |
-| `oauth.dynamicRegistrationLimit` | `10` | `/oauth/register` rate limit per IP per hour. `0` = disabled |
+| `oauth.dynamicRegistrationLimit` | `60` | `/oauth/register` rate limit per IP per hour. `0` = disabled |
 
 ---
 
@@ -30426,11 +30423,15 @@ The same `/mcp` URL serves three personas; the tool surface scales per caller:
 
 Public access is **default-deny**. Anonymous requests get a 401 unless the operator explicitly flips `mcp.publicAccess` on in settings AND marks at least one collection's `mcp.access` as `public` in the schema editor.
 
+### A fourth caller: the visitor's browser
+
+The bundled [WebMCP extension](docs/extensions/webmcp) registers this server's read tools in the visitor's browser. Its calls reach `/mcp` with the visitor's session cookie, and a same-origin *session* is treated like an OAuth client the user approved for `cms:read` and `mcp:tools` only — **read-only and tools-only**, whatever the user could do in the admin: an administrator's session is the admin persona, any other signed-in user is the authenticated persona, reaching only collections whose MCP Access is Authenticated or Public and that their access groups grant read on — never a collection marked Admin only — and the server itself lists no write tool for either. A visitor with no session stays the same anonymous client it always was, reaching only collections whose MCP Access is Public; the server does not narrow an anonymous caller's tool list the way it does a session's, so it is the extension's own script that keeps only tools the server marks `readOnlyHint: true` — a `public`-access tool that writes would otherwise appear in an anonymous `tools/list` like any other. Nothing changes for API-key, OAuth or anonymous clients calling `/mcp` directly, outside a browser page.
+
 ### Editions: reading everywhere, writing on Pro
 
 The MCP endpoint requires **Standard or Pro**. Lite does not include it. What differs between Standard and Pro is which personas are available to reach it.
 
-The public persona works everywhere, so any Total CMS site can expose collections for an AI agent to read. The other two personas depend on credentials that are Pro features — an API key for the admin persona, the OAuth server for the authenticated one — so **writing to your site from an agent requires Pro**, as does any access scoped to a particular user.
+The public persona works everywhere, so any Total CMS site can expose collections for an AI agent to read. The other two personas depend on credentials that are Pro features — an API key for the admin persona, the OAuth server for the authenticated one — so **writing to your site from an agent requires Pro**, as does user-scoped access from an external client — while a signed-in browser session reads as that user on Standard (see [the fourth caller](#a-fourth-caller-the-visitors-browser) above).
 
 That gate is enforced where the persona is decided, not only where credentials are issued. A key or token that outlives the licence which created it — after a trial lapses, a downgrade, or a restored backup — is treated as absent rather than honoured: the caller falls through to anonymous and still gets whatever is genuinely public.
 
@@ -30530,7 +30531,7 @@ A typical "read-only AI browser" connection requests `cms:read mcp:tools mcp:res
 
 ### Configuring a static client for Claude Desktop
 
-Dynamic registration is **off by default** (an unauthenticated endpoint that writes server state — see the toggle's help text for the trade-off). Turn it on in **Admin → Settings → OAuth Server → Allow Dynamic Registration** for the zero-touch Claude flow: until it's on, the discovery document doesn't advertise `registration_endpoint`, and clients either report the server as incompatible (Claude Code) or ask for a manual Client ID and secret (claude.ai connectors). If you'd rather not enable it — or want a named client you can track and revoke independently — create a static client instead:
+Dynamic registration is on by default, which gives the zero-touch Claude flow. If it has been turned off (**Admin → Settings → OAuth Server → Allow Dynamic Registration**), the discovery document doesn't advertise `registration_endpoint`, and clients either report the server as incompatible (Claude Code) or ask for a manual Client ID and secret (claude.ai connectors). If you'd rather keep it off — or want a named client you can track and revoke independently — create a static client instead:
 
 1. **Admin → Utilities → OAuth Clients → Create Client.**
 2. Name it something traceable: "Claude Desktop – Joe", "Cursor – Content Team".
@@ -30579,8 +30580,9 @@ Every one of these has bitten a real setup. Match the symptom, apply the fix:
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Claude Code: "Incompatible auth server: does not support dynamic client registration" | Dynamic registration is off (the default) | Enable **Allow Dynamic Registration**, or create a static client and connect with its Client ID |
+| Claude Code: "Incompatible auth server: does not support dynamic client registration" | Dynamic registration is turned off | Enable **Allow Dynamic Registration**, or create a static client and connect with its Client ID |
 | claude.ai connector asks for a manual Client ID and secret | Same — DCR not advertised in discovery | Same as above |
+| claude.ai: "Couldn't register with … sign-in service" | Dynamic registration is off, or its rate limit is exhausted (a `security.rate_limit` entry for `/oauth/register` in the OAuth activity log). Every connect attempt registers again from Anthropic's servers | Wait out the hour or raise **Dynamic Registration Rate Limit** — or create a static client and paste its Client ID and secret into the connector's advanced settings |
 | OAuth errors about keys / empty `jwks.json` | Signing keys never generated | Run `tcms oauth:setup` once |
 | Works in a browser, but connectors/`curl` get 403 | A firewall (7G/8G, security plugin) filters non-browser user agents | Exempt `/mcp`, `/oauth/*`, `/.well-known/*` from UA rules |
 | Every request returns 401 | Wrong or revoked API key / token | Check the key; `WWW-Authenticate` on the 401 names the scheme it expects |
@@ -31865,6 +31867,10 @@ $context->registerMcpTool(
 ```
 
 `access` controls which [persona](mcp/server#three-audiences-one-endpoint) sees the tool: `admin` (visible only to the admin persona), `public` (visible to everyone, including unauthenticated callers), or `authenticated` (visible to any OAuth-authenticated caller plus admin, but not anonymous callers). An unrecognised `access` value matches none of these and fails closed to admin-only visibility.
+
+**A tool with no `annotations` counts as read-only.** `registerMcpTool()` takes an optional `annotations: new \Mcp\Schema\ToolAnnotations(...)` argument, and a tool that omits it entirely is treated as `readOnlyHint: true` for the purpose of deciding what a [same-origin browser session](mcp/server#a-fourth-caller-the-visitors-browser) may call — which is exactly the population WebMCP hands tools to. If your handler writes, declare `readOnlyHint: false` (and `destructiveHint: true` where it deletes or overwrites), or it becomes callable from a visitor's own page with that visitor's own authority. An `annotations` object that sets some other field but leaves `readOnlyHint` out (`new ToolAnnotations(title: 'Acme Search')`, say) is *not* the same as omitting `annotations` entirely — it no longer reads as `readOnlyHint: true` by default, so the tool is excluded from a same-origin session's `tools/list` and from a WebMCP page just as a declared writer would be.
+
+**`access: 'public'` bypasses this for a truly anonymous caller.** The read-only rule above is enforced server-side only for a *session* — a signed-in browser tab. A visitor with no session at all is a plain anonymous MCP client like any other, and the server does not narrow its tool list by `readOnlyHint`; if your tool writes, registering it at `access: 'public'` makes it callable by that anonymous visitor (and by curl, and by any other unauthenticated MCP client) regardless of whether WebMCP is installed. The WebMCP extension's own script filters what it offers *on a page* to `readOnlyHint: true` tools, but that is a courtesy in the browser, not a server-side gate — `access` plus `readOnlyHint`/`destructiveHint`, chosen honestly, are what actually decide who can call a writing tool.
 
 **`outputSchema` is optional but recommended.** Declare a JSON Schema describing your handler's return shape — its root must be `{type: 'object', ...}`, same as `inputSchema`. It costs nothing at call time (T3 doesn't validate your handler's actual return against it), but SDK-aware MCP clients use it to pre-validate results and, more importantly, models reason better about a tool's output when they know its shape up front instead of inferring it from one example response. OpenAI's plugin-directory scanner specifically flags tools that omit it. Match the shape your handler actually returns — if it varies (an error object vs. a success object, say), use `oneOf` rather than picking one shape and hoping; see [Saved-Query Tools](mcp/saved-query-tools) or `src/Domain/Mcp/Tool/Discovery/ListCollectionsTool.php` for worked examples.
 
@@ -33636,6 +33642,17 @@ $context->addFrontendAsset(
 
 Defaults: CSS goes in the head, JS goes in the body, module scripts emit `type="module"`, no preload, mtime-based cache busting.
 
+### Head meta tags
+
+An extension can also put a `<meta>` tag in the head of public or dashboard pages — an origin-trial token, a verification tag. Attributes are escaped; there is no raw-HTML path.
+
+```php
+$context->addFrontendMeta(['http-equiv' => 'origin-trial', 'content' => $token]);
+$context->addAdminMeta(['name' => 'my-extension', 'content' => 'on']);
+```
+
+They render through `cms.assetsHead()` / `cms.adminAssetsHead()` before any stylesheet, under the same `frontend:assets` / `admin:assets` capabilities.
+
 ### Where they render
 
 Extension assets are merged with Total CMS core assets and emitted by these Twig helpers in your templates:
@@ -33652,9 +33669,10 @@ Extension assets are merged with Total CMS core assets and emitted by these Twig
 For the admin interface there's nothing to do — core admin templates already call the helpers. For public pages, your theme template needs to call `cms.assetsHead()` / `cms.assetsBody()` for extension frontend assets to render. A site can leave core frontend features it never renders out of those helpers, site-wide with `$settings['frontendAssets']['except']` or per call with `{except: [...]}` (see [Frontend Assets](docs/site-builder/frontend)); extension assets always render.
 
 Within each helper, output ordering is:
-1. Stylesheets first.
-2. Preload hints (`<link rel="preload">` / `<link rel="modulepreload">`) — always emitted in the head regardless of the asset's own `position`.
-3. Script tags last.
+1. Meta tags first (`cms.assetsHead()` / `cms.adminAssetsHead()` only — a meta tag has no body position).
+2. Stylesheets next.
+3. Preload hints (`<link rel="preload">` / `<link rel="modulepreload">`) — always emitted in the head regardless of the asset's own `position`.
+4. Script tags last.
 
 ## Which admin surface?
 
@@ -36658,7 +36676,7 @@ Source: `resources/extensions/totalcms/scheduled/`
 
 ## WebMCP (Bundled Extension)
 
-`totalcms/webmcp` — bundled with Total CMS, off by default, **experimental**. Renders forms an AI agent in the visitor's browser can fill and submit, and registers search and get tools for the collections you choose, so an agent on the page can look content up. One Twig call; no API keys, no separate login, because the agent works inside the session the visitor already has.
+`totalcms/webmcp` — bundled with Total CMS, off by default, **experimental**. Renders forms an AI agent in the visitor's browser can fill and submit, and hands that agent the **MCP server's read tools**, called inside the session the visitor already has. One Twig call for forms; nothing to configure for reads beyond what the MCP server already knows. Read tools need the Standard edition or above, because they are the MCP server's — Data Views tools (`list_views`/`query_view`) stay Pro and simply come back empty below it.
 
 ## What WebMCP is
 
@@ -36672,7 +36690,7 @@ Chrome 149 opened the WebMCP **origin trial**; Edge follows Chromium; no other e
 
 1. **Admin → Extensions → WebMCP → Enable** (or `tcms extension:enable totalcms/webmcp`).
 2. To use it without a flag, register your site's origin for the trial at [developer.chrome.com/origintrials](https://developer.chrome.com/origintrials/#/register_trial/4163014905550602241) and paste the token into **Chrome origin-trial token**. The extension emits it as a `<meta http-equiv="origin-trial">` on every page. For local testing, `chrome://flags/#enable-webmcp-testing` does the same job.
-3. Under **Collections exposed as read tools**, pick the collections an agent may search. A visitor's agent only sees those that allow public `read` under the collection's **Public Operations**, because the API would refuse the call anyway; your own agent, while you are signed in, sees them all.
+3. There is no list of collections to expose here. What an agent may read is what the MCP server would let that person read: each collection's **MCP Access** on its MCP tab — Public collections are readable by anyone; Authenticated collections are readable by a signed-in, non-administrator only when their access groups grant them read; Admin only collections are never reachable by anyone but an administrator — plus the per-property **Expose to MCP** flag, and the `mcp.enabled` / `mcp.publicAccess` switches. See [MCP Server](docs/mcp/server).
 
 The settings page also has **Agent-callable forms** and **Read tools** switches. Off, the templates below keep rendering plain forms and nothing is registered.
 
@@ -36700,25 +36718,32 @@ When an agent submits, the bundled script answers with the form's own save resul
 
 ## Read tools
 
-Two tools are registered when the page loads, the same shape as the MCP server's `query_collection` and `get_object`:
+When the page loads in a browser that has the WebMCP API, `assets/webmcp.js` makes one `tools/list` call to this site's `/mcp` endpoint and registers only the tools the server marks read-only, under the server's own name, description and input schema: `list_collections`, `describe_collection`, `query_collection`, `get_object`, `search_collection`, `search_collections`, `list_views` and `query_view`, `get_site_info`, every [saved-query tool](docs/mcp/saved-query-tools) you have defined, and any read-only tool an extension adds. `assets/webmcp.js` imports `assets/bridge.js` — the script that answers an agent's form submits — so a page that needs read tools gets both from one script tag; a page with **Read tools** off and **Agent-callable forms** on loads `assets/bridge.js` alone. A browser without the API costs the server nothing: the script checks for `document.modelContext` before it makes a request.
 
-| Tool | Input | Returns |
-|---|---|---|
-| `search_content` | `collection`, `q` (search terms), `limit` (up to **Search results per call**) | id, title, summary or description, and url of each match |
-| `get_content` | `collection`, `id` | the object as JSON |
+The call carries the browser's own session, and the MCP server treats a same-origin session like an OAuth client acting for that user: a visitor stays the same anonymous client it always was, seeing collections whose MCP Access is Public (with `mcp.publicAccess` on); a signed-in user who is not an administrator sees collections whose MCP Access is Authenticated or Public **and** that their access groups grant read on — a collection whose MCP Access is Admin only is never readable by a non-administrator, grant or not; an administrator sees everything. The script registers only tools the server marks read-only, so no write tool ever reaches an agent on a page; for a signed-in session the server itself lists none. Results pass through the same shaping as any MCP client's: properties not exposed to MCP are stripped, styled text is rendered, drafts are hidden from anyone without draft authority.
 
-`collection` is an enum of the collections the manifest offers, each named in the tool description with its plural label and its description, which you wrote. The tools read the collections API with the browser's own session, so what the enum holds depends on who is looking: a visitor gets the listed collections that allow public `read`; a signed-in operator gets every listed collection, on a public page as much as in the dashboard. Both tools are annotated `readOnlyHint` and `untrustedContentHint`, so a well-behaved agent treats what comes back as data, not instructions.
+Every registered tool is annotated `readOnlyHint` and `untrustedContentHint`, so a well-behaved agent treats what comes back as data, not instructions.
+
+### Upgrading from the first release
+
+The first release of this extension had its own two tools, `search_content` and `get_content`, over the REST collections API, with its own list of exposed collections. Those are gone. What changes for an operator:
+
+- **Which collections an agent sees** now follows each collection's MCP Access, not its Public Operations or the old list. A collection with public REST read but "Admin only" MCP access disappears from a visitor's agent; the reverse appears.
+- **Which fields come back** follows the per-property Expose to MCP flag.
+- **Signed-in users** who are not administrators now see collections whose MCP Access is Authenticated or Public and that their access groups grant read on — never a collection marked Admin only — where before anyone signed into the operator collection saw every listed collection.
+- **The edition, `mcp.enabled` and `mcp.publicAccess`** now apply to the browser too. On a Lite site the read tools stop working; Standard and above have them — Data Views tools (`list_views`/`query_view`) are Pro and simply come back empty below it. Forms still work everywhere.
+- The **Collections exposed as read tools** and **Search results per call** settings are removed; a saved value is ignored.
 
 ## In the admin dashboard
 
-**Read tools in the admin dashboard**, off by default, loads the script on dashboard pages too, so an agent in the operator's own browser gets the same two tools there. Admin forms are not annotated: an agent in the dashboard would be the operator, with none of the scopes, group access or audit trail the [MCP server](docs/mcp/server) gives an agent, so for agents that manage content, that server is the right surface.
+**Read tools in the admin dashboard**, off by default, loads the script on dashboard pages too, so an agent in the operator's own browser gets the same tools there — read-only, even for an administrator. Admin forms are not annotated. For an agent that manages content, the [MCP server](docs/mcp/server) with an API key or OAuth is the right surface: scopes, group access and an activity log.
 
 ## Testing
 
 - Chrome 150+ with `chrome://flags/#enable-webmcp-testing` enabled, or the origin-trial token in place.
 - The [Model Context Tool Inspector](https://github.com/beaufortfrancois/model-context-tool-inspector) Chrome extension lists a page's tools, calls them by hand, and can drive them through Gemini.
 - DevTools console: the script logs under `[webmcp]` how many tools it registered, and every agent submit.
-- `GET /api/ext/totalcms/webmcp/tools.json` is the manifest the script reads; it shows which collections made the list for the session asking.
+- The Network tab shows one POST to `/mcp` per page load, `Mcp-Method: tools/list`, and one per call. A 403 means the edition does not include MCP; a 404 means `mcp.enabled` is off; a 401 for a signed-out visitor means `mcp.publicAccess` is off.
 
 ## Security
 
@@ -36733,7 +36758,7 @@ An agent inside your visitor's session is a **confused deputy**: it carries the 
 
 - Chrome and Chromium-based browsers only, behind the origin trial or a flag. No Safari or Firefox.
 - The declarative attributes may be renamed by the spec; this extension will follow, and the change will be an extension update.
-- Read tools cover collections with public read; there are no write tools beyond the forms you annotate, by design.
+- Read tools are the MCP server's, so they need the Standard edition or above and `mcp.enabled`; there are no write tools beyond the forms you annotate, by design.
 
 ---
 

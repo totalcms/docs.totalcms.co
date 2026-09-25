@@ -43,11 +43,15 @@ The same `/mcp` URL serves three personas; the tool surface scales per caller:
 
 Public access is **default-deny**. Anonymous requests get a 401 unless the operator explicitly flips `mcp.publicAccess` on in settings AND marks at least one collection's `mcp.access` as `public` in the schema editor.
 
+### A fourth caller: the visitor's browser
+
+The bundled [WebMCP extension](/extensions/webmcp/) registers this server's read tools in the visitor's browser. Its calls reach `/mcp` with the visitor's session cookie, and a same-origin *session* is treated like an OAuth client the user approved for `cms:read` and `mcp:tools` only — **read-only and tools-only**, whatever the user could do in the admin: an administrator's session is the admin persona, any other signed-in user is the authenticated persona, reaching only collections whose MCP Access is Authenticated or Public and that their access groups grant read on — never a collection marked Admin only — and the server itself lists no write tool for either. A visitor with no session stays the same anonymous client it always was, reaching only collections whose MCP Access is Public; the server does not narrow an anonymous caller's tool list the way it does a session's, so it is the extension's own script that keeps only tools the server marks `readOnlyHint: true` — a `public`-access tool that writes would otherwise appear in an anonymous `tools/list` like any other. Nothing changes for API-key, OAuth or anonymous clients calling `/mcp` directly, outside a browser page.
+
 ### Editions: reading everywhere, writing on Pro
 
 The MCP endpoint requires **Standard or Pro**. Lite does not include it. What differs between Standard and Pro is which personas are available to reach it.
 
-The public persona works everywhere, so any Total CMS site can expose collections for an AI agent to read. The other two personas depend on credentials that are Pro features — an API key for the admin persona, the OAuth server for the authenticated one — so **writing to your site from an agent requires Pro**, as does any access scoped to a particular user.
+The public persona works everywhere, so any Total CMS site can expose collections for an AI agent to read. The other two personas depend on credentials that are Pro features — an API key for the admin persona, the OAuth server for the authenticated one — so **writing to your site from an agent requires Pro**, as does user-scoped access from an external client — while a signed-in browser session reads as that user on Standard (see [the fourth caller](#a-fourth-caller-the-visitors-browser) above).
 
 That gate is enforced where the persona is decided, not only where credentials are issued. A key or token that outlives the licence which created it — after a trial lapses, a downgrade, or a restored backup — is treated as absent rather than honoured: the caller falls through to anonymous and still gets whatever is genuinely public.
 
@@ -147,7 +151,7 @@ A typical "read-only AI browser" connection requests `cms:read mcp:tools mcp:res
 
 ### Configuring a static client for Claude Desktop
 
-Dynamic registration is **off by default** (an unauthenticated endpoint that writes server state — see the toggle's help text for the trade-off). Turn it on in **Admin → Settings → OAuth Server → Allow Dynamic Registration** for the zero-touch Claude flow: until it's on, the discovery document doesn't advertise `registration_endpoint`, and clients either report the server as incompatible (Claude Code) or ask for a manual Client ID and secret (claude.ai connectors). If you'd rather not enable it — or want a named client you can track and revoke independently — create a static client instead:
+Dynamic registration is on by default, which gives the zero-touch Claude flow. If it has been turned off (**Admin → Settings → OAuth Server → Allow Dynamic Registration**), the discovery document doesn't advertise `registration_endpoint`, and clients either report the server as incompatible (Claude Code) or ask for a manual Client ID and secret (claude.ai connectors). If you'd rather keep it off — or want a named client you can track and revoke independently — create a static client instead:
 
 1. **Admin → Utilities → OAuth Clients → Create Client.**
 2. Name it something traceable: "Claude Desktop – Joe", "Cursor – Content Team".
@@ -196,8 +200,9 @@ Every one of these has bitten a real setup. Match the symptom, apply the fix:
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Claude Code: "Incompatible auth server: does not support dynamic client registration" | Dynamic registration is off (the default) | Enable **Allow Dynamic Registration**, or create a static client and connect with its Client ID |
+| Claude Code: "Incompatible auth server: does not support dynamic client registration" | Dynamic registration is turned off | Enable **Allow Dynamic Registration**, or create a static client and connect with its Client ID |
 | claude.ai connector asks for a manual Client ID and secret | Same — DCR not advertised in discovery | Same as above |
+| claude.ai: "Couldn't register with … sign-in service" | Dynamic registration is off, or its rate limit is exhausted (a `security.rate_limit` entry for `/oauth/register` in the OAuth activity log). Every connect attempt registers again from Anthropic's servers | Wait out the hour or raise **Dynamic Registration Rate Limit** — or create a static client and paste its Client ID and secret into the connector's advanced settings |
 | OAuth errors about keys / empty `jwks.json` | Signing keys never generated | Run `tcms oauth:setup` once |
 | Works in a browser, but connectors/`curl` get 403 | A firewall (7G/8G, security plugin) filters non-browser user agents | Exempt `/mcp`, `/oauth/*`, `/.well-known/*` from UA rules |
 | Every request returns 401 | Wrong or revoked API key / token | Check the key; `WWW-Authenticate` on the 401 names the scheme it expects |
