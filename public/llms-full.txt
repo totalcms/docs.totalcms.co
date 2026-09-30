@@ -154,7 +154,7 @@ Any PHP-capable server with URL rewriting will work.
 | Server | Notes |
 |---|---|
 | Apache | `mod_rewrite` must be enabled. T3 ships an `.htaccess` |
-| Nginx | Use PHP-FPM. See [Nginx Configuration](operations/nginx) |
+| Nginx | Use PHP-FPM. See [Nginx Configuration](docs/operations/nginx) |
 | Caddy | Use PHP-FPM, same fundamentals as Nginx — different config syntax |
 | LiteSpeed | Works out of the box |
 | FrankenPHP | Classic mode works like PHP-FPM. **Worker mode is unverified** — use at your own risk for now |
@@ -179,7 +179,7 @@ These requirements only apply to the admin. Your public-facing site is rendered 
 
 ## What the wizard checks
 
-When you load your install URL for the first time, the [setup wizard](get-started/installation) runs an environment check before anything else. Required extensions must all pass; recommended ones show up as friendly suggestions. If something's missing, you'll see exactly what's wrong and what to install — no guessing.
+When you load your install URL for the first time, the [setup wizard](docs/get-started/installation) runs an environment check before anything else. Required extensions must all pass; recommended ones show up as friendly suggestions. If something's missing, you'll see exactly what's wrong and what to install — no guessing.
 
 ---
 
@@ -1613,6 +1613,8 @@ The following action types are supported by Total CMS (as defined in `/javascrip
 - **webhook** / **ajax** - Send POST request to external URL
 - **mailer** - Send email via configured mailer
 
+Extensions can add their own action types. The bundled [Pushover extension](#pushover), for example, adds `pushover`.
+
 ## Common Action Properties
 
 These properties can be used with multiple action types:
@@ -1846,7 +1848,7 @@ Send an email notification using a configured mailer.
 
 ### Pushover
 
-Send a push notification via [Pushover](https://pushover.net). Requires **Pro edition** and Pushover configuration in **Settings > Push Notifications**.
+The `pushover` action comes from the bundled **Pushover** extension, not from core. It needs the **Pro edition**, and the extension has to be enabled in **Admin → Extensions** first, with your Application Token and User Key entered on its settings page.
 
 ```json
 {
@@ -1856,40 +1858,7 @@ Send a push notification via [Pushover](https://pushover.net). Requires **Pro ed
 }
 ```
 
-**Properties:**
-- `action` - Must be `"pushover"`
-- `title` - Notification title (supports Twig)
-- `message` - Notification body (supports Twig, required)
-- `priority` - Priority level: `-2` (lowest), `-1` (low), `0` (normal), `1` (high), `2` (emergency)
-- `sound` - Notification sound (e.g., `cashregister`, `magic`, `none`)
-- `link` - Supplementary clickable URL (supports Twig)
-- `linkTitle` - Label for the URL (supports Twig)
-- `image` - Image attachment object with `collection`, `id`, `property`, and optional `name` (for galleries)
-- `group` - (optional) If `true`, send to group key instead of user key
-- `continue` - (optional) If `true`, continue to next action even if notification fails
-
-**Twig Variables:** All text fields support `{{ data.fieldName }}` for form values and `{{ user.fieldName }}` for the authenticated user.
-
-**Example with all options:**
-```json
-{
-	"action": "pushover",
-	"title": "New Order #{{ data.id }}",
-	"message": "{{ data.customerName }} placed an order for ${{ data.total }}",
-	"priority": 1,
-	"sound": "cashregister",
-	"link": "https://mysite.com/admin/collections/orders/{{ data.id }}",
-	"linkTitle": "View Order",
-	"continue": true
-}
-```
-
-**Example use cases:**
-- Get notified on your phone when new content is submitted
-- Alert admin of high-priority form submissions
-- Monitor e-commerce orders in real time
-
-For full documentation including sound options, priority levels, and setup instructions, see [Pushover Push Notifications](docs/extensions/pushover).
+For every property (priority, sound, links, image attachments, delivery groups) and the setup steps, see [Pushover Push Notifications](docs/extensions/pushover).
 
 ## Complete Examples
 
@@ -5448,11 +5417,11 @@ Give the field an `options` list to offer a set of preset colors as a datalist n
 }
 ```
 
-Presets follow the same rules as every other option-backed field — see [Static Options](fields/static-options) for the full syntax (including pulling values from another property or collection).
+Presets follow the same rules as every other option-backed field — see [Static Options](docs/fields/static-options) for the full syntax (including pulling values from another property or collection).
 
 ## Using the value in a template
 
-Read a color with `cms.data.color('id')` (or the `cms.color('id')` shorthand) and emit it in any CSS format — hex, `rgb()`, `hsl()`, `oklch()` — or derive lighter/muted/complementary variants with the OKLCH adjustment filters. That's all covered in **[Colors in Twig](twig/colors)**.
+Read a color with `cms.data.color('id')` (or the `cms.color('id')` shorthand) and emit it in any CSS format — hex, `rgb()`, `hsl()`, `oklch()` — or derive lighter/muted/complementary variants with the OKLCH adjustment filters. That's all covered in **[Colors in Twig](docs/twig/colors)**.
 
 ---
 
@@ -5852,7 +5821,7 @@ authenticated user, so it broadens access to all signed-in users regardless of
 the other entries.
 
 > **Note:** File Access Groups only gate file downloads and streaming. They are
-> separate from the [access group permissions](auth/access-groups) that control
+> separate from the [access group permissions](docs/auth/access-groups) that control
 > admin and API access to collections.
 
 ---
@@ -7018,7 +6987,7 @@ What changes:
 
 What is dropped: any element not listed above (`iframe`, `object`, `canvas`, `form` controls, `script`, `style`, custom elements), a `div` without a class or id (its contents are kept), and `<a>` attributes other than `href`, `target`, `rel`, `class`, `style`, `title` and `data-*`.
 
-For content you author by hand and want stored byte-for-byte, use a [code editor](fields/code-editor) field with `"mode": "html"` and render it with the `raw` filter. Keep styled text for content editors will actually edit in the toolbar.
+For content you author by hand and want stored byte-for-byte, use a [code editor](docs/fields/code-editor) field with `"mode": "html"` and render it with the `raw` filter. Keep styled text for content editors will actually edit in the toolbar.
 
 ## Editor Height
 
@@ -8334,7 +8303,7 @@ A page's description and social image live on its **SEO card** (`page.seo.descri
 {% endif %}
 ```
 
-For the social tags themselves, let `cms.seo.head(page)` do the work — it resolves the card image, falls back to the site default, and emits `og:image` with its alt. See [SEO](site-builder/seo).
+For the social tags themselves, let `cms.seo.head(page)` do the work — it resolves the card image, falls back to the site default, and emits `og:image` with its alt. See [SEO](docs/site-builder/seo).
 
 ## HTTP Status Codes
 
@@ -12508,11 +12477,11 @@ See [cmsgrid tag](docs/twig/cmsgrid-tag) for the `{% cmsgrid %}` template tag do
 
 ## Colors in Twig
 
-A [color field](fields/color) stores its value in two forms at once — a `hex` string and an **OKLCH** breakdown (`l`, `c`, `h`). Twig gives you a small toolkit on top of that to read a color, emit it in any CSS format, and derive new colors (lighter, more muted, complementary) without leaving the template.
+A [color field](docs/fields/color) stores its value in two forms at once — a `hex` string and an **OKLCH** breakdown (`l`, `c`, `h`). Twig gives you a small toolkit on top of that to read a color, emit it in any CSS format, and derive new colors (lighter, more muted, complementary) without leaving the template.
 
 ## Reading a color
 
-Use the [`cms.data`](twig/data) adapter. It returns the stored object, so you can reach `hex` and the OKLCH parts directly:
+Use the [`cms.data`](docs/twig/data) adapter. It returns the stored object, so you can reach `hex` and the OKLCH parts directly:
 
 ```twig
 {% set brand = cms.data.color('brand') %}
@@ -12599,7 +12568,7 @@ Generate a small set of CSS custom properties from a single brand color:
 </style>
 ```
 
-For the field itself (admin control, storage shape, preset swatches) see the [Color field](fields/color); for the broader `cms.data` reference see [Twig Data](twig/data).
+For the field itself (admin control, storage shape, preset swatches) see the [Color field](docs/fields/color); for the broader `cms.data` reference see [Twig Data](docs/twig/data).
 
 ---
 
@@ -14430,7 +14399,7 @@ Get the number of objects in a collection using cached metadata. This is much mo
 
 ### objects()
 
-Get all objects from a collection. Takes the collection id and nothing else — to narrow the result, pipe it through the [`filterCollection`](twig/collection-filtering) and sorting filters.
+Get all objects from a collection. Takes the collection id and nothing else — to narrow the result, pipe it through the [`filterCollection`](docs/twig/collection-filtering) and sorting filters.
 
 ```twig
 {% for post in cms.collection.objects('blog') %}
@@ -14441,7 +14410,7 @@ Get all objects from a collection. Takes the collection id and nothing else — 
 {% endfor %}
 ```
 
-**`objects()` returns index data, not full records.** Each entry holds only the properties listed in the schema's [`index`](schemas/reference#index) array (plus `id`). A property that is not indexed is simply absent from every entry, so `post.body` on a non-indexed `body` prints nothing rather than erroring. Either add the property to the schema's `index`, or fetch the full record per object with `object()` when you need it:
+**`objects()` returns index data, not full records.** Each entry holds only the properties listed in the schema's [`index`](docs/schemas/reference#index) array (plus `id`). A property that is not indexed is simply absent from every entry, so `post.body` on a non-indexed `body` prints nothing rather than erroring. Either add the property to the schema's `index`, or fetch the full record per object with `object()` when you need it:
 
 ```twig
 {% for entry in cms.collection.objects('blog') %}
@@ -14533,7 +14502,7 @@ Results are plain object arrays in ranked order — the same shape `search()` re
 
 - Ranks by term coverage, not field position, and returns partial matches instead of requiring every term.
 - Does **not** support `field:value` scoped queries or explicit `and`/`or` operators — use `search()` for those.
-- Opt-in and additive; `cms.collection.search()` is unchanged. See the [relevance ranking notes](../operations/search#relevance-ranking-mcp-programmatic-search).
+- Opt-in and additive; `cms.collection.search()` is unchanged. See the [relevance ranking notes](docs/operations/search#relevance-ranking-mcp-programmatic-search).
 
 ## URL Generation
 
@@ -15654,7 +15623,7 @@ Get the absolute canonical URL for an object, including scheme and domain.
 
 > **Linking to a page rather than an object?** Site Builder pages have their own
 > equivalent, `cms.builder.canonicalUrl(page)` — see
-> [Site Builder](site-builder/overview). Both resolve the domain from the site
+> [Site Builder](docs/site-builder/overview). Both resolve the domain from the site
 > config, so neither needs a hard-coded host in a template.
 
 ### cms.collection.redirectToCanonicalUrl()
@@ -25690,24 +25659,321 @@ The admin adapter also exposes diagnostic sub-objects:
 
 ## Mailer
 
-> **Placeholder.** Full documentation for the Mailer is in progress.
+The Mailer is Total CMS's email system. You write an email once as a **template** — recipient, subject, and body, all in Twig — and then send it from wherever you need it:
 
-Total CMS includes a built-in Mailer for sending transactional emails, form notifications, and admin alerts. The Mailer is accessible from the admin dashboard and integrates with form actions, password reset flows, and extension event listeners.
+- a **form action**, after someone submits a form
+- the **password reset** and **email verification** flows
+- an **automation** handler, or its error notification
+- your own **PHP** code
+- a **bulk send** that mails every object in a collection, one email per object (Pro)
 
-## What to document here
+Templates are stored as objects in the reserved `mailer` collection, so they can be exported, imported, duplicated, and synced with `tcms push --mailer` like any other content. Email goes out over SMTP.
 
-- Mailer configuration (SMTP, API providers, sender identities)
-- Email templates and where they live
-- Sending mail from Twig (`cms.mailer.send(...)`)
-- Form-action integration for contact and notification forms
-- Edition / license gating (which tiers include the Mailer)
-- Admin UI walkthrough
-- Access-group permissions (`mailer` capability — see [Access Groups](docs/auth/access-groups))
+## Editions
 
-## Related
+| Feature | Edition |
+|---|---|
+| Mailer templates, form actions, and every other single send | Standard and above |
+| Bulk Send | Pro and above |
 
-- [Pushover Notifications](docs/extensions/pushover)
-- [Access Groups](docs/auth/access-groups) — controls who can use the Mailer
+On Lite, mailer form actions are removed from forms, and any attempt to send a template fails with *"Mailer actions require the Standard edition or higher"*. The built-in password reset and verification emails still send on Lite, as long as no template is picked for them in Settings → Auth. If one is picked, those emails fail on Lite, silently, because the auth flows never reveal whether an email went out. Clear the selection to go back to the built-in emails. See [Licenses](docs/operations/licenses) for the full edition matrix.
+
+## Setting up SMTP
+
+Before anything can send, point Total CMS at an SMTP server in **Settings → SMTP**.
+
+| Setting | Key | Default | Notes |
+|---|---|---|---|
+| SMTP Host | `host` | `127.0.0.1` | Your mail server or provider's SMTP host |
+| SMTP Port | `port` | `25` | Usually `587` for TLS or `465` for SSL |
+| Encryption | `secure` | TLS | `tls` (STARTTLS), `ssl`, or none |
+| SMTP Username / Password | `username`, `password` | — | Authentication is only used when a username is set |
+| From Address | `from` | — | The default sender. Templates can override it |
+| From Name | `fromName` | — | The default sender name |
+| Send Delay (ms) | `sendDelay` | `0` | Milliseconds to wait between bulk emails |
+| Max Emails Per Hour | `maxPerHour` | `0` | Bulk emails allowed per hour. `0` is unlimited |
+| Max Emails Per Day | `maxPerDay` | `0` | Bulk emails allowed per 24 hours. `0` is unlimited |
+
+You can also set these in `tcms.php` under `$settings['smtp']`, using the keys above. The page's **Default To Address** field isn't used by anything yet.
+
+### Testing the connection
+
+The **Test SMTP Configuration** section at the bottom of the SMTP settings page sends a plain test message to any address you enter. It uses the settings you have **saved**, so save first, then test. A successful test proves the server connection and credentials; it doesn't involve templates, editions, or the whitelist.
+
+Most transactional providers (Postmark, Mailgun, Amazon SES, SendGrid, Fastmail, Google Workspace) offer SMTP credentials. Use them rather than your web host's local mail server — your emails are far more likely to be delivered.
+
+## Mailer settings
+
+**Settings → Mailer** controls who can receive email sent through the public send endpoint and how fast.
+
+| Setting | Key | Default | What it does |
+|---|---|---|---|
+| Email Domain Whitelist | `whitelist` | *(off)* | A JSON list of allowed recipient domains, e.g. `["@yourcompany.com"]`. When set, a template can only be sent **to** an address at one of them |
+| Rate Limit per IP | `ratePerIp` | `10` | Requests one IP address can make to `POST /api/action/mailer` per window (1–1000) |
+| Rate Limit per Template | `ratePerTemplate` | `50` | Requests for any one template through that endpoint per window (1–10000) |
+| Rate Limit Window (seconds) | `rateWindow` | `300` | The window length (60–3600) |
+
+These can also be set in `tcms.php` under `$settings['mailer']`.
+
+Each whitelist entry is one domain, matched exactly and without regard to case: `@yourcompany.com` allows `Jane@YourCompany.com` but not `jane@mail.yourcompany.com` — list subdomains separately. The whitelist checks the **To** address only; CC, BCC, and Reply-To are not checked. It applies to every template send, including bulk sends and their override address. It does not apply to the built-in auth emails or the SMTP test, which don't use templates.
+
+The rate limits apply only to the public endpoint described [below](#sending-from-the-api), and they count requests, including ones that fail. The admin **Test Email** button uses the same endpoint, so a burst of testing can hit the limit. The counters are kept in the cache; if no cache backend is available, the limits are not enforced.
+
+## Creating a template
+
+Go to **Mailer** in the admin sidebar and click **+ New Email**. Templates are grouped in the sidebar by **Category**.
+
+| Field | Required | Notes |
+|---|---|---|
+| Active | | Inactive templates refuse to send |
+| Template Name | ✓ | Internal name. The ID is generated from it plus a short unique suffix |
+| Category | | Groups templates in the sidebar |
+| Description | | What the email is for |
+| To Email | ✓ | Recipient address. Twig: `{{ data.email }}` |
+| To Name | | Twig: `{{ data.name }}` |
+| From Email / From Name | | Leave empty to use the SMTP defaults |
+| Reply-To Email | | Twig: `{{ data.email }}` |
+| CC Emails / BCC Emails | | One address per line. Each line is rendered with Twig, and empty results are dropped |
+| Subject | ✓ | Twig: `New message from {{ data.name }}` |
+| Body (HTML) | ✓ | The email body, in Twig |
+| Body (Plain Text) | | Optional plain-text version for mail clients that don't show HTML |
+
+The template's **ID** is what you reference everywhere else — in form actions, auth settings, automations, and code.
+
+### Template variables
+
+The address, name, subject, and body fields are rendered as Twig templates. From Name can use Twig too; From Email is an email field, so it only accepts a plain address. Active, Template Name, Category, and Description are never rendered. Two variables are available:
+
+- **`data`** — the data the email is about. What it contains depends on where the email was sent from (see below).
+- **`user`** — the signed-in user who triggered the send, when there is one.
+
+Templates render in the same Twig environment as the rest of your site, so filters and the `cms` global work as usual.
+
+```twig
+<h1>New message from {{ data.name }}</h1>
+<p>{{ data.message|nl2br }}</p>
+<p>Sent {{ "now"|date("F j, Y") }}</p>
+```
+
+If a field fails to render — a Twig syntax error, for example — the error is written to `email.log` and the field is sent as its raw template text, so check the log if an email arrives with `{{ }}` in it.
+
+| Sent from | `data` contains | `user` |
+|---|---|---|
+| Form action | The submitted form's field values | The signed-in user, if any |
+| Bulk Send | The full object being mailed | — |
+| Password reset | `email`, `name`, `user` (the account), `resetUrl`, `expiryMinutes`, `collection` | — |
+| Email verification | `email`, `name`, `verifyUrl`, `expiryMinutes`, `collection` | — |
+| Automation error | `automation`, `error` | — |
+| Automations / PHP | The array you pass | The array you pass as the fourth argument, if any |
+
+### Responsive layouts with Inky
+
+Body HTML is run through [Inky](https://get.foundation/emails/docs/inky.html) before sending, so you can use Inky's tags for layouts that hold up across mail clients:
+
+```html
+<container>
+  <row>
+    <columns>
+      <h1>Hi {{ data.name }}</h1>
+      <p>Thanks for signing up.</p>
+      <button href="{{ data.url }}">Get started</button>
+    </columns>
+  </row>
+</container>
+```
+
+Inky is optional: plain HTML keeps its layout. The body is still parsed and re-serialized on the way through, though, so entities may come out in numeric form and a full `<html>` wrapper is added — check a test send if you rely on unusual markup. Inky converts markup only — it doesn't add CSS. Include your own styles inline, or in a `<style>` block for the clients that support one.
+
+### Testing a template
+
+The **Test Email** section on a template's edit page sends the template for real, using JSON you enter as `data`:
+
+```json
+{ "name": "Jane", "email": "jane@example.com", "message": "Hello!" }
+```
+
+**Load test data from object** fills the box from an existing object — enter its `collection/id`. The test data is remembered in your browser for each template. Remember that the email goes to whatever **To** renders to, so use your own address in the test data. Test sends go through the same endpoint as form actions, so the whitelist and rate limits apply, and `user` is you. Loading from an object needs read access to its collection.
+
+Attachments are not supported.
+
+## Sending from a form
+
+Add a `mailer` action to a form and the email is sent after the form saves successfully:
+
+```twig
+{% set form = cms.form.builder('contact', {
+    newActions: [
+        { action: 'mailer', mailerId: 'contact-notify' }
+    ]
+}) %}
+{% do form.addField('name') %}
+{% do form.addField('email') %}
+{% do form.addField('message') %}
+{{ form.build() }}
+```
+
+Use `newActions` for new objects, `editActions` for edits, and `deleteActions` for deletes. Actions run in order; if an email fails, the remaining actions stop unless the action has `continue: true`. To send it from the admin's own add and edit forms for a collection, put the action in the collection's [form settings](docs/collections/form-settings) — those settings don't apply to forms you build on your site, which need the action in their own options. More on building forms in [Form Builder](docs/forms/builder) and on actions in [Form Options](docs/forms/options).
+
+`data` in the template is the form's field values as submitted, and `user` is the signed-in user, if there is one.
+
+A common pair of templates for a contact form: one to you, and one confirming receipt to the visitor.
+
+```text
+contact-notify    To: you@yourcompany.com       Reply To: {{ data.email }}
+contact-confirm   To: {{ data.email }}          Subject: Thanks, {{ data.name }}
+```
+
+## Password reset and verification emails
+
+Total CMS has built-in emails for password resets and email verification. To send your own design instead, create a template and select it in **Settings → Auth** as the **Password Reset Email Template** or **Email Verification Template** (`forgotPasswordMailerId` and `verificationMailerId`). Use `{{ data.resetUrl }}` or `{{ data.verifyUrl }}` for the link; the full variable lists are in the [table above](#template-variables) and in [Password Reset](docs/auth/password-reset). Custom auth templates need the Standard edition.
+
+## Sending from automations and PHP
+
+Automation handlers get the Mailer as `$ctx->mailer`:
+
+```php
+$ctx->mailer->sendEmail('weekly-digest', ['posts' => $posts->all()]);
+```
+
+Each automation can also name an **error mailer**, sent in production when a run fails, with `data.automation` and `data.error`. See [Automation Handlers](docs/automations/handlers).
+
+In your own PHP, `$totalcms->mailer()` returns the same service ([PHP API](docs/apis/php-api)):
+
+```php
+$result = $totalcms->mailer()->sendEmail('order-confirmation', [
+    'orderId' => 'order-123',
+    'email'   => 'customer@example.com',
+]);
+
+if (!$result->success) {
+    // $result->message and $result->error explain why
+}
+```
+
+`sendEmail()` also takes two optional arguments: an address to send to instead of the template's **To**, and an array exposed to the template as `user`:
+
+```php
+$totalcms->mailer()->sendEmail('welcome', $data, null, ['name' => 'Jane']);
+```
+
+## Sending from the API
+
+Form actions send through a public endpoint:
+
+```http
+POST /api/action/mailer
+Content-Type: application/json
+
+{ "mailerId": "contact-notify", "data": { "name": "Jane", "email": "jane@example.com" } }
+```
+
+It returns `{"success": true, "message": "..."}`. It responds with `400` for a missing `mailerId` or malformed `data`, `500` when the send fails, and `429` with a `Retry-After` header when a [rate limit](#mailer-settings) is hit.
+
+> **This endpoint is public by design** — a visitor's browser calls it after submitting your contact form. That means anyone can call it with any template ID and any `data`. If a template's **To**, **CC**, or **BCC** comes from `data` (like `{{ data.email }}`), anyone can use that template to send your email to any address. Keep the recipient fixed for notification templates, keep the rate limits tight, and use the whitelist when a template only ever needs to reach your own domain. Deactivate templates you aren't using.
+
+## Bulk Send
+
+*Pro edition.* Bulk Send mails a template to every object in a collection — a newsletter to your subscribers, a notice to every member, a reminder to everyone registered for an event. Each object becomes the `data` for one email, so `{{ data.email }}` and `{{ data.name }}` are that object's fields.
+
+Bulk Send appears at the bottom of a template's edit page, once the template has been saved.
+
+### Audience & Send
+
+| Field | What it does |
+|---|---|
+| Collection | The collection to send to |
+| Include Filter / Exclude Filter | [Index filters](docs/apis/index-filter) to narrow the audience, e.g. include `subscribed:true`, exclude `status:bounced` |
+| Specific Objects | Pick individual objects instead. When any are picked, the filters are ignored |
+| Override To Email | Send every email to this address instead — for proofing (see below) |
+| Schedule | Send at a later date and time, in your site's timezone. Leave empty to send on the next queue run |
+
+Click **Queue Bulk Send** and confirm. One email job is queued per object, and the result shows how many were queued. These choices apply to this send only; they aren't saved with the template.
+
+### Preview
+
+Pick an object under **Preview** to see the subject, recipient, and HTML body that object would get, without sending anything. Choose a Collection under Audience & Send first. The preview shows Body HTML before Inky runs, so layout tags display as-is, and it doesn't show CC, BCC, or the plain-text body.
+
+### How sends are processed
+
+Queuing doesn't send anything by itself. Emails go out as the job queue runs, from the `tcms jobs:process` cron job, or the `/cron/jobs` URL on hosts without cron (see [Cron URLs](docs/operations/cron-urls)). A site with no job runner set up will queue emails forever.
+
+Each email job:
+
+1. Checks the hourly and daily limits (**Max Emails Per Hour** and **Max Emails Per Day** in SMTP settings). If a limit is reached, the job goes back in the queue for a later run — it isn't failed, and it doesn't use up an attempt. The rest of that run stops too, so other queued jobs, including non-email ones, wait with it.
+2. Checks the once-per-object rule below.
+3. Waits **Send Delay** milliseconds, if set, to spread emails out.
+4. Sends the email. A failed send gets three attempts in all. Failed jobs are retried only by `tcms jobs:process`; the `/cron/jobs` URL doesn't retry them.
+
+The limits count every bulk email sent, test sends included. Check your email provider's sending limits and set yours below them. Most providers throttle or suspend accounts that exceed their limits.
+
+### Each template is sent to each object once
+
+**A template is delivered to each object only once — ever.** When you queue a bulk send, objects that already received that template are left out, and the result tells you how many: *"Queued 12 emails for sending (40 left out: already received this email)"*. If every object has already received it, nothing is queued and you get an error that says so.
+
+This makes a bulk send safe to repeat. If a send stopped partway, or new subscribers joined since, queuing it again reaches only the objects that were missed.
+
+It also means **a recurring email needs a new template each time.** For a monthly newsletter, **Duplicate** last month's template (from the template's actions menu), edit it, and send the copy. The copy gets a new ID, so everyone receives it (unless **Keep ID on Duplicate Object?** is turned on in Settings → Dashboard — then change the ID yourself).
+
+### Proofing with Override To
+
+To see exactly what your audience will get, fill in **Override To Email** with your own address and queue the send. Every object's email — rendered with that object's data — goes to you instead.
+
+Test sends never count as delivered. When you clear the override and queue the real send, everyone receives it. You can proof as many times as you like, but you get one email per object, and they count toward the hourly and daily limits — for a quick proof of a large audience, pick a few **Specific Objects**.
+
+The override replaces **To** only. If the template has **CC** or **BCC** addresses, they still receive every test email, so clear them while proofing a large audience.
+
+### Send History
+
+**Send History** on the template's edit page lists the template's recent batches:
+
+| Column | Meaning |
+|---|---|
+| Queued | When the batch was queued |
+| Audience | The collection; a **Test** badge and address for override sends; how many objects were left out as already sent |
+| Status | *Scheduled*, *In progress*, *Complete*, *Failures*, or *Nothing sent* |
+| Sent / Failed / Skipped | Emails processed so far, counting each object once |
+| Pending | Queued emails not yet sent, failed, or skipped |
+
+The panel shows the 10 most recent batches and refreshes after each queue; click **Refresh** to update it while a batch is sending. *Skipped* counts objects that received the email from another batch after this one was queued — two overlapping sends of the same template, for example. A failed email is one that couldn't be sent, or whose object was deleted after the send was queued; `email.log` in your logs folder has the reason.
+
+The history is stored in `tcms-data/.system/bulkmailer`, a SQLite database. Deleting that file erases the send history and resets the hourly and daily counts — and **every object becomes eligible to receive every template again**.
+
+Delivery is tracked by template and object ID. If you send the same template to a second collection, any object whose ID matches one already mailed from the first collection is left out; use a separate template for each collection.
+
+### Bulk Send endpoints
+
+The admin page uses these endpoints. They need the Pro edition and either a signed-in user whose access group has the `mailer` permission, or an API key whose grants include these paths.
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/action/mailer/bulk` | Queue a bulk send. Form fields: `mailerId`, `bulkCollection`, `bulkInclude`, `bulkExclude`, `bulkObjectIds[]`, `bulkOverrideTo`, `bulkscheduledAt` |
+| `POST /api/action/mailer/bulk/preview` | Render one object's email: `mailerId`, `bulkPreviewObjectId`, `bulkCollection` |
+| `GET /api/action/mailer/bulk/objects` | List a collection's objects for the picker: `bulkCollection`, `bulkInclude`, `bulkExclude` |
+| `GET /api/action/mailer/bulk/history` | Recent batches for `mailerId` |
+
+These return HTML fragments for the admin UI (except `objects`, which returns JSON), not a stable API. Errors from the endpoint itself also come back as HTML with status 200; only a refused sign-in or permission returns a 401 or 403.
+
+## Permissions
+
+The **Mailer** page and the Bulk Send endpoints require the `mailer` permission in the user's [access group](docs/auth/access-groups). The built-in Admin and Editor groups have it; Viewer and Default don't. Admins always have access.
+
+Templates are also ordinary objects in the `mailer` collection, so the collection permissions of an access group apply to reading and editing them through the REST API.
+
+## Troubleshooting
+
+**Nothing arrives, and there's no error.** Check `email.log` first. Then check spam folders, and that the **From** address is one your SMTP provider allows you to send as — many providers reject or silently drop mail from unverified senders.
+
+**The SMTP test works but a template doesn't send.** Check that the template is **Active**, that your edition is Standard or higher, and that the rendered **To** is a valid address that passes the whitelist, if you set one. A `429` means the rate limit was hit. The JSON response's `error` field and `email.log` have the details.
+
+**Bulk emails are queued but never sent.** The job queue isn't running. Set up the `tcms jobs:process` cron job or the `/cron/jobs` URL. The **Job Queue Manager** under Utils shows what’s waiting.
+
+**A bulk send stops partway and resumes later.** Either the hourly or daily limit was reached, or, on the `/cron/jobs` URL, the run used up its time budget. Both pick up again on the next run.
+
+**"Nothing to send: all N matching objects have already received this email."** Each template reaches each object once. Duplicate the template to send the email again.
+
+**An email shows `{{ data.something }}` literally.** The field failed to render. `email.log` has the Twig error.
+
+**Emails go out without encryption.** Set **Encryption** to TLS or SSL in SMTP settings and match the port — `587` for TLS or `465` for SSL.
 
 ---
 
@@ -30946,9 +31212,9 @@ tcms mcp:test list_collections --json
 
 ## Extension authoring
 
-Extensions can publish their own MCP tools and resources via `ExtensionContext::registerMcpTool()`, `registerMcpResource()`, and `registerMcpResourceTemplate()`. Custom tools and resources show up alongside the core surface — AI agents see them the same way they see `query_collection` or `tcms://blog/`. The bundled [Documentation Tools](mcp/docs-tools) (`docs_search`, `docs_get`, `docs_lookup`) are a real-world example — a bundled extension registering `authenticated`-access tools with the same `ExtensionContext` API a third-party extension would use.
+Extensions can publish their own MCP tools and resources via `ExtensionContext::registerMcpTool()`, `registerMcpResource()`, and `registerMcpResourceTemplate()`. Custom tools and resources show up alongside the core surface — AI agents see them the same way they see `query_collection` or `tcms://blog/`. The bundled [Documentation Tools](docs/mcp/docs-tools) (`docs_search`, `docs_get`, `docs_lookup`) are a real-world example — a bundled extension registering `authenticated`-access tools with the same `ExtensionContext` API a third-party extension would use.
 
-See **[Extending MCP](mcp/extensions)** for the full authoring guide, including registration examples, naming conventions, capability toggles, and real-world use cases.
+See **[Extending MCP](docs/mcp/extensions)** for the full authoring guide, including registration examples, naming conventions, capability toggles, and real-world use cases.
 
 ---
 
@@ -31005,7 +31271,7 @@ Before submitting your site to Anthropic's Connector Directory, walk through:
 - [ ] Tool names ≤ 64 characters (including any `toolPrefix`).
 - [ ] Read and write operations split into separate tools (no mixed-mode tools).
 - [ ] Tool descriptions don't instruct Claude ("always do X", "you must call Y first") — Total CMS uses `setInstructions()` for cross-tool guidance.
-- [ ] Tools report errors by throwing `Mcp\Exception\ToolCallException` with a recovery hint in the message — the SDK sets `isError: true` for you (see [Extending MCP](mcp/extensions), "Returning data and reporting errors"). A hand-built `['isError' => true, ...]` return array does NOT set the outer `CallToolResult.isError`.
+- [ ] Tools report errors by throwing `Mcp\Exception\ToolCallException` with a recovery hint in the message — the SDK sets `isError: true` for you (see [Extending MCP](docs/mcp/extensions), "Returning data and reporting errors"). A hand-built `['isError' => true, ...]` return array does NOT set the outer `CallToolResult.isError`.
 - [ ] Lazy authentication verified: public tools work unauthenticated; only protected tools challenge.
 - [ ] Submission slug chosen carefully (fixed after publication).
 
@@ -31051,7 +31317,7 @@ Your site's MCP endpoint is your site URL with `/mcp` on the end:
 https://yoursite.com/mcp
 ```
 
-That single URL is all most clients need. What a client can *see* through it depends on who it is: anonymous callers get whatever you've exposed publicly, and an API key unlocks admin-level access to schemas, templates, and content. See [MCP Server](mcp/server) for how those audiences differ.
+That single URL is all most clients need. What a client can *see* through it depends on who it is: anonymous callers get whatever you've exposed publicly, and an API key unlocks admin-level access to schemas, templates, and content. See [MCP Server](docs/mcp/server) for how those audiences differ.
 
 MCP requires **Standard or Pro** — Lite does not serve the endpoint at all. On Standard the anonymous read path below works: connect without a key and expose the collections you want readable. The API-key and OAuth options are Pro features.
 
@@ -31157,7 +31423,7 @@ Without a key, what an agent can reach is governed by `mcp.publicAccess` and eac
 
 ## If it doesn't connect
 
-Connection failures usually have one of a handful of causes, and they stack — a site often has two at once. [Troubleshooting](mcp/troubleshooting) walks them in the order they actually occur, starting with bot filters and stripped `Authorization` headers.
+Connection failures usually have one of a handful of causes, and they stack — a site often has two at once. [Troubleshooting](docs/mcp/troubleshooting) walks them in the order they actually occur, starting with bot filters and stripped `Authorization` headers.
 
 Confirm the server side independently with:
 
@@ -31532,8 +31798,8 @@ Use a saved-query tool when you want a predictable, named entry point. Use `quer
 
 ## Reference
 
-- [MCP Server](mcp/server) — personas, transport, core tool catalog, collection MCP settings.
-- [Extending MCP](mcp/extensions) — registering tools and resources from PHP extensions, progress notifications, error handling, persona-aware handlers.
+- [MCP Server](docs/mcp/server) — personas, transport, core tool catalog, collection MCP settings.
+- [Extending MCP](docs/mcp/extensions) — registering tools and resources from PHP extensions, progress notifications, error handling, persona-aware handlers.
 
 ---
 
@@ -31586,7 +31852,7 @@ The prompt text lives in `prompts.json` inside the extension, not in its PHP. It
 
 Unlike most bundled extensions (disabled until an operator opts in — see [Bundled Extensions](docs/extensions/bundled)), `totalcms/docs` ships `default_enabled: true`. A fresh install has all three tools live immediately, no admin action required.
 
-That does **not** mean they're public. The tools register at `authenticated` access by default: visible to the admin persona (API key) and to any OAuth-authenticated caller, but absent from `tools/list` for anonymous callers. Listing and calling are gated separately — resolving to the authenticated persona needs any `mcp:*` scope, while actually invoking a tool needs `mcp:tools`. A token carrying only `mcp:resources` therefore sees these tools listed and is refused when it calls one. Installing or updating to a version that ships this extension changes nothing about a site's *public* MCP surface — `mcp.publicAccess` and each collection's `mcp.access` setting still govern what an anonymous agent can reach. See [Three audiences, one endpoint](mcp/server#three-audiences-one-endpoint) for how the personas work.
+That does **not** mean they're public. The tools register at `authenticated` access by default: visible to the admin persona (API key) and to any OAuth-authenticated caller, but absent from `tools/list` for anonymous callers. Listing and calling are gated separately — resolving to the authenticated persona needs any `mcp:*` scope, while actually invoking a tool needs `mcp:tools`. A token carrying only `mcp:resources` therefore sees these tools listed and is refused when it calls one. Installing or updating to a version that ships this extension changes nothing about a site's *public* MCP surface — `mcp.publicAccess` and each collection's `mcp.access` setting still govern what an anonymous agent can reach. See [Three audiences, one endpoint](docs/mcp/server#three-audiences-one-endpoint) for how the personas work.
 
 ## Exposing the tools publicly
 
@@ -31620,8 +31886,8 @@ The tool list shown per persona reflects whether the extension is enabled and, i
 
 ## See also
 
-- [MCP Server](mcp/server) — personas, transport, the full core tool catalog
-- [Extending MCP](mcp/extensions) — how extensions register their own tools and resources
+- [MCP Server](docs/mcp/server) — personas, transport, the full core tool catalog
+- [Extending MCP](docs/mcp/extensions) — how extensions register their own tools and resources
 - [Bundled Extensions](docs/extensions/bundled) — the bundled-extension model in general
 - [Extension Manifest Reference](docs/extensions/manifest) — the `default_enabled` field this extension uses
 
@@ -31631,7 +31897,7 @@ The tool list shown per persona reflects whether the extension is enabled and, i
 
 MCP prompts are reusable, operator-authored templates that AI clients discover via `prompts/list` and invoke via `prompts/get`. Each prompt lives as an object in the `mcp-prompt` reserved collection. The body is a Twig template — the full `cms.*` function library is available alongside declared argument values.
 
-Use prompts when you want to ship a starting workflow to an AI agent — a house-style blog scaffold, a brand-voice rewrite template, or a site-wide content audit outline. For data retrieval, use [Saved-Query Tools](mcp/saved-query-tools) instead.
+Use prompts when you want to ship a starting workflow to an AI agent — a house-style blog scaffold, a brand-voice rewrite template, or a site-wide content audit outline. For data retrieval, use [Saved-Query Tools](docs/mcp/saved-query-tools) instead.
 
 | | Prompts | Saved-Query Tools |
 |---|---|---|
@@ -31789,11 +32055,11 @@ Only declared argument names are injected into the template context. Extra keys 
 
 Extensions can ship code-defined prompts alongside the collection-stored ones this page covers. They share the same `prompts/list` and `prompts/get` surface; the difference is authoring path — PHP in an extension vs. JSON object in the admin.
 
-See **[Extending MCP → Registering code-defined prompts](mcp/extensions)** for the full guide: signature, when-to-use comparison vs. collection-stored, worked examples, access tiers, and collision policy.
+See **[Extending MCP → Registering code-defined prompts](docs/mcp/extensions)** for the full guide: signature, when-to-use comparison vs. collection-stored, worked examples, access tiers, and collision policy.
 
 ## ID field and snake_case
 
-The `id` field on the `mcp-prompt` schema is readonly and auto-generated from the **Name** you enter. It follows the `snakeCase` ID setting — see [ID Field](fields/id) for details. The `name` field is the canonical identifier AI clients use to call the prompt; keep it stable once published.
+The `id` field on the `mcp-prompt` schema is readonly and auto-generated from the **Name** you enter. It follows the `snakeCase` ID setting — see [ID Field](docs/fields/id) for details. The `name` field is the canonical identifier AI clients use to call the prompt; keep it stable once published.
 
 ## Limitations (v1)
 
@@ -31804,9 +32070,9 @@ The `id` field on the `mcp-prompt` schema is readonly and auto-generated from th
 
 ## Reference
 
-- [MCP Server](mcp/server) — personas, transport, core tool catalog, collection MCP settings.
-- [Saved-Query Tools](mcp/saved-query-tools) — parameterised data queries; the right tool when you need filtered collection content rather than a workflow template.
-- [Extending MCP](mcp/extensions) — `registerMcpPrompt()` in the full context of the extension MCP API surface.
+- [MCP Server](docs/mcp/server) — personas, transport, core tool catalog, collection MCP settings.
+- [Saved-Query Tools](docs/mcp/saved-query-tools) — parameterised data queries; the right tool when you need filtered collection content rather than a workflow template.
+- [Extending MCP](docs/mcp/extensions) — `registerMcpPrompt()` in the full context of the extension MCP API surface.
 
 ---
 
@@ -31814,7 +32080,7 @@ The `id` field on the `mcp-prompt` schema is readonly and auto-generated from th
 
 Extensions can publish their own MCP tools and resources via `ExtensionContext`, plugging directly into the site's MCP server alongside the core surface. AI agents see your extension's tools and resources the same way they see `query_collection`, `get_object`, or `tcms://blog/`.
 
-For an overview of T3's MCP server itself — personas, transport, tool catalog, resources — see the [MCP Server](mcp/server).
+For an overview of T3's MCP server itself — personas, transport, tool catalog, resources — see the [MCP Server](docs/mcp/server).
 
 ## What you'd build with this
 
@@ -31866,19 +32132,19 @@ $context->registerMcpTool(
 );
 ```
 
-`access` controls which [persona](mcp/server#three-audiences-one-endpoint) sees the tool: `admin` (visible only to the admin persona), `public` (visible to everyone, including unauthenticated callers), or `authenticated` (visible to any OAuth-authenticated caller plus admin, but not anonymous callers). An unrecognised `access` value matches none of these and fails closed to admin-only visibility.
+`access` controls which [persona](docs/mcp/server#three-audiences-one-endpoint) sees the tool: `admin` (visible only to the admin persona), `public` (visible to everyone, including unauthenticated callers), or `authenticated` (visible to any OAuth-authenticated caller plus admin, but not anonymous callers). An unrecognised `access` value matches none of these and fails closed to admin-only visibility.
 
-**A tool with no `annotations` counts as read-only.** `registerMcpTool()` takes an optional `annotations: new \Mcp\Schema\ToolAnnotations(...)` argument, and a tool that omits it entirely is treated as `readOnlyHint: true` for the purpose of deciding what a [same-origin browser session](mcp/server#a-fourth-caller-the-visitors-browser) may call — which is exactly the population WebMCP hands tools to. If your handler writes, declare `readOnlyHint: false` (and `destructiveHint: true` where it deletes or overwrites), or it becomes callable from a visitor's own page with that visitor's own authority. An `annotations` object that sets some other field but leaves `readOnlyHint` out (`new ToolAnnotations(title: 'Acme Search')`, say) is *not* the same as omitting `annotations` entirely — it no longer reads as `readOnlyHint: true` by default, so the tool is excluded from a same-origin session's `tools/list` and from a WebMCP page just as a declared writer would be.
+**A tool with no `annotations` counts as read-only.** `registerMcpTool()` takes an optional `annotations: new \Mcp\Schema\ToolAnnotations(...)` argument, and a tool that omits it entirely is treated as `readOnlyHint: true` for the purpose of deciding what a [same-origin browser session](docs/mcp/server#a-fourth-caller-the-visitors-browser) may call — which is exactly the population WebMCP hands tools to. If your handler writes, declare `readOnlyHint: false` (and `destructiveHint: true` where it deletes or overwrites), or it becomes callable from a visitor's own page with that visitor's own authority. An `annotations` object that sets some other field but leaves `readOnlyHint` out (`new ToolAnnotations(title: 'Acme Search')`, say) is *not* the same as omitting `annotations` entirely — it no longer reads as `readOnlyHint: true` by default, so the tool is excluded from a same-origin session's `tools/list` and from a WebMCP page just as a declared writer would be.
 
 **`access: 'public'` bypasses this for a truly anonymous caller.** The read-only rule above is enforced server-side only for a *session* — a signed-in browser tab. A visitor with no session at all is a plain anonymous MCP client like any other, and the server does not narrow its tool list by `readOnlyHint`; if your tool writes, registering it at `access: 'public'` makes it callable by that anonymous visitor (and by curl, and by any other unauthenticated MCP client) regardless of whether WebMCP is installed. The WebMCP extension's own script filters what it offers *on a page* to `readOnlyHint: true` tools, but that is a courtesy in the browser, not a server-side gate — `access` plus `readOnlyHint`/`destructiveHint`, chosen honestly, are what actually decide who can call a writing tool.
 
-**`outputSchema` is optional but recommended.** Declare a JSON Schema describing your handler's return shape — its root must be `{type: 'object', ...}`, same as `inputSchema`. It costs nothing at call time (T3 doesn't validate your handler's actual return against it), but SDK-aware MCP clients use it to pre-validate results and, more importantly, models reason better about a tool's output when they know its shape up front instead of inferring it from one example response. OpenAI's plugin-directory scanner specifically flags tools that omit it. Match the shape your handler actually returns — if it varies (an error object vs. a success object, say), use `oneOf` rather than picking one shape and hoping; see [Saved-Query Tools](mcp/saved-query-tools) or `src/Domain/Mcp/Tool/Discovery/ListCollectionsTool.php` for worked examples.
+**`outputSchema` is optional but recommended.** Declare a JSON Schema describing your handler's return shape — its root must be `{type: 'object', ...}`, same as `inputSchema`. It costs nothing at call time (T3 doesn't validate your handler's actual return against it), but SDK-aware MCP clients use it to pre-validate results and, more importantly, models reason better about a tool's output when they know its shape up front instead of inferring it from one example response. OpenAI's plugin-directory scanner specifically flags tools that omit it. Match the shape your handler actually returns — if it varies (an error object vs. a success object, say), use `oneOf` rather than picking one shape and hoping; see [Saved-Query Tools](docs/mcp/saved-query-tools) or `src/Domain/Mcp/Tool/Discovery/ListCollectionsTool.php` for worked examples.
 
 **Important — `authenticated` is a Phase 4 capability.** Registering `access: 'authenticated'` for a tool, resource, or template causes it to be silently invisible to all clients until Phase 4 ships OAuth and scoped-token support. No error is raised; the tool simply never appears in `tools/list`. Use `'admin'` or `'public'` for all current deployments.
 
 The handler closure is invoked by the MCP SDK using PHP reflection on its named parameters — define typed `string` / `int` / `bool` / `array` params that map one-to-one with your `inputSchema` properties.
 
-The bundled [Documentation Tools](mcp/docs-tools) extension (`totalcms/docs`) is a real registration at `authenticated` access if you want a worked example beyond the snippet above.
+The bundled [Documentation Tools](docs/mcp/docs-tools) extension (`totalcms/docs`) is a real registration at `authenticated` access if you want a worked example beyond the snippet above.
 
 ## Registering a resource
 
@@ -32087,7 +32353,7 @@ The following capabilities show up automatically in the Extensions admin page on
 
 ## Subscriptions and change notifications
 
-T3's resource subscription system pushes `notifications/resources/updated` events when subscribed URIs change. Core wires this to collection/object events automatically; extensions opt in by dispatching events the [`McpResourceSubscriptionListener`](mcp/server#resource-subscriptions) listens for, or by calling `ResourceNotifier::notifyResourceChanged($uri)` directly from your domain code when something behind your URIs changes.
+T3's resource subscription system pushes `notifications/resources/updated` events when subscribed URIs change. Core wires this to collection/object events automatically; extensions opt in by dispatching events the [`McpResourceSubscriptionListener`](docs/mcp/server#resource-subscriptions) listens for, or by calling `ResourceNotifier::notifyResourceChanged($uri)` directly from your domain code when something behind your URIs changes.
 
 For most extensions, the simpler path is: store your data in a T3 collection (perhaps a reserved-name collection like `acme-invoices`) and let the core listener handle subscriptions to `tcms://acme-invoices/` automatically. Custom URI schemes (`acme://...`) require explicit notification calls.
 
@@ -32396,7 +32662,7 @@ $context->registerSearchProvider(new MeilisearchSearchProvider(
 ));
 ```
 
-For a production-quality reference implementation see the bundled **[Algolia Search](extensions/algolia-search)** extension — it follows the same pattern with cross-collection faceting, snippet extraction, and ranking score normalization.
+For a production-quality reference implementation see the bundled **[Algolia Search](docs/extensions/algolia-search)** extension — it follows the same pattern with cross-collection faceting, snippet extraction, and ranking score normalization.
 
 ---
 
@@ -32408,11 +32674,11 @@ For a production-quality reference implementation see the bundled **[Algolia Sea
 
 ## Related
 
-- [MCP Server](mcp/server) — personas, transport, core tool catalog
-- [MCP Prompts](mcp/prompts) — operator-authored prompts stored in the `mcp-prompt` collection
-- [Extension Points](extensions/extension-points) — full catalog of `ExtensionContext` hooks
-- [Events](extensions/events) — dispatching custom events that listeners (including subscription listeners) can consume
-- [Algolia Search](extensions/algolia-search) — bundled search provider extension, complete working implementation
+- [MCP Server](docs/mcp/server) — personas, transport, core tool catalog
+- [MCP Prompts](docs/mcp/prompts) — operator-authored prompts stored in the `mcp-prompt` collection
+- [Extension Points](docs/extensions/extension-points) — full catalog of `ExtensionContext` hooks
+- [Events](docs/extensions/events) — dispatching custom events that listeners (including subscription listeners) can consume
+- [Algolia Search](docs/extensions/algolia-search) — bundled search provider extension, complete working implementation
 
 ---
 
@@ -33129,7 +33395,7 @@ new TwigFunction('acme_banner', function (): void {
 
 Extensions register Twig **functions, filters, and globals** — never custom tags or nodes — so there is nothing else to do to be yield-ready.
 
-> **Security: Twig autoescaping is OFF.** Total CMS renders content fields as trusted author HTML/Markdown, so Twig does not escape output for you. Any value your extension prints that came from outside the admin — request input, anonymous submissions, third-party APIs — must be escaped explicitly with `{{ value | e }}` (or `| e('html_attr')` inside an attribute), or wrapped in `{% autoescape 'html' %}`. A handler that prints `{{ input }}` has no automatic XSS protection. See [Template Output Escaping](operations/security#template-output-escaping-twig).
+> **Security: Twig autoescaping is OFF.** Total CMS renders content fields as trusted author HTML/Markdown, so Twig does not escape output for you. Any value your extension prints that came from outside the admin — request input, anonymous submissions, third-party APIs — must be escaped explicitly with `{{ value | e }}` (or `| e('html_attr')` inside an attribute), or wrapped in `{% autoescape 'html' %}`. A handler that prints `{{ input }}` has no automatic XSS protection. See [Template Output Escaping](docs/operations/security#template-output-escaping-twig).
 
 ## Twig Functions
 
@@ -34953,9 +35219,9 @@ tcms jumpstart:import my-site.json --json
 
 ## Sync Commands
 
-Push and pull schemas, templates, site-machinery objects, and collection settings between a local development instance and a production server. Configure the production server URL and API key in **Settings > Sync** in the admin dashboard. Full details, including the object-seeding workflow: [Sync guide](operations/sync).
+Push and pull schemas, templates, site-machinery objects, and collection settings between a local development instance and a production server. Configure the production server URL and API key in **Settings > Sync** in the admin dashboard. Full details, including the object-seeding workflow: [Sync guide](docs/operations/sync).
 
-> **3.5.1 note:** `--collections` now means collection *settings* (it used to mean objects from five allowlisted collections). The flag formerly named `collection-meta` is gone — `--collections` does its job now. Objects for those five collections move via their own feature flags instead (`--pages`, `--dataviews`, `--mailer`, `--mcp-prompts`, `--automations`), and any other collection's object data can be seeded with `--objects`. Full breaking-changes writeup: [Sync guide](operations/sync).
+> **3.5.1 note:** `--collections` now means collection *settings* (it used to mean objects from five allowlisted collections). The flag formerly named `collection-meta` is gone — `--collections` does its job now. Objects for those five collections move via their own feature flags instead (`--pages`, `--dataviews`, `--mailer`, `--mcp-prompts`, `--automations`), and any other collection's object data can be seeded with `--objects`. Full breaking-changes writeup: [Sync guide](docs/operations/sync).
 
 ### `push`
 
@@ -35020,7 +35286,7 @@ tcms pull --collections=comparisons
 
 **Filter semantics:** a bare `tcms push` or `tcms pull` is a full mirror of schemas, templates, the five feature-flagged collections, and collection settings — it never seeds `--objects`, which only runs when named explicitly. The moment any filter flag is given, the categories you did not mention are excluded entirely, so `tcms push --schemas=blog` moves the blog schema and nothing else.
 
-**Backups:** before an overwrite lands, the receiving instance snapshots the current version to `tcms-data/.system/backups/{schemas,objects}/...` (ten most recent per item). See the [Sync guide](operations/sync) for details.
+**Backups:** before an overwrite lands, the receiving instance snapshots the current version to `tcms-data/.system/backups/{schemas,objects}/...` (ten most recent per item). See the [Sync guide](docs/operations/sync) for details.
 
 ---
 
@@ -35121,7 +35387,7 @@ tcms mcp:test query_collection --params='{"collection":"blog"}' --persona=public
 
 ## Backup Commands
 
-Every object save keeps the version it replaced and every delete keeps the final state, under `tcms-data/.system/backups/objects/`. These two commands read that history back. See [Backups](../operations/backups) for what is kept and for how long.
+Every object save keeps the version it replaced and every delete keeps the final state, under `tcms-data/.system/backups/objects/`. These two commands read that history back. See [Backups](docs/operations/backups) for what is kept and for how long.
 
 ### `backup:list`
 
@@ -36316,13 +36582,21 @@ Go to [pushover.net/apps/build](https://pushover.net/apps/build) and create a ne
 
 Your **User Key** is displayed on your [Pushover dashboard](https://pushover.net/dashboard).
 
-### 4. Configure Total CMS
+### 4. Enable the Extension
 
-Go to **Settings > Push Notifications** in the Total CMS admin and enter your Application Token and User Key.
+Pushover ships with Total CMS as a bundled extension, disabled by default. Enable it in **Admin → Extensions**, or from the command line:
 
-### 5. Test Your Configuration
+```bash
+tcms extension:enable totalcms/pushover
+```
 
-Use the **Test Push Notifications** section at the bottom of the settings page to send a test notification and verify everything is working.
+### 5. Configure It
+
+Open the extension's settings page from **Admin → Extensions** and enter your **Application Token** and **User Key**.
+
+### 6. Test Your Configuration
+
+Use the **Test Notification** link on the extension's card in **Admin → Extensions** to send a test notification and verify everything is working.
 
 ## Form Action
 
@@ -36460,7 +36734,7 @@ If the image cannot be generated (missing property, empty gallery, etc.), the no
 Pushover [delivery groups](https://pushover.net/api/groups) let you broadcast the same notification to multiple users with a single key. To use groups:
 
 1. Create a delivery group at [pushover.net/groups/build](https://pushover.net/groups/build) and add your team members
-2. Enter the group key in **Settings > Push Notifications > Pushover Group Key**
+2. Enter the group key as **Group Key (optional)** on the extension's settings page
 3. Add `"group": true` to your action config
 
 ```json
@@ -36800,6 +37074,42 @@ You should commit your customization files:
 - Custom templates in your theme directory
 - Custom schemas if you've created any
 
+### Versioning Content (Optional)
+
+Ignoring `tcms-data` is the right default: on most sites editors work in the admin on production, and git and the admin cannot both be the source of truth for the same content. To move content between a local copy and production, use [`tcms push` and `tcms pull`](docs/operations/sync) instead.
+
+Some sites work the other way round — content written by developers, or by an agent working locally, then deployed like code. Content can be versioned there, but **never commit the whole `tcms-data` folder**. It holds more than content:
+
+| Path | What it holds | Why it must not be committed |
+|------|---------------|------------------------------|
+| `tcms-data/.system/` | Settings, API keys, the site encryption key (`site.key`), OAuth signing keys, sessions, remember-me tokens, OAuth grants, job and automation queues, migration state, [record history](docs/operations/backups), and logs on zip installs | API keys and the sync key are stored as-is, so the repository becomes a set of admin credentials. Sessions, queues and migration state are live runtime state: deploying them logs people out, re-runs jobs, or skips a migration |
+| `tcms-data/auth/` | User records, with password hashes and passkeys | Credentials, even hashed, do not belong in a repository |
+| `tcms-data/**/.index.json` | Each collection's index | Rebuilt on every save, so every commit touches it and any two branches conflict on it. It can be regenerated |
+
+Commit the collection folders (each object file and the collection's `.meta.json`) and `.schemas/`, and ignore the rest:
+
+```gitignore
+# Total CMS 3 — versioned content, never runtime state
+tcms-data/.system/
+tcms-data/auth/
+tcms-data/**/.index.json
+**/tcms/cache
+**/tcms/logs
+**/tcms/tmp
+```
+
+After cloning or pulling, rebuild the indexes so they match the files on disk:
+
+```bash
+tcms repair:index --all
+```
+
+Three things to expect:
+
+- **`.meta.json` changes on saves.** It is the collection's definition, so it must be committed, but it also carries the object count and a last-updated time. Expect those lines in diffs, and resolve a conflict on them either way — `repair:index` recalculates the count.
+- **Uploads are binary.** Images, files and depots live inside the object folders, so committing them puts every upload's full history in the repository. Consider Git LFS for them, or keep them out of git.
+- **Diffs read best in Markdown.** A collection can store each object as Markdown with YAML front matter instead of JSON; see [Storage Format](docs/collections/storage-format).
+
 ## Deployment Pipeline
 
 After pulling new code, four things have to happen in the right order to bring a Total CMS site fully up to date:
@@ -37017,7 +37327,7 @@ A Composer install (`composer create-project totalcms/totalcms`) drops these `.h
 
 Zip installs and the Stacks plugin layout ship the same files. If you are installing from a custom source and don't see them, the snippets below are the canonical content.
 
-> **You only need the project-root `.htaccess` when your docroot is one level above `public/`.** If you point Apache's `DocumentRoot` directly at `public/` (the recommended layout — see [Filesystem](operations/filesystem)), only the two files inside `public/` and `tcms-data/` matter.
+> **You only need the project-root `.htaccess` when your docroot is one level above `public/`.** If you point Apache's `DocumentRoot` directly at `public/` (the recommended layout — see [Filesystem](docs/operations/filesystem)), only the two files inside `public/` and `tcms-data/` matter.
 
 ## The Setup Wizard Snippet
 
@@ -38806,7 +39116,7 @@ Listing one of these is not blocked, but nothing good comes of it.
 
 `tcms push` / `tcms pull` read their remote from `sync` in `config/tcms.php`
 rather than an overlay, so a deploy key never has to live in the shared data
-folder at all. See [Sync](sync).
+folder at all. See [Sync](docs/operations/sync).
 
 ## Known limitations
 
@@ -38877,7 +39187,7 @@ If you have scripts or CI steps calling `tcms push --collections=...` expecting 
 - **Site-machinery objects**, one feature flag per collection — `--pages` (`builder-pages`), `--dataviews` (`dataviews`), `--mailer` (`mailer`), `--mcp-prompts` (`mcp-prompt`), `--automations` (`automations`). Each upserts: given with no value it moves every object in that collection (`--pages`), given a value it moves just those ids (`--pages=home,about`).
 - **Seeded objects (push only)** — `--objects=collection[:id,id]` exports object data from any seedable collection and lands it on the target, but only where the target doesn't already have that id. See [Seeding objects with `--objects`](#seeding-objects-with-objects) below.
 
-> **Git-managed templates are excluded.** If you keep a `builder/` folder at your project root, templates travel by git, not Sync — so Sync skips them and carries schemas and the flagged/settings/seeded data only. See [Git-First Templates](operations/git-first-templates).
+> **Git-managed templates are excluded.** If you keep a `builder/` folder at your project root, templates travel by git, not Sync — so Sync skips them and carries schemas and the flagged/settings/seeded data only. See [Git-First Templates](docs/operations/git-first-templates).
 
 ### The five feature flags
 
@@ -38960,7 +39270,7 @@ On your **local** Total CMS instance:
 #### Configuring sync in `tcms.php` instead
 
 The Settings page writes to `settings.json` inside `tcms-data`. If several
-installs [share one data folder](shared-data), they share that file — so
+installs [share one data folder](docs/operations/shared-data), they share that file — so
 every site would push to the same server with the same deploy key, and there
 would be no way to give one site its own remote.
 
@@ -39127,7 +39437,7 @@ tcms-data/.system/backups/objects/{collection}/{id}/{id}-{YYYYMMDD-HHMMSS}.json
 tcms-data/.system/backups/collections/{id}/{id}-{YYYYMMDD-HHMMSS}.json
 ```
 
-This happens on whichever side is receiving: production backs up on a push, your local instance backs up on a pull. Each schema and object keeps its ten most recent snapshots; re-syncing unchanged content does not stack duplicates. Objects restore with `tcms backup:list` and `tcms backup:restore` — see [Backups](backups). Schemas and collection settings are still a manual copy: find the snapshot you want, copy it back over the live file, then clear the cache.
+This happens on whichever side is receiving: production backs up on a push, your local instance backs up on a pull. Each schema and object keeps its ten most recent snapshots; re-syncing unchanged content does not stack duplicates. Objects restore with `tcms backup:list` and `tcms backup:restore` — see [Backups](docs/operations/backups). Schemas and collection settings are still a manual copy: find the snapshot you want, copy it back over the live file, then clear the cache.
 
 Backups only cover what sync overwrites. They are not a substitute for real backups of `tcms-data/`.
 
@@ -39184,7 +39494,7 @@ This is a **record history**, not a site backup. Only the object's data is kept:
 |-------|----------|
 | An object is **saved** | The state *before* the save |
 | An object is **deleted** | The final state, as it was |
-| A **sync** overwrites a schema, collection or object | The file that was about to be replaced (see [Sync](sync#automatic-backups)) |
+| A **sync** overwrites a schema, collection or object | The file that was about to be replaced (see [Sync](docs/operations/sync#automatic-backups)) |
 
 Creating an object writes nothing: its first state is recoverable from the first update's snapshot, and doubling writes on import-heavy sites buys nothing. Imports never write snapshots at all — the whole point of a bulk import is that it's bulk.
 
@@ -39258,8 +39568,8 @@ Both commands take `--json` for machine-readable output.
 ## Where It Fits
 
 - **Editing mistakes** — this feature. `backup:list`, pick the version, `backup:restore`.
-- **A sync that replaced the wrong thing** — also this feature; sync's pre-overwrite snapshots land in the same tree. See [Sync](sync#automatic-backups).
-- **A rolled-back application update** — see [Updates](updates); that path keeps the previous release's files, not content.
+- **A sync that replaced the wrong thing** — also this feature; sync's pre-overwrite snapshots land in the same tree. See [Sync](docs/operations/sync#automatic-backups).
+- **A rolled-back application update** — see [Updates](docs/operations/updates); that path keeps the previous release's files, not content.
 - **Disaster recovery** — back up `tcms-data/` with your host's tooling. Snapshots are inside it, so they come along.
 
 ---
@@ -39315,11 +39625,11 @@ git pull          # brings in template changes
 # clear caches as usual — see the Deployment guide
 ```
 
-See the [Deployment guide](operations/deployment) for webhook and cache-clearing details.
+See the [Deployment guide](docs/operations/deployment) for webhook and cache-clearing details.
 
 ## Pages and content still use Sync
 
-Git-first templates cover **templates only**. Your **pages** (the `builder-pages` records: routes, template bindings, nav, content) and other collection data are not git-controlled — they're promoted local → production with the [Sync Manager](operations/sync), exactly as before. Each artifact has one delivery channel:
+Git-first templates cover **templates only**. Your **pages** (the `builder-pages` records: routes, template bindings, nav, content) and other collection data are not git-controlled — they're promoted local → production with the [Sync Manager](docs/operations/sync), exactly as before. Each artifact has one delivery channel:
 
 - **Templates → git**
 - **Pages & content → Sync**
@@ -39948,7 +40258,7 @@ $results = $searchService->search(new SearchQuery(
 
 `relevance` defaults to `false`, in which case the legacy all-or-nothing AND filter is used unchanged. Optional `weights` boost matches in chosen fields; with no weights the score is simply the number of distinct terms matched.
 
-Twig templates can opt into the same ranking on the front-end search via [`cms.collection.searchScored()`](../twig/collections#searchscored) — the standard `cms.collection.search()` (with its AND/OR syntax and [priority properties](#prioritizing-search-results)) is unchanged.
+Twig templates can opt into the same ranking on the front-end search via [`cms.collection.searchScored()`](docs/twig/collections#searchscored) — the standard `cms.collection.search()` (with its AND/OR syntax and [priority properties](#prioritizing-search-results)) is unchanged.
 
 ---
 

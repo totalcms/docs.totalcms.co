@@ -41,7 +41,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 ### Collections
 - [Collection Settings](https://docs.totalcms.co/collections/settings/): Complete reference for Total CMS collection .meta.json settings including URL configuration, dashboard display, access control, sorting, and schema overrides.
 - [Storage Format](https://docs.totalcms.co/collections/storage-format/): Store a collection's objects as markdown files with YAML frontmatter instead of JSON
-- [Form Settings](https://docs.totalcms.co/collections/form-settings/): Configure Total CMS collection form behavior including help text display, form actions like redirects, webhooks, mailer, Pushover notifications, and validation.
+- [Form Settings](https://docs.totalcms.co/collections/form-settings/): Configure Total CMS collection form behavior including help text display, form actions like redirects, webhooks, and mailer emails, and validation.
 - [Data Views](https://docs.totalcms.co/collections/data-views/): Pre-compute and cache data structures from Total CMS collections using Twig templates. Data Views auto-rebuild when dependencies change.
 - [Importing Data](https://docs.totalcms.co/collections/import/): Import data into Total CMS collections from CSV and JSON files, update existing objects, and process images and files via the job queue.
 - [Migrating from another CMS](https://docs.totalcms.co/collections/migrate/): Move content into Total CMS from a WordPress WXR export, Alloy, Total CMS 1, or an RSS/Atom/JSON feed using the built-in platform importers.
@@ -161,7 +161,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Admin Twig](https://docs.totalcms.co/admin/twig/): Reference for the cms.admin namespace providing dashboard stats, job queue management, URL helpers, and system diagnostics.
 
 ### Notifications
-- [Mailer](https://docs.totalcms.co/notifications/mailer/): Configure and send transactional and notification emails from Total CMS.
+- [Mailer](https://docs.totalcms.co/notifications/mailer/): Create Twig email templates in Total CMS and send them from forms, password resets, automations, PHP, or as a bulk send to every object in a collection.
 
 ### Auth
 - [Authentication](https://docs.totalcms.co/auth/auth/): Protect pages and content sections with Total CMS authentication using page locks, section locks, and user data access in Twig templates.
