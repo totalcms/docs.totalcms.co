@@ -92,6 +92,18 @@ export default defineConfig({
 			customCss: [
 				'./src/styles/custom.css',
 			],
+			// Matomo Tag Manager container, injected into every page's <head>.
+			head: [
+				{
+					tag: 'script',
+					content: `var _mtm = window._mtm = window._mtm || [];
+_mtm.push({'mtm.startTime': (new Date().getTime()), 'event': 'mtm.Start'});
+(function() {
+	var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+	g.async=true; g.src='https://matomo.totalcms.co/js/container_R0RCCzub.js'; s.parentNode.insertBefore(g,s);
+})();`,
+				},
+			],
 			sidebar,
 		}),
 	],
