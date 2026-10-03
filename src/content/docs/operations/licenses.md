@@ -7,56 +7,13 @@ related:
 ---
 Total CMS is a one-time purchase, licensed per domain. There is no subscription: a license keeps working for as long as you run the site. The edition you buy decides which features are available, and every license includes two years of updates.
 
-Current prices, renewals, and upgrade costs are on the [pricing page](https://totalcms.co/pricing).
-
 ## Editions
 
-Total CMS is sold in two editions, **Standard** and **Pro**.
+Total CMS is sold in two editions. **Standard** covers a typical content site: blogs, galleries, file depots, forms that send email, access groups, passkeys, and a read-only MCP server for AI agents. **Pro** adds custom schemas, the external REST API with API keys, the OAuth server, Automations, Data Views, the bulk mailer, webhook form actions, and Algolia search.
+
+Every feature's documentation notes when it needs Pro. For the full side-by-side comparison and current prices, see the [pricing page](https://totalcms.co/pricing).
 
 > Lite is no longer sold. Existing Lite licenses keep working and stay supported: you can renew their updates, move them to a new domain, or upgrade them to Standard or Pro.
-
-### Included in every edition
-
-These collection schemas and features are available on every license:
-
-* code, color, date, email, file, feed, gallery, image, number, styledtext, svg, text, toggle, and url schemas
-* Templates
-
-### Standard
-
-**Schemas:**
-* blog
-* depot
-
-**Features:**
-* Access groups
-* Barcodes
-* Image watermarks
-* Mailer form actions
-* MCP server (anonymous, read-only; see below)
-* Passkeys
-* QR codes
-* RSS import
-* Text watermarks
-* Whitelabel templates
-
-### Pro
-
-Everything in Standard, plus:
-
-**Schemas:**
-* Custom schemas
-
-**Features:**
-* Algolia search
-* API keys
-* Automations
-* Bulk mailer
-* Data views
-* External REST API
-* OAuth server
-* Webhook form actions
-* Whitelabel Pro templates
 
 ### MCP and AI access
 
@@ -94,7 +51,7 @@ Total CMS is free to use, with every Pro feature, on domains that can only exist
 | `127.0.0.1`, on any port | `127.0.0.1:8000` |
 | Any `.test` domain | `mysite.test`, `client.mysite.test` |
 
-These names are reserved for testing by internet standards ([RFC 6761](https://www.rfc-editor.org/rfc/rfc6761)), so they can never be a real public website. Tools like Laravel Herd, Valet, and DDEV serve local sites on `.test` by default, and Chrome and Firefox resolve any `.localhost` name to your own machine without a hosts-file entry.
+These names are reserved for testing by internet standards ([RFC 6761](https://www.rfc-editor.org/rfc/rfc6761)), so they can never be a real public website. Herd and Valet serve on `.test` by default; DDEV can be configured to. Chrome and Firefox resolve any `.localhost` name to your own machine without a hosts-file entry.
 
 A development domain runs as a **Development license**: full Pro features with no expiry. The admin sidebar shows "Development license in use. Not for production sites." as a reminder.
 
