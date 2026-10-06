@@ -56,6 +56,10 @@
                 "slug": "collections/sitemap-builder"
             },
             {
+                "label": "RSS Feeds",
+                "slug": "collections/rss-feed"
+            },
+            {
                 "label": "Podcasts",
                 "slug": "collections/podcast"
             }
@@ -137,6 +141,10 @@
                         "slug": "fields/localized-text"
                     },
                     {
+                        "label": "Markdown",
+                        "slug": "fields/markdown"
+                    },
+                    {
                         "label": "Number & Range",
                         "slug": "fields/number-range"
                     },
@@ -159,6 +167,10 @@
                     {
                         "label": "Select",
                         "slug": "fields/select"
+                    },
+                    {
+                        "label": "Styled Markdown",
+                        "slug": "fields/styled-markdown"
                     },
                     {
                         "label": "Styled Text",

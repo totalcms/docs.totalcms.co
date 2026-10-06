@@ -47,6 +47,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Migrating from another CMS](https://docs.totalcms.co/collections/migrate/): Move content into Total CMS from a WordPress WXR export, Alloy, Total CMS 1, or an RSS/Atom/JSON feed using the built-in platform importers.
 - [Exporting Data](https://docs.totalcms.co/collections/export/): Export Total CMS collection data as JSON, CSV, or ZIP archives with include and exclude filtering for backups and migrations.
 - [Sitemap Builder](https://docs.totalcms.co/collections/sitemap-builder/): Generate XML sitemaps for Total CMS collections and builder pages, with admin-managed defaults, a sitemap index at /sitemap.xml, and backward-compatible URL parameters.
+- [RSS Feeds](https://docs.totalcms.co/collections/rss-feed/): Publish a collection as an RSS feed at /feed/rss/{collection}: turn it on per collection, map the fields, choose what is left out, and build filtered variants with URL parameters.
 - [Podcasts](https://docs.totalcms.co/collections/podcast/): Publish a podcast from Total CMS: create the show and episode collections from the built-in schemas, upload episodes, and serve a feed Apple Podcasts and Spotify accept with one line of Twig.
 
 ### Schemas
@@ -70,12 +71,14 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Image & Gallery](https://docs.totalcms.co/fields/image-gallery/): Configure image and gallery upload fields in Total CMS with validation rules, location stripping, and image or text watermark settings.
 - [Lists](https://docs.totalcms.co/fields/lists/): Configure list field settings in Total CMS including remove buttons, duplicate item control, and item management options for tags and categories.
 - [Localized Text](https://docs.totalcms.co/fields/localized-text/): Multi-language text, textarea, and styled-text fields with one value per configured locale. Pro edition only.
+- [Markdown](https://docs.totalcms.co/fields/markdown/): The markdown field is a Markdown source editor with a toolbar, preview and fullscreen. It stores what you write; render it with the markdown filter.
 - [Number & Range](https://docs.totalcms.co/fields/number-range/): Configure number and range input fields in Total CMS with min, max, and step settings for precise numeric value control.
 - [Password](https://docs.totalcms.co/fields/password/): Set up password fields in Total CMS with automatic confirmation input, match validation, and customizable placeholder text.
 - [Price](https://docs.totalcms.co/fields/price/): Locale-aware currency price field — live formatting as you type, a per-currency symbol and icon, configurable currency/decimals/locale, stored as a plain number.
 - [Radio & Checklist](https://docs.totalcms.co/fields/radio-checklist/): Configure radio button and checklist fields in Total CMS with responsive fieldGrid and fieldColumns layout settings for multi-column option displays.
 - [Secret](https://docs.totalcms.co/fields/secret/): Mask plaintext-stored sensitive values like API keys and tokens using the secret field type, with a built-in show/hide toggle and password-manager opt-out.
 - [Select](https://docs.totalcms.co/fields/select/): Configure select and multiselect dropdown fields in Total CMS with the clearValue button setting for optional selection clearing.
+- [Styled Markdown](https://docs.totalcms.co/fields/styled-markdown/): The styledmarkdown field edits Markdown in the Styled Text visual editor, with a source mode and preview. It stores Markdown source; render it with the markdown filter.
 - [Styled Text](https://docs.totalcms.co/fields/styled-text/): Configure the Tiptap rich text editor in Total CMS with toolbar options, inline styles, HTML snippets, color palettes, and image upload rules.
 - [SVG](https://docs.totalcms.co/fields/svg/): Configure SVG field sanitization in Total CMS to prevent XSS attacks, with the option to disable svgclean for trusted content.
 - [Text Inputs](https://docs.totalcms.co/fields/text-inputs/): Configure text and textarea fields in Total CMS with maxlength, minlength, pattern validation, readonly, disabled, rows, and HTML sanitization settings.

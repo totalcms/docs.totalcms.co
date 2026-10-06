@@ -335,6 +335,8 @@ This account has full privileges, including installing extensions and modifying 
 
 Your license is validated automatically. New installations start with a free trial; if you've already purchased a license for this domain, it's detected on first run.
 
+Local development domains are free. On `localhost`, `127.0.0.1`, or any `.localhost` or `.test` domain, Total CMS runs with every Pro feature and needs no trial or license key. A `.local` domain is not one of them and starts a normal trial. See [Development Domains](docs/operations/licenses#development-domains).
+
 You can change the license later from **Settings → License Manager** in the admin.
 
 ![Setup Wizard — License](docs/get-started/images/wizard-license.jpg)
@@ -2602,6 +2604,88 @@ For complete filtering documentation including boolean/string handling, multi-cr
 
 ---
 
+## RSS Feeds
+
+A collection can publish its objects as an RSS feed at:
+
+```
+/feed/rss/{collection}
+```
+
+The feed is **off by default**. A collection publishes one only when **Publish RSS Feed** is turned on in its settings. For every other collection the URL returns 404, the same as for a collection that does not exist.
+
+Collections created from the `blog` and `feed` schemas are the exception: they are created with the feed already on.
+
+## Configuring a Collection
+
+Each collection has an **RSS Feed** card on its edit form (`/admin/collections/{collection}/edit`). Turning on the toggle reveals the rest of the settings:
+
+| Setting | What it does |
+|---|---|
+| **Publish RSS Feed** | Master toggle. Off → `/feed/rss/{collection}` returns 404. |
+| **Feed Name** | The feed's title in a reader. Defaults to the site name. |
+| **Language** | The language the feed is written in, picked from the site's locale list. |
+| **Feed Description** | A short description. Defaults to the feed name. |
+| **Link to Website** | The page the feed belongs to. Defaults to the site's homepage. |
+| **Feed Image** | URL of an image that represents the feed. |
+| **Include Filter** | Only include objects matching this expression (e.g. `featured:true`). |
+| **Exclude Filter** | Skip objects matching this expression (e.g. `category:internal`). |
+| **Item Limit** | The most items the feed lists, newest first. Defaults to 25; `-1` for no limit. |
+| **Hidden Field** | Objects with this property turned on are left out of the feed. Defaults to `draft`. |
+| **Title / Date / Content / Author / Media Property** | Which object property supplies each part of an item. Defaults: `title`, `updated`, `summary`, `author`, `media`. |
+
+Saving the collection writes these into its `.meta.json` under a `feed` block.
+
+If the Content Property is a `markdown` or `styledmarkdown` field, its Markdown is rendered to HTML for the feed, the same way the `|markdown` filter renders it. Other field types go out as written.
+
+The feed reads the collection's **index**, not the full objects. A property you map, filter on or name as the Hidden Field must be in the schema's index.
+
+## What Is Left Out
+
+- **Hidden objects.** An object is left out when its Hidden Field is on. That field is `draft` unless you choose another, so drafts are left out of every feed by default, for every schema.
+- **Objects without a URL.** An item needs a link, so the collection needs a URL and the object needs a complete one.
+
+Choosing a different Hidden Field **replaces** `draft`. If a collection uses `archived` instead, objects with `archived` on are left out and `draft` no longer hides anything. To leave out both, keep the Hidden Field on one and add the other to the Exclude Filter, for example `draft:true`.
+
+That is also how to publish a feed that includes drafts: point the Hidden Field at another property. Remember the feed is public.
+
+The Hidden Field must be in the schema's index to take effect, and it can only be set on the collection. A URL cannot change it.
+
+## URL Parameters
+
+The saved settings are the feed. A URL may adjust only these, to build a variant of an enabled feed, such as one category or a shorter list:
+
+| Parameter | Effect |
+|---|---|
+| `include` | Replaces the Include Filter |
+| `exclude` | Replaces the Exclude Filter |
+| `limit` | Replaces the Item Limit |
+| `name` | Replaces the Feed Name |
+| `description` | Replaces the Feed Description |
+
+```
+/feed/rss/blog?include=category:news&name=News%20Only&limit=10
+```
+
+Every other parameter is ignored. In particular, a URL cannot turn a feed on, cannot choose which properties appear, and cannot bring back hidden objects.
+
+The **Feeds** utility on a collection (`/admin/collections/{collection}/-feeds`) builds these URLs for you.
+
+## Locking a Feed Down Further
+
+Anyone who can reach an enabled feed can use `include` and `exclude` to filter it by any indexed property. If that is more than you want, leave **Publish RSS Feed** off and serve the feed from a Site Builder page with [`cms.feed.rss()`](docs/twig/feeds) instead. The template then decides exactly which objects and fields go out, and no URL parameter can change it.
+
+## Upgrading from 3.6.1 or Earlier
+
+In 3.6.1 and earlier, every collection that had a URL served a feed, and the URL's parameters chose the fields. That made every indexed field of those collections public, and drafts were only left out for blogs. On upgrade:
+
+- **Blog and feed collections keep their feed.** A migration turns **Publish RSS Feed** on for collections using the `blog`, `blog-legacy` or `feed` schema, or a schema that inherits from one.
+- **Every other collection's feed stops.** Its URL returns 404 until you turn the feed on in that collection's settings.
+- **Field mapping moves into the collection.** `title`, `content`, `date`, `author`, `media`, `link`, `image` and `language` in a feed URL are now ignored. If a feed URL used them, set the same values on the collection's RSS Feed card. A feed that mapped `content` to another property shows `summary` until you do.
+- **Drafts are left out on every collection**, not only blogs, unless you change the collection's Hidden Field.
+
+---
+
 ## Podcasts
 
 Podcasting ships as the bundled **Podcast** extension: two schemas, `podcast`
@@ -3790,6 +3874,13 @@ Both `--- My Header` (new) and `---Title Here---` (still supported) produce the 
 +------------------+------------------+
 ```
 
+
+### Dividers and headers with conditional fields
+
+A divider or header hides itself while every field in the section it introduces is hidden by a [visibility rule](docs/fields/all-fields#conditional-visibility), and reappears when one of them shows. A group of settings behind a toggle can therefore have its own dividers without leaving stray lines when the toggle is off. The section is the run of rows up to the next divider or header; if it contains a fieldset or an accordion, the divider always shows.
+
+Fieldsets and accordions do the same. A fieldset hides while every field inside it is hidden, an accordion panel likewise, and an accordion hides once all of its panels have.
+
 ## Fieldsets
 
 Use `[[ ]]` to group related fields inside a styled fieldset container. The text after `[[` on the same line is an optional legend:
@@ -4253,6 +4344,8 @@ happen. Every one of those has a field built for it.
 | a name, headline or short label | `text` | Add `pattern`, `minLength`, `maxLength` for codes with a known format. |
 | a summary, excerpt or plain note | `textarea` | No formatting. |
 | an article body, formatted content | `styledtext` | Rich text, stored as HTML. |
+| content written as Markdown source | `markdown` | A source editor; stored as written. Render with the `markdown` filter. |
+| content kept as Markdown source, edited visually | `styledmarkdown` | The Styled Text editor, stored as Markdown. Render with the `markdown` filter. |
 | an embed snippet, custom CSS, raw markup | `code` | Set `mode` to `html`, `css` or `javascript`. |
 | an email address | `email` | Validated. Never `text`. |
 | a phone number | `phone` | Formatted on output with `formatPhone`. |
@@ -6494,6 +6587,92 @@ The **order of the `available` array matters** — when a template calls `cms.lo
 
 ---
 
+## Markdown
+
+The `markdown` field is a source editor: you write Markdown, and it is stored exactly as you wrote it. A toolbar inserts the syntax for you, a preview shows the result, and fullscreen gives you room for a long document.
+
+There are two Markdown fields, and they store the same thing:
+
+| Field | How you edit |
+|---|---|
+| `markdown` | You write the Markdown source. Nothing is rewritten, and footnotes, raw HTML and anything else Markdown allows are kept. |
+| [`styledmarkdown`](docs/fields/styled-markdown) | A visual editor writes the Markdown for you. Best for editors who don't know Markdown. |
+
+Because the stored value is the same, you can change a field from one to the other in the schema at any time.
+
+## Rendering
+
+The value is Markdown source, so pass it through the [`markdown` filter](docs/twig/markdown):
+
+```twig
+{{ post.body|markdown }}
+```
+
+The filter escapes any HTML in the source. Always render the field with the filter; printing the raw value shows the Markdown source and any HTML in it.
+
+## The editor
+
+In the admin the editor highlights Markdown syntax as you type. On a public form it is a plain text area with the same toolbar.
+
+The toolbar inserts syntax at the cursor or around the selected text:
+
+- **Headings, bold, italic, inline code.** Pressing a button again removes the formatting.
+- **Bullet list, numbered list, blockquote.** These apply to every line you have selected.
+- **Code block, horizontal rule, table.** These insert a block on its own lines.
+- **Link.** Wraps the selected text as `[text](url)`.
+- **Image and File.** Open the upload dialog and insert `![alt](url)` or `[name](url)`. Before the object has been saved for the first time, uploads are not available and the buttons insert the syntax for you to fill in.
+
+### Preview and fullscreen
+
+**Preview** replaces the editor with the rendered content; press it again to go back to the source. It is an approximation of your site: footnotes, abbreviations and definition lists are rendered by your site but not by the preview.
+
+**Fullscreen** expands the editor to the whole window. In fullscreen, Preview shows the source and the rendered content side by side, and the preview follows what you type. Press Escape to leave fullscreen.
+
+### Changing the toolbar
+
+Add `toolbarConfig` to the field's settings to choose your own buttons, in the same group format [Styled Text](docs/fields/styled-text#toolbar-configuration) uses. The buttons are `heading`, `bold`, `italic`, `strike`, `inlineCode`, `bulletList`, `orderedList`, `blockquote`, `codeBlock`, `horizontalRule`, `link`, `image`, `file`, `table`, `preview` and `fullscreen`. `strike` is not in the default toolbar.
+
+```json
+{
+  "toolbarConfig": [
+    { "name": "text", "buttons": ["heading", "bold", "italic", "strike"] },
+    { "name": "insert", "buttons": ["link", "image"] },
+    { "name": "misc", "buttons": ["preview", "fullscreen"], "align": "right" }
+  ]
+}
+```
+
+## Settings
+
+These Styled Text settings work the same way in this field. Each links to its description on the [Styled Text](docs/fields/styled-text) page.
+
+| Setting | What it does |
+|---|---|
+| [`height`, `heightMin`, `heightMax`](docs/fields/styled-text#editor-height) | The editor's height. |
+| [`toolbarConfig`](docs/fields/styled-text#toolbar-configuration) | The toolbar buttons and their groups. |
+| [`headingLevels`](docs/fields/styled-text#heading-levels) | The levels in the heading menu. The default is 2, 3 and 4. |
+| [`imagePreset`, `imageUploadRules`](docs/fields/styled-text#upload-settings) | The preset and validation rules for image uploads. |
+
+## Sanitizing
+
+A markdown field holds source, so it is stored exactly as written, the same as a [code field](docs/fields/code-editor). HTML in the source is not removed when the object is saved. The `markdown` filter escapes it when the page renders, which is why code samples such as `<script>` inside a code block stay intact.
+
+If people you don't fully trust can write to the field, such as visitors using a public form, turn on `htmlclean` so unsafe HTML is stripped when the object is saved:
+
+```json
+{
+  "htmlclean": true
+}
+```
+
+With it on, `<script>` tags and event attributes are removed everywhere in the value, including inside code blocks, so leave it off for content that shows HTML code samples.
+
+## AI agents and the API
+
+Over the REST API and MCP the value is the Markdown string, read and written as is. Agents should send Markdown, not HTML.
+
+---
+
 ## Number and Range Fields
 
 ```json
@@ -6957,6 +7136,121 @@ Select fields include a clear button (x) that appears when a value is selected, 
 ```
 
 When enabled (default), a circular clear button appears on the right side of the select field whenever a value is selected. Clicking it clears the selection and returns to the placeholder state.
+
+---
+
+## Styled Markdown
+
+The `styledmarkdown` field stores a Markdown string. It uses the same editor as [Styled Text](docs/fields/styled-text), limited to what Markdown can express, so editors get a toolbar and writers who know Markdown get the source.
+
+For writing the Markdown source yourself, use the [`markdown`](docs/fields/markdown) field. Both store the same value, so a schema can switch between them at any time.
+
+Use it when the content should stay as Markdown: documentation, changelogs, or bodies in a [markdown-format collection](docs/collections/storage-format). Use [Styled Text](docs/fields/styled-text) when editors need color, alignment, or embedded video.
+
+## Rendering
+
+The value is Markdown source, so pass it through the [`markdown` filter](docs/twig/markdown):
+
+```twig
+{{ post.body|markdown }}
+```
+
+The filter escapes any HTML in the source. Always render the field with the filter; printing the raw value shows the Markdown source and any HTML in it.
+
+## The editor
+
+The toolbar offers headings, bold, italic, inline code, bullet and numbered lists, blockquotes, code blocks, horizontal rules, links, image uploads, file links, and tables. There is no color, font, alignment, or underline, because Markdown has no syntax for them.
+
+The **Source** button on the right switches to the raw Markdown and back.
+
+### Changing the toolbar
+
+Add `toolbarConfig` to the field's settings to choose your own buttons, in the same group format [Styled Text](docs/fields/styled-text) uses. These extra buttons are available but not in the default toolbar: `strike`, `undo`, `redo`, `preview`, and `fullscreen`.
+
+```json
+{
+  "toolbarConfig": [
+    { "name": "text", "buttons": ["heading", "bold", "italic", "strike", "inlineCode"] },
+    { "name": "insert", "buttons": ["link", "image"] },
+    { "name": "misc", "buttons": ["preview", "codeView", "fullscreen"], "align": "right" }
+  ]
+}
+```
+
+`preview` shows the content rendered as HTML. It is an approximation of your site, in the same way the visual editor is. Keep `codeView` in a custom toolbar: it is how content the visual editor cannot keep gets edited.
+
+Buttons for things Markdown cannot express, such as `underline` or `align`, do nothing in this field.
+
+## Settings
+
+These Styled Text settings work the same way in this field. Each links to its description on the [Styled Text](docs/fields/styled-text) page.
+
+| Setting | What it does |
+|---|---|
+| [`height`, `heightMin`, `heightMax`](docs/fields/styled-text#editor-height) | The editor's height. |
+| [`pasteAsPlainText`](docs/fields/styled-text#paste-behavior) | Paste without formatting. |
+| [`toolbarConfig`](docs/fields/styled-text#toolbar-configuration) | The toolbar buttons and their groups. See [Changing the toolbar](docs/fields/styled-markdown#changing-the-toolbar) for the buttons this field has. |
+| [`headingLevels`](docs/fields/styled-text#heading-levels) | The levels in the heading menu. The default is 2, 3 and 4. |
+| [`charCounterCount`, `charCounterMax`, `wordCounterCount`, `wordCounterMax`](docs/fields/styled-text#character-and-word-counters) | Counters under the editor. They count the visible text, not the Markdown characters, and a maximum only highlights when it is exceeded. |
+| [`imagePreset`, `imageUploadRules`](docs/fields/styled-text#upload-settings) | The preset and validation rules for image uploads. |
+
+Custom inline styles, custom inline classes, block classes, HTML snippets and the color palette do nothing in this field. Markdown has no syntax for them.
+
+## What the visual editor changes
+
+The visual editor reads your Markdown and writes it back in one consistent style. The first time someone edits a field in visual mode, the source is normalized:
+
+| You wrote | It is saved as |
+|---|---|
+| `*` or `+` bullets | `-` bullets |
+| `1)` numbering | `1.` numbering |
+| `Title` underlined with `===` | `# Title` |
+| `__bold__`, `_italic_` | `**bold**`, `*italic*` |
+| `~~~` or indented code blocks | Backtick-fenced code blocks |
+| Reference links (`[text][ref]`) | Inline links |
+| A single line break | A line break with two trailing spaces |
+| Blank lines between list items | A tight list |
+
+These render the same on your site, apart from the last one: a tight list has slightly less space between its items.
+
+A field that nobody edits is never rewritten. Opening and saving an object leaves its Markdown exactly as it was.
+
+## Content the visual editor cannot keep
+
+Some syntax has no equivalent in the visual editor:
+
+- raw HTML and HTML comments
+- footnotes (`[^1]`)
+- abbreviations (`*[HTML]: HyperText Markup Language`)
+- an image inside a link (`[![badge](badge.png)](https://example.com)`)
+
+When a field contains any of these, it opens in source mode with a notice, and nothing is changed. You can still switch to the visual editor; it asks first, because editing there removes that syntax.
+
+HTML inside a code block or inline code is not affected. It is kept as written in both modes. To write about a tag in running text, put it in inline code (`` `<div>` ``); a bare `<div>` typed in the visual editor is saved as raw HTML.
+
+The visual editor also writes HTML entities as plain characters when you edit: `&amp;` becomes `&`, and `&#169;` becomes `©`.
+
+## Images and files
+
+Image and file uploads work as they do in Styled Text. An uploaded image is inserted as `![alt text](url)`. Image width and float options are not offered, because Markdown cannot store them.
+
+## Sanitizing
+
+A styledmarkdown field holds source, so it is stored exactly as written, the same as a [code field](docs/fields/code-editor). HTML in the source is not removed when the object is saved. The `markdown` filter escapes it when the page renders, which is why code samples such as `<script>` inside a code block stay intact.
+
+If people you don't fully trust can write to the field, such as visitors using a public form, turn on `htmlclean` in the field's settings so unsafe HTML is stripped when the object is saved:
+
+```json
+{
+  "htmlclean": true
+}
+```
+
+With it on, `<script>` tags and event attributes are removed everywhere in the value, including inside code blocks, so leave it off for content that shows HTML code samples.
+
+## AI agents and the API
+
+Over the REST API and MCP the value is the Markdown string, read and written as is. Agents should send Markdown, not HTML.
 
 ---
 
@@ -11688,7 +11982,7 @@ By default, gallery images display in their stored order. Use the `sort` option 
 {% if cms.auth.verifyFilePassword(password, 'documents', docId, 'file') %}
     <a href="{{ cms.media.download(docId, {pwd: password}) }}">Download Document</a>
 {% else %}
-    <p>Invalid password</p>
+    <p>Invalid login credentials</p>
 {% endif %}
 ```
 
@@ -14120,14 +14414,18 @@ Serve it from a route ending in `.xml`, and remember `meta.self`.
 
 ## Compared with the built-in feed
 
-Total CMS also serves `/feed/rss/{collection}` without any template. That
-endpoint maps fields by name — which field is the title, which is the content
-— and that is its limit: it cannot build a title out of two fields, and it
-cannot run content through `|markdown`, so a Markdown field arrives at the
-subscriber as raw `- **like this**`.
+A collection can also publish a feed at `/feed/rss/{collection}` without any
+template: turn on **Publish RSS Feed** in the collection's settings. See
+[RSS Feeds](docs/collections/rss-feed).
+
+That endpoint maps fields by name — which property is the title, which is the
+content — and that is its limit: it cannot build a title out of two fields or
+shape the content beyond rendering a Markdown field to HTML. It also reads the
+collection index, so every property it uses has to be indexed.
 
 Use the endpoint when your collection already has a plain-text summary field
-and a usable title. Build the feed in Twig when you need control over either.
+and a usable title. Build the feed in Twig when you need control over either,
+or when you want a feed no URL parameter can filter.
 
 ---
 
@@ -25085,6 +25383,7 @@ Customize the welcome message at the top of the admin dashboard:
 | `submitLabel` | Sign in | Text for the submit button |
 | `forgotPasswordLabel` | Forgot Password? | Text for the forgot password link |
 | `showForgotPassword` | true | Whether to show the forgot password link |
+| `showRememberMe` | true | Whether to show the persistent login checkbox |
 
 ### Login Page - Below Form
 
@@ -27244,7 +27543,7 @@ Verify a password for accessing a protected file or depot item.
 {% if cms.auth.verifyFilePassword(password, 'documents', docId, 'file') %}
     <a href="{{ cms.media.download(docId, {pwd: password}) }}">Download</a>
 {% else %}
-    <p>Invalid password</p>
+    <p>Invalid login credentials</p>
 {% endif %}
 
 {# For depot files, include the filename #}
@@ -30692,7 +30991,7 @@ The same `/mcp` URL serves three personas; the tool surface scales per caller:
 | **Authenticated consumer** (`authenticated`) | `Authorization: Bearer <oauth-token>` header with at least one `mcp:*` scope | The **intersection** of what the token's scopes consent to and what the approving user's access groups grant — not every `mcp.access: 'authenticated'` collection. A blogger-group user's token can read/write the collections their groups say `blogger` can touch, plus anything marked `mcp.access: 'public'`; nothing else. Used by "Connect Claude" / "Connect Cursor" style flows where an end-user grants a third-party AI client scoped access to their content. See [The three-layer rule](#the-three-layer-rule-scope-group-exposure) and [OAuth Server](docs/apis/oauth) for setup. A token approved by an **admin-group** user and carrying the `cms:admin` scope elevates to the admin persona — see [Required scopes for MCP](#required-scopes-for-mcp). |
 | **Public AI agent** (`public`) | No credentials (anonymous) | Only tools marked `access: public` AND only collections with `mcp.access: 'public'`. Drafts are auto-hidden. |
 
-Public access is **default-deny**. Anonymous requests get a 401 unless the operator explicitly flips `mcp.publicAccess` on in settings AND marks at least one collection's `mcp.access` as `public` in the schema editor.
+Public content is **opt-in per collection**. `mcp.publicAccess` is on by default, so an anonymous caller can open a session, but every collection's `mcp.access` defaults to `admin` — the public persona sees nothing until the operator marks a collection's `mcp.access` as `public` in the schema editor. To refuse anonymous callers outright (401), set `mcp.publicAccess` to `false`.
 
 ### A fourth caller: the visitor's browser
 
@@ -31018,7 +31317,7 @@ Settings live in **Admin → Settings → MCP Server** and serialize to `mcp.*` 
 | Key | Default | Effect |
 |---|---|---|
 | `mcp.enabled` | `true` | Master switch. When `false`, `POST /mcp` returns 404 and discovery reports `disabled: true`. |
-| `mcp.publicAccess` | `false` | Default-deny for anonymous callers. When `false`, requests without an API key get 401 + `WWW-Authenticate: Bearer realm="MCP", error="login_required"`. |
+| `mcp.publicAccess` | `true` | Master switch for anonymous callers. When `true`, they resolve to the public persona and see only collections marked `mcp.access: 'public'` (none by default). When `false`, requests without an API key get 401 + `WWW-Authenticate: Bearer realm="MCP", error="login_required"`. |
 | `mcp.allowedOrigins` | `[]` | CORS origin allow-list for **browser-rendered** AI clients. Empty = browsers blocked. See [CORS and browser AI clients](#cors-and-browser-ai-clients) below. |
 | `mcp.publicIpPerMinute` | `60` | Per-IP rate limit on anonymous requests, 60-second window. API key callers bypass. Set to `0` to disable. |
 | `mcp.toolPrefix` | `""` | Optional snake_case prefix prepended to every tool name (`bistro` → `bistro_list_collections`). Useful when an agent connects to multiple T3 sites simultaneously. |
@@ -31284,7 +31583,7 @@ Before submitting your site to Anthropic's Connector Directory, walk through:
 
 ## Security considerations
 
-- **Anonymous access is default-deny.** `mcp.publicAccess: false` and `mcp.access: 'admin'` on every reserved schema mean a fresh install never leaks content until the operator opts a collection in.
+- **Anonymous content is opt-in.** `mcp.publicAccess` defaults to `true`, so anonymous callers can open a session, but `mcp.access` defaults to `admin` on every collection, so a fresh install never leaks content until the operator opts a collection in. Set `mcp.publicAccess: false` to turn anonymous callers away with a 401.
 - **Drafts are server-filtered.** Public/anonymous callers can never see `draft:true` items regardless of caller intent — `query_collection`, `search_collection`, and `get_object` enforce this server-side. AUTHENTICATED (OAuth) callers see drafts only in collections where their access groups grant `read` — public `mcp.access` exposure by itself does not unlock drafts, even though it unlocks published content. `get_view` / `query_view` are the one exception: they follow the view's own `mcp.access` field, not group grants — see [Data views are the exception](#data-views-are-the-exception-to-the-group-rule).
 - **Public registration carries automatic login.** Forms that use the public registration endpoint auto-log the new user in; gate them with CAPTCHA / rate limit / email verification when the access group new users land in reaches sensitive content. (Unrelated to MCP directly, but worth flagging — the same operator who exposes a collection to MCP might also be running public registration.)
 - **API keys are scoped.** A key scoped only to `/collections/blog` does NOT unlock MCP; the operator must explicitly include `/mcp` (or `*`) in the scope.
@@ -31424,7 +31723,7 @@ Anonymous callers see only what you have deliberately exposed. An API key raises
 
 Create one in **Admin → API Keys**, then supply it as an `X-API-Key` header, or paste it into the desktop extension's **API key** field at install time.
 
-Without a key, what an agent can reach is governed by `mcp.publicAccess` and each collection's own `mcp.access` setting. A site with public access off simply exposes nothing to anonymous callers, which is the default.
+Without a key, what an agent can reach is governed by `mcp.publicAccess` and each collection's own `mcp.access` setting. Public access is on by default, but every collection starts as admin-only, so a site exposes nothing to anonymous callers until a collection is marked public.
 
 ## If it doesn't connect
 
@@ -34687,7 +34986,7 @@ All commands support a `--json` flag that outputs valid JSON to stdout. This is 
 
 ### `info`
 
-Show site status, version, edition, license, collection count, and cache backend.
+Show site status, version, edition, license, collection count, and cache backends.
 
 ```bash
 tcms info
@@ -34697,16 +34996,41 @@ tcms info --json
 **JSON output:**
 ```json
 {
-    "version": "3.2.2",
+    "version": "3.6.2",
     "build": "7f080a63",
     "edition": "pro",
     "license": { "valid": true, "trial": false, "trialDaysRemaining": null },
     "domain": "example.com",
     "collections": { "total": 12 },
-    "schemas": { "reserved": 22, "custom": 4 },
-    "cache": { "backend": "apcu" }
+    "schemas": { "reserved": 38, "custom": 4 },
+    "cache": {
+        "backend": "apcu",
+        "backends": { "opcache": "available", "apcu": "available", "redis": "active", "filesystem": "active" }
+    }
 }
 ```
+
+`cache.backend` is the backend a web request stores data in; `cache.backends` lists every installed one with its status in the CLI process — `available` means installed but not usable from the command line, which is normal for APCu and OPcache when `apc.enable_cli` and `opcache.enable_cli` are off. The admin's Cache Manager shows the same status for web requests.
+
+The domain, and with it the edition and license, come from the Host header, which the CLI does not have. Web requests record the site's origin in `cache/.siteurl` and the CLI reads it back, so the first `tcms info` on a fresh install (or right after a cache clear) can report `unknown` and a trial until the site has been loaded once in a browser. Setting `domain` in `config/tcms.php` overrides both.
+
+### `check`
+
+The admin's **Server Checker** (Admin → Utilities) from the command line: bundle integrity, license, server information, directory permissions, required and optional PHP extensions.
+
+```bash
+tcms check
+tcms check --config    # also print the merged configuration, secrets redacted
+tcms check --json
+```
+
+The command exits **1** when the install cannot run — the bundle is corrupted, `tcms-data`, `cache`, `logs` or `tmp` is not writable, or a required extension is missing — and **0** otherwise, so a deploy script can gate on it:
+
+```bash
+composer update && vendor/bin/tcms check || exit 1
+```
+
+The checks run in the command line's PHP, which is not the one serving pages: the extensions, limits, cache state and session settings it reports can differ from the web server's, and rows only a web request knows (the web server software) are left out. For the values a page request sees, use the Server Checker in the admin. The domain and license follow the same `cache/.siteurl` rule as `info`.
 
 ---
 
@@ -39216,7 +39540,7 @@ These five are the only collections sync can move *destructively* (overwriting a
   - The five feature-flag collections (`builder-pages`, `dataviews`, `mailer`, `mcp-prompt`, `automations`) are reachable only through their own flag, not `--objects`.
   - `image`, `gallery`, `file`, and `depot` can never be seeded — see [Binaries never travel](#what-never-gets-synced) below.
   - `playground` can never be seeded — it's a per-install scratchpad created on demand, not portable content.
-- Binaries never travel even for seedable collections: a card or field that references an image/file/gallery/depot is exported without that field, so the receiving object simply won't have it populated. A pushed blog post never blanks a production image field, because the field never arrives at all.
+- Binaries never travel even for seedable collections: a card or field that references an image/file/gallery/depot is exported without that field, so the receiving object simply won't have it populated. A pushed blog post never blanks a production image or file field, because the field never arrives at all.
 
 ## What Never Gets Synced
 
