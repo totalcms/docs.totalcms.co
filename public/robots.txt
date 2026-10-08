@@ -3,6 +3,7 @@
 
 User-agent: *
 Allow: /
+Disallow: /cdn-cgi/l/
 
 # AI Crawlers - explicitly allowed
 User-agent: GPTBot
