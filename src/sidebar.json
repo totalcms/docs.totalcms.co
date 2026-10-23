@@ -368,6 +368,10 @@
                     {
                         "label": "QR Codes",
                         "slug": "twig/qrcodes"
+                    },
+                    {
+                        "label": "Badges",
+                        "slug": "twig/badges"
                     }
                 ]
             },
@@ -660,68 +664,44 @@
         "label": "Operations",
         "items": [
             {
-                "label": "Deployment",
-                "slug": "operations/deployment"
+                "label": "Activity Log",
+                "slug": "operations/activity"
             },
             {
                 "label": "Apache",
                 "slug": "operations/apache"
             },
             {
-                "label": "Nginx",
-                "slug": "operations/nginx"
-            },
-            {
-                "label": "Security",
-                "slug": "operations/security"
-            },
-            {
-                "label": "Impersonation",
-                "slug": "operations/impersonation"
-            },
-            {
-                "label": "Server Sizing",
-                "slug": "operations/server-sizing"
-            },
-            {
-                "label": "Filesystem",
-                "slug": "operations/filesystem"
-            },
-            {
-                "label": "Shared Data",
-                "slug": "operations/shared-data"
-            },
-            {
-                "label": "Sync",
-                "slug": "operations/sync"
-            },
-            {
                 "label": "Backups",
                 "slug": "operations/backups"
             },
             {
-                "label": "Git-First Templates",
-                "slug": "operations/git-first-templates"
+                "label": "Configuration",
+                "slug": "operations/configuration"
             },
             {
                 "label": "Cron URLs",
                 "slug": "operations/cron-urls"
             },
             {
-                "label": "Updates",
-                "slug": "operations/updates"
+                "label": "Deployment",
+                "slug": "operations/deployment"
+            },
+            {
+                "label": "Filesystem",
+                "slug": "operations/filesystem"
+            },
+            {
+                "label": "Git-First Templates",
+                "slug": "operations/git-first-templates"
+            },
+            {
+                "label": "Impersonation",
+                "slug": "operations/impersonation"
             },
             {
                 "label": "JumpStart",
                 "slug": "operations/jumpstart"
-            },
-            {
-                "label": "Search Backends",
-                "slug": "operations/search"
-            },
-            {
-                "label": "Supported Locales",
-                "slug": "operations/supported-locales"
             },
             {
                 "label": "Licenses",
@@ -732,8 +712,40 @@
                 "slug": "operations/migration-total-cms-one"
             },
             {
-                "label": "Configuration",
-                "slug": "operations/configuration"
+                "label": "Nginx",
+                "slug": "operations/nginx"
+            },
+            {
+                "label": "Search Backends",
+                "slug": "operations/search"
+            },
+            {
+                "label": "Security",
+                "slug": "operations/security"
+            },
+            {
+                "label": "Server Sizing",
+                "slug": "operations/server-sizing"
+            },
+            {
+                "label": "Shared Data",
+                "slug": "operations/shared-data"
+            },
+            {
+                "label": "Sharing Sessions",
+                "slug": "operations/sharing-sessions"
+            },
+            {
+                "label": "Supported Locales",
+                "slug": "operations/supported-locales"
+            },
+            {
+                "label": "Sync",
+                "slug": "operations/sync"
+            },
+            {
+                "label": "Updates",
+                "slug": "operations/updates"
             }
         ]
     }

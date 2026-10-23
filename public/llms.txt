@@ -132,6 +132,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Edition Helpers](https://docs.totalcms.co/twig/edition/): Reference for the cms.edition namespace providing edition detection, feature gating, and license level information.
 - [Barcodes](https://docs.totalcms.co/twig/barcodes/): Generate barcodes in Total CMS Twig templates with 16+ formats including Code 128, EAN-13, UPC-A, QR, and DataMatrix with SVG output and styling.
 - [QR Codes](https://docs.totalcms.co/twig/qrcodes/): Generate QR codes in Total CMS Twig templates for URLs, vCard contacts, WiFi credentials, calendar events, GPS locations, and SMS or email links.
+- [Badges](https://docs.totalcms.co/twig/badges/): Add a Built with Total CMS badge to a site's footer with cms.badge: generic pill, stacked and text badges, and profile badges that link to a designer's profile on totalcms.co.
 
 #### Media
 - [Media](https://docs.totalcms.co/twig/media/): Reference for the cms.media namespace providing image paths, gallery paths, file downloads, and streaming URLs.
@@ -213,25 +214,27 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [WebMCP](https://docs.totalcms.co/extensions/webmcp/): Make your forms callable by a browser AI agent, and hand it the MCP server's read tools inside the visitor's own session, through the WebMCP origin trial in Chrome 149+. Experimental.
 
 ### Operations
-- [Deployment](https://docs.totalcms.co/operations/deployment/): Deploy Total CMS to production with Git configuration, cache clearing scripts, CI/CD integration for GitHub Actions and GitLab, and troubleshooting.
+- [Activity Log](https://docs.totalcms.co/operations/activity/): See who changed, downloaded or called what, and when: content edits, logins, file downloads by signed-in users, refused requests and MCP tool calls, filterable by user, AI client, collection and date.
 - [Apache](https://docs.totalcms.co/operations/apache/): Apache and LiteSpeed rewrite rules for Total CMS — what ships in the box, where each .htaccess file lives, and common customizations like HTTPS redirects, caching, and compression.
-- [Nginx](https://docs.totalcms.co/operations/nginx/): Configure Nginx to work with Total CMS — front-controller routing, blocking the tcms-data directory, PHP-FPM, and snippets for the recommended docroot layout.
-- [Security](https://docs.totalcms.co/operations/security/): Secure your Total CMS installation with tcms-data folder protection, HTTPS setup, HTML and SVG sanitization, upload restrictions, and security headers.
-- [Impersonation](https://docs.totalcms.co/operations/impersonation/): Super-admins can temporarily browse and edit the site as another user to debug permission and access issues. All actions taken while impersonating are recorded in the access log.
-- [Server Sizing](https://docs.totalcms.co/operations/server-sizing/): Choose the right CPU, RAM, and storage for Total CMS with guidance on APCu cache tuning, PHP-FPM workers, Redis setup, and multi-site hosting.
-- [Filesystem](https://docs.totalcms.co/operations/filesystem/): Explore the Total CMS filesystem structure including tcms-data directory, collection JSON files, object assets, indexes, and custom schema storage.
-- [Shared Data](https://docs.totalcms.co/operations/shared-data/): Run several Total CMS installs against one tcms-data folder: what they share, what stays per-install, caching, and per-site settings overlays.
-- [Sync](https://docs.totalcms.co/operations/sync/): Push and pull schemas and templates between local development and production Total CMS instances using the CLI or admin dashboard.
 - [Backups](https://docs.totalcms.co/operations/backups/): Total CMS keeps a snapshot history for every object: its state before each save and its final state on delete. List and restore them from the CLI.
-- [Git-First Templates](https://docs.totalcms.co/operations/git-first-templates/): Source-control your Site Builder templates and deploy them with git. Create a builder/ folder at the project root and templates become version-controlled, the admin editor goes read-only, and the repo is the single source of truth.
+- [Configuration](https://docs.totalcms.co/operations/configuration/): Configure Total CMS with the config/tcms.php bootstrap file, the deep-merge override model, real settings keys, the logger path, and reading config in Twig.
 - [Cron URLs](https://docs.totalcms.co/operations/cron-urls/): Run the job queue and scheduled automations over HTTP when your host cannot run scheduled shell commands.
-- [Updates](https://docs.totalcms.co/operations/updates/): Keep Total CMS up to date with one-click dashboard updates, CLI commands, or manual upgrades. Includes rollback and maintenance mode details.
+- [Deployment](https://docs.totalcms.co/operations/deployment/): Deploy Total CMS to production with Git configuration, cache clearing scripts, CI/CD integration for GitHub Actions and GitLab, and troubleshooting.
+- [Filesystem](https://docs.totalcms.co/operations/filesystem/): Explore the Total CMS filesystem structure including tcms-data directory, collection JSON files, object assets, indexes, and custom schema storage.
+- [Git-First Templates](https://docs.totalcms.co/operations/git-first-templates/): Source-control your Site Builder templates and deploy them with git. Create a builder/ folder at the project root and templates become version-controlled, the admin editor goes read-only, and the repo is the single source of truth.
+- [Impersonation](https://docs.totalcms.co/operations/impersonation/): Super-admins can temporarily browse and edit the site as another user to debug permission and access issues. All actions taken while impersonating are recorded in the access log.
 - [JumpStart](https://docs.totalcms.co/operations/jumpstart/): Bootstrap new Total CMS projects with JumpStart data import and export for collections, schemas, objects, and Faker-based factory test data.
-- [Search Backends](https://docs.totalcms.co/operations/search/): Search Total CMS collections with case-insensitive queries, AND/OR logic, quoted phrases, property-specific targeting, and result prioritization.
-- [Supported Locales](https://docs.totalcms.co/operations/supported-locales/): Reference table of every locale code Total CMS recognizes — code, native-language name, English name, and writing direction. Used by the system locale setting and by content-localization (localizedtext / localizedstyledtext) field types.
 - [Licenses](https://docs.totalcms.co/operations/licenses/): How Total CMS licensing works: Standard and Pro editions, per-domain licenses, free development domains, the 45-day trial, update periods, license validation, and offline licenses.
 - [Migrating from v1](https://docs.totalcms.co/operations/migration-total-cms-one/): Everything you need to move a Total CMS v1 site to Total CMS 3: the built-in v1 importer, what it brings over, rethinking repurposed blogs as custom schemas, and a full mapping of every v1 page macro to its Twig equivalent.
-- [Configuration](https://docs.totalcms.co/operations/configuration/): Configure Total CMS with the config/tcms.php bootstrap file, the deep-merge override model, real settings keys, the logger path, and reading config in Twig.
+- [Nginx](https://docs.totalcms.co/operations/nginx/): Configure Nginx to work with Total CMS — front-controller routing, blocking the tcms-data directory, PHP-FPM, and snippets for the recommended docroot layout.
+- [Search Backends](https://docs.totalcms.co/operations/search/): Search Total CMS collections with case-insensitive queries, AND/OR logic, quoted phrases, property-specific targeting, and result prioritization.
+- [Security](https://docs.totalcms.co/operations/security/): Secure your Total CMS installation with tcms-data folder protection, HTTPS setup, HTML and SVG sanitization, upload restrictions, and security headers.
+- [Server Sizing](https://docs.totalcms.co/operations/server-sizing/): Choose the right CPU, RAM, and storage for Total CMS with guidance on APCu cache tuning, PHP-FPM workers, Redis setup, and multi-site hosting.
+- [Shared Data](https://docs.totalcms.co/operations/shared-data/): Run several Total CMS installs against one tcms-data folder: what they share, what stays per-install, caching, and per-site settings overlays.
+- [Sharing Sessions](https://docs.totalcms.co/operations/sharing-sessions/): Pass data between Total CMS pages and other PHP applications on the same site through $_SESSION: where Total CMS stores sessions, the one rule every app must follow, and how to diagnose a split session.
+- [Supported Locales](https://docs.totalcms.co/operations/supported-locales/): Reference table of every locale code Total CMS recognizes — code, native-language name, English name, and writing direction. Used by the system locale setting and by content-localization (localizedtext / localizedstyledtext) field types.
+- [Sync](https://docs.totalcms.co/operations/sync/): Push and pull schemas and templates between local development and production Total CMS instances using the CLI or admin dashboard.
+- [Updates](https://docs.totalcms.co/operations/updates/): Keep Total CMS up to date with one-click dashboard updates, CLI commands, or manual upgrades. Includes rollback and maintenance mode details.
 
 ## AI Integration
 
