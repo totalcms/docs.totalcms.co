@@ -25,7 +25,9 @@ The value is Markdown source, so pass it through the [`markdown` filter](/twig/m
 {{ post.body|markdown }}
 ```
 
-The filter escapes any HTML in the source. Always render the field with the filter; printing the raw value shows the Markdown source and any HTML in it.
+The filter escapes any HTML in the source; to render it as markup, pass `true`: `{{ post.body|markdown(true) }}` (see [Letting HTML through](/twig/filters#letting-html-through/)). Always render the field with the filter; printing the raw value shows the Markdown source and any HTML in it.
+
+To caption an image, give it a title on a line of its own: `![Alt](url "Caption")` renders as a `<figure>` with a `<figcaption>`. See [Image captions](/twig/markdown#image-captions/). To open a link in a new tab, title it `external`: `[Text](url "external")`. See [Links that open in a new tab](/twig/markdown#links-that-open-in-a-new-tab/).
 
 ## The editor
 
@@ -72,7 +74,7 @@ These Styled Text settings work the same way in this field. Each links to its de
 
 ## Sanitizing
 
-A markdown field holds source, so it is stored exactly as written, the same as a [code field](/fields/code-editor/). HTML in the source is not removed when the object is saved. The `markdown` filter escapes it when the page renders, which is why code samples such as `<script>` inside a code block stay intact.
+A markdown field holds source, so it is stored exactly as written, the same as a [code field](/fields/code-editor/). HTML in the source is not removed when the object is saved. The `markdown` filter escapes it when the page renders, which is why code samples such as `<script>` inside a code block stay intact. `markdown(true)` lets the HTML through instead, so only use it when the people writing to the field are trusted, or when `htmlclean` is on.
 
 If people you don't fully trust can write to the field, such as visitors using a public form, turn on `htmlclean` so unsafe HTML is stripped when the object is saved:
 

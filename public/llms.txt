@@ -132,7 +132,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Edition Helpers](https://docs.totalcms.co/twig/edition/): Reference for the cms.edition namespace providing edition detection, feature gating, and license level information.
 - [Barcodes](https://docs.totalcms.co/twig/barcodes/): Generate barcodes in Total CMS Twig templates with 16+ formats including Code 128, EAN-13, UPC-A, QR, and DataMatrix with SVG output and styling.
 - [QR Codes](https://docs.totalcms.co/twig/qrcodes/): Generate QR codes in Total CMS Twig templates for URLs, vCard contacts, WiFi credentials, calendar events, GPS locations, and SMS or email links.
-- [Badges](https://docs.totalcms.co/twig/badges/): Add a Built with Total CMS badge to a site's footer with cms.badge: generic pill, stacked and text badges, and profile badges that link to a designer's profile on totalcms.co.
+- [Badges](https://docs.totalcms.co/twig/badges/): Add a Built with Total CMS badge to a site's footer with cms.badge: generic pill, stacked and text badges, profile badges for a designer's own site, and Built by badges that credit the designer on a client's site.
 
 #### Media
 - [Media](https://docs.totalcms.co/twig/media/): Reference for the cms.media namespace providing image paths, gallery paths, file downloads, and streaming URLs.

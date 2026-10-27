@@ -1038,6 +1038,28 @@ Access groups that can access files in this collection. Used for controlling dow
 
 ---
 
+### accessCollection
+
+**Type:** `string`
+**Required:** No
+**Default:** `""`
+
+The auth collection a signed-out visitor signs in to when they open a protected file in this collection. Shown as **Access Collection** under Access Controls.
+
+```json
+{
+    "accessCollection": "dealers"
+}
+```
+
+Empty sends visitors to the default login (`/admin/login`), which signs people in against the site's main auth collection. A portal whose users live in their own auth collection (a `dealers` collection on the `auth` schema) cannot sign in there, so set this to that collection and visitors go to `/admin/login/dealers` instead. Either way the visitor returns to the file after signing in.
+
+Site Builder pages have their own **Access Collection** field, next to Access Groups: see [Members in Their Own Auth Collection](docs/site-builder/overview#members-in-their-own-auth-collection).
+
+This only chooses where a signed-out visitor is sent. Who may open the file is still decided by [`groups`](#groups). Saving a collection whose `accessCollection` is missing or is not an auth collection (its schema is not `auth` and does not inherit from it) is rejected.
+
+---
+
 ### publicOperations
 
 **Type:** `array<string>`
@@ -6820,7 +6842,9 @@ The value is Markdown source, so pass it through the [`markdown` filter](docs/tw
 {{ post.body|markdown }}
 ```
 
-The filter escapes any HTML in the source. Always render the field with the filter; printing the raw value shows the Markdown source and any HTML in it.
+The filter escapes any HTML in the source; to render it as markup, pass `true`: `{{ post.body|markdown(true) }}` (see [Letting HTML through](docs/twig/filters#letting-html-through)). Always render the field with the filter; printing the raw value shows the Markdown source and any HTML in it.
+
+To caption an image, give it a title on a line of its own: `![Alt](url "Caption")` renders as a `<figure>` with a `<figcaption>`. See [Image captions](docs/twig/markdown#image-captions). To open a link in a new tab, title it `external`: `[Text](url "external")`. See [Links that open in a new tab](docs/twig/markdown#links-that-open-in-a-new-tab).
 
 ## The editor
 
@@ -6867,7 +6891,7 @@ These Styled Text settings work the same way in this field. Each links to its de
 
 ## Sanitizing
 
-A markdown field holds source, so it is stored exactly as written, the same as a [code field](docs/fields/code-editor). HTML in the source is not removed when the object is saved. The `markdown` filter escapes it when the page renders, which is why code samples such as `<script>` inside a code block stay intact.
+A markdown field holds source, so it is stored exactly as written, the same as a [code field](docs/fields/code-editor). HTML in the source is not removed when the object is saved. The `markdown` filter escapes it when the page renders, which is why code samples such as `<script>` inside a code block stay intact. `markdown(true)` lets the HTML through instead, so only use it when the people writing to the field are trusted, or when `htmlclean` is on.
 
 If people you don't fully trust can write to the field, such as visitors using a public form, turn on `htmlclean` so unsafe HTML is stripped when the object is saved:
 
@@ -7367,7 +7391,7 @@ The value is Markdown source, so pass it through the [`markdown` filter](docs/tw
 {{ post.body|markdown }}
 ```
 
-The filter escapes any HTML in the source. Always render the field with the filter; printing the raw value shows the Markdown source and any HTML in it.
+The filter escapes any HTML in the source; to render it as markup, pass `true`: `{{ post.body|markdown(true) }}` (see [Letting HTML through](docs/twig/filters#letting-html-through)). Always render the field with the filter; printing the raw value shows the Markdown source and any HTML in it.
 
 ## The editor
 
@@ -7448,7 +7472,7 @@ Image and file uploads work as they do in Styled Text. An uploaded image is inse
 
 ## Sanitizing
 
-A styledmarkdown field holds source, so it is stored exactly as written, the same as a [code field](docs/fields/code-editor). HTML in the source is not removed when the object is saved. The `markdown` filter escapes it when the page renders, which is why code samples such as `<script>` inside a code block stay intact.
+A styledmarkdown field holds source, so it is stored exactly as written, the same as a [code field](docs/fields/code-editor). HTML in the source is not removed when the object is saved. The `markdown` filter escapes it when the page renders, which is why code samples such as `<script>` inside a code block stay intact. `markdown(true)` lets the HTML through instead, so only use it when the people writing to the field are trusted, or when `htmlclean` is on.
 
 If people you don't fully trust can write to the field, such as visitors using a public form, turn on `htmlclean` in the field's settings so unsafe HTML is stripped when the object is saved:
 
@@ -8874,7 +8898,7 @@ The page form's **Features** section is a checklist populated from the registry.
 
 | Name | Behavior |
 |------|----------|
-| `auth` | Requires a logged-in visitor. Redirects logged-out visitors to `/admin/login` (with `?redirect=` to bring them back). Optionally restricted to specific access groups via the **Access Groups** field — see below. |
+| `auth` | Requires a logged-in visitor. Redirects logged-out visitors to the login page (with `?redirect=` to bring them back): `/admin/login`, or the page's **Access Collection**. Optionally restricted to specific access groups via the **Access Groups** field — see below. |
 
 Common uses for `auth`: legal documents that need a login, draft preview links, member-only pages.
 
@@ -8889,6 +8913,12 @@ Failure responses:
 - Logged-out visitors → 302 to login (same as before)
 - Logged-in users who aren't in any of the listed groups → **403 Forbidden** (no login redirect — they're already logged in; sending them to login would loop)
 - For JSON requests, both states return JSON error bodies (`401` or `403` respectively)
+
+### Members in Their Own Auth Collection
+
+The default login signs people in against the site's main auth collection. When a page's visitors live in another one (a `dealers` collection for a client portal), pick it in the page's **Access Collection** field, which appears next to Access Groups when `auth` is enabled. Signed-out visitors then go to `/admin/login/dealers`, and come back to the page after signing in.
+
+Empty (the default) sends visitors to `/admin/login`. Protected *files* use the same idea, set on the file's collection instead: see [`accessCollection`](docs/collections/settings#accesscollection).
 
 ### Registering Middleware from an Extension
 
@@ -8924,7 +8954,7 @@ Names must be lowercase letters, digits, and hyphens (e.g. `geo-redirect`, `rate
 
 ### Scope
 
-Per-page middleware applies only to **builder-page matches**. Collection-URL matches (where the rendered template is `pages/{collection-id}.twig` and the variable is `object.*`) don't currently support per-record middleware. Apply your own auth in the collection's template if you need it.
+Per-page middleware applies only to **builder-page matches**. Collection-URL matches (where the rendered template is `pages/{collection-id}.twig` and the variable is `object.*`) don't run page features. To protect a collection's object pages, give them a builder page: see [Protecting Collection Pages](#protecting-collection-pages).
 
 ## Collection URL Routing
 
@@ -8993,6 +9023,27 @@ Set the blog collection's URL to `/blog` (Pretty URLs enabled) so `objectUrl()` 
 ```
 
 The first approach is simpler when the detail page only renders one collection. The second approach is useful when the detail page needs the builder-page record (`page.title`, `page.data.*`) alongside the collection object — useful for SEO overrides, custom metadata, etc.
+
+### Protecting Collection Pages
+
+A collection URL serves every object to anyone. To put a collection's object pages behind a login (a members-only blog, a dealer portal's price sheets), use the second approach: a builder page always wins over the collection URL it shares a route with, and a builder page can turn on [`auth`](#restricting-auth-to-access-groups).
+
+1. Create a page with the collection's route (`/blog/{id}`) and a template (`blog-post`).
+2. Under **Features**, check `auth`. Optionally pick **Access Groups**, and an **Access Collection** if the members sign in to their own auth collection.
+3. In the template, load the object and send a real 404 when there is nothing to show. A builder page renders for any id, and drafts are not hidden for you:
+
+```twig
+{# pages/blog-post.twig #}
+{% set post = cms.data.object('blog', params.id) %}
+{% if post is empty or post.draft %}{{ cms.notFound() }}{% endif %}
+
+<h1>{{ post.title }}</h1>
+<div>{{ post.content | raw }}</div>
+```
+
+4. Turn off the collection's [sitemap](docs/collections/sitemap-builder) and [RSS feed](docs/collections/rss-feed). The page gates the URL, but the sitemap and feed would still publish every post's title and link.
+
+Links built with `objectUrl()` keep working: they point at the same `/blog/{id}` address, which the page now answers.
 
 See [Object Linking](docs/twig/object-linking) for full documentation on URL templates, canonical URLs, and the `objectUrl()` function.
 
@@ -10005,7 +10056,7 @@ See [Navigation](docs/site-builder/overview#navigation) for `subnav()` and `navT
 
 ### Footer (`partials/footer.twig`)
 
-A simple footer with dynamic copyright year via `{{ 'now' | date('Y') }}` and the domain name.
+A simple footer with dynamic copyright year via `{{ 'now' | date('Y') }}`, the domain name, and a "Powered by Total CMS" link from [`cms.badge.text()`](docs/twig/badges). Swap it for another badge or remove it.
 
 ### Stylesheet (`public/assets/style.css`)
 
@@ -14139,6 +14190,7 @@ The markdown integration allows you to:
 - Process markdown content stored in CMS collections
 - Use extended markdown features like tables, footnotes, and fenced code blocks
 - Safely render user-generated markdown content with built-in XSS protection
+- Let HTML in trusted content through as markup with `markdown(true)`
 - Combine markdown with Twig templating for dynamic content
 
 ## Markdown Parser
@@ -14148,7 +14200,7 @@ Total CMS uses **ParsedownExtra** which extends the standard Parsedown library w
 - **Standard Markdown**: Headers, paragraphs, lists, links, images, emphasis
 - **GitHub Flavored Markdown**: Fenced code blocks, tables, strikethrough
 - **Extended Features**: Footnotes, definition lists, abbreviations
-- **Security**: Safe mode enabled to prevent XSS attacks
+- **Security**: Safe mode enabled to prevent XSS attacks (switch it off per call with `markdown(true)`)
 - **Line Breaks**: Automatic conversion of single line breaks to `<br>` tags
 
 ## Basic Usage
@@ -14200,6 +14252,18 @@ Use `|markdownInline` when you need to process markdown within existing HTML ele
 ```
 
 **Supported inline syntax:** bold (`**text**`), italic (`*text*`), code (`` `code` ``), links (`[text](url)`), and images (`![alt](url)`).
+
+### Letting HTML through
+
+Both filters escape HTML in the source by default, so `<mark>` or `<span class="note">` written into the Markdown shows up as text. Pass `true` to render it as markup instead. The named form is easier to read, and both work:
+
+```twig
+{{ post.body|markdown(true) }}
+{{ post.body|markdown(html: true) }}
+<h2>{{ page.title|markdownInline(html: true) }}</h2>
+```
+
+Code blocks and inline code are still escaped, so HTML samples in them show as code. Only use this on content your own editors write; see [Security Considerations](#security-considerations).
 
 ### Processing Collection Content
 
@@ -14257,6 +14321,50 @@ ParsedownExtra supports GitHub-style tables:
     {{ specs.comparison_table|markdown }}
 </div>
 ```
+
+### Image captions
+
+An image that sits alone in its paragraph and has a title renders as a figure, with the title as its caption:
+
+```markdown
+![Sync diagram](/stream/upload/erp/content/sync.svg "Orders sync every five minutes")
+```
+
+```html
+<figure>
+<img src="/stream/upload/erp/content/sync.svg" alt="Sync diagram" />
+<figcaption>Orders sync every five minutes</figcaption>
+</figure>
+```
+
+To use the alt text as the caption, set the title to `caption` (or `alt`). The image is then written without an `alt` attribute, because the caption already describes it and a screen reader would otherwise read the same sentence twice:
+
+```markdown
+![Orders sync every five minutes](sync.svg "caption")
+```
+
+```html
+<figure>
+<img src="sync.svg" />
+<figcaption>Orders sync every five minutes</figcaption>
+</figure>
+```
+
+Nothing else changes. An image without a title, or one inside a sentence or a link, renders as a plain `<img>` like before. The caption is text: HTML in a title is escaped.
+
+### Links that open in a new tab
+
+Give a link the title `external` (or `_blank`) to open it in a new tab. The link gets `target="_blank"` and no `title` attribute:
+
+```markdown
+[Read the spec](https://example.com/spec "external")
+```
+
+```html
+<a href="https://example.com/spec" target="_blank">Read the spec</a>
+```
+
+This works in `|markdown` and `|markdownInline`, and with reference-style links. Any other title stays a normal `title` attribute.
 
 ### Code Blocks
 
@@ -14410,10 +14518,12 @@ This is a text with footnote[^1].
 
 ParsedownExtra runs in **safe mode** by default, which:
 
-- Prevents execution of raw HTML that could contain malicious scripts
-- Filters out dangerous HTML attributes and elements
+- Escapes raw HTML in the source, so a `<script>` tag or an event attribute is shown as text, never run
+- Blocks dangerous link schemes such as `javascript:`
 - Protects against XSS (Cross-Site Scripting) attacks
 - Maintains the security of user-generated content
+
+`markdown(true)` and `markdownInline(true)` switch safe mode off for that call: HTML in the source is output as markup and `javascript:` links are no longer blocked. Use them only for content written by people you trust. For a field that visitors can write to, such as one filled in through a public form, keep the default, or turn on the field's `htmlclean` setting so unsafe HTML is stripped when the object is saved (see [Sanitizing](docs/fields/markdown#sanitizing)).
 
 ```twig
 {# Safe processing of user-generated markdown #}
@@ -18407,8 +18517,8 @@ Converts SVG to symbol for icon systems.
 
 ### Markdown Filters
 
-#### `markdown(mixed $value): string`
-Processes full markdown syntax including block elements (paragraphs, headers, lists, etc.).
+#### `markdown(mixed $value, bool $html = false): string`
+Processes full markdown syntax including block elements (paragraphs, headers, lists, etc.). HTML in the source is escaped unless you pass `true` (see [Letting HTML through](#letting-html-through)).
 
 ```twig
 {% set content = "This is **bold** and [a link](https://example.com)" %}
@@ -18429,9 +18539,10 @@ Processes full markdown syntax including block elements (paragraphs, headers, li
 - GitHub Flavored Markdown (tables, fenced code blocks)
 - Extended features (footnotes, definition lists)
 - Wraps content in appropriate block elements (`<p>`, `<h1>`, etc.)
+- Escapes HTML in the source unless `html` is `true`
 
-#### `markdownInline(mixed $value): string`
-Processes only inline markdown syntax without wrapping content in `<p>` tags or other block elements. Perfect for processing markdown within existing HTML elements.
+#### `markdownInline(mixed $value, bool $html = false): string`
+Processes only inline markdown syntax without wrapping content in `<p>` tags or other block elements. Perfect for processing markdown within existing HTML elements. Takes the same `html` argument as `markdown`.
 
 ```twig
 {% set text = "This is **bold** and [a link](https://example.com)" %}
@@ -18514,7 +18625,27 @@ Processes only inline markdown syntax without wrapping content in `<p>` tags or 
 </blockquote>
 ```
 
-**Security Note:** Both markdown filters run in safe mode with XSS protection enabled.
+**Security Note:** Both markdown filters run in safe mode with XSS protection enabled, unless you pass `true`.
+
+#### Letting HTML through
+
+By default both filters escape HTML in the source, so `<mark>` shows up as text. Pass `true` to let it through as markup instead. The named form reads more clearly in a template, and both work:
+
+```twig
+{{ post.body | markdown(true) }}
+{{ post.body | markdown(html: true) }}
+<h2>{{ page.title | markdownInline(html: true) }}</h2>
+
+{% set note = "**Heads up:** <mark>sale ends Friday</mark>" %}
+{{ note | markdown }}
+{# Output: <p><strong>Heads up:</strong> &lt;mark&gt;sale ends Friday&lt;/mark&gt;</p> #}
+{{ note | markdown(true) }}
+{# Output: <p><strong>Heads up:</strong> <mark>sale ends Friday</mark></p> #}
+```
+
+Code blocks and inline code are still escaped, so an HTML sample in a fenced block shows as code either way.
+
+Only use it on content your own editors write. With `true`, the filter no longer escapes `<script>` or event attributes, and it no longer blocks `javascript:` links. If visitors can write to the field (a public form, for example), leave it off, or turn on the field's `htmlclean` setting so unsafe HTML is stripped when the object is saved. See [Sanitizing](docs/fields/markdown#sanitizing).
 
 ### Email and HTML Encoding
 
@@ -22331,7 +22462,7 @@ The QR code integration in Total CMS provides a comprehensive solution for creat
 
 The `cms.badge` namespace writes a "Built with Total CMS" badge: a small linked image, usually for a site's footer. The images are served by totalcms.co, so a badge stays current without your site changing. A designer's badge shows their latest photo and approved work as soon as totalcms.co has it.
 
-There are five badges. Three are generic and need no account. Two belong to a designer and link to their profile on totalcms.co, so they need a free profile there.
+There are seven badges. Three are generic and need no account. Four belong to a designer and link to their profile on totalcms.co, so they need a free profile there: two for the designer's own site, and two that credit them on a client's site.
 
 | Function | Badge | Themes |
 |---|---|---|
@@ -22340,6 +22471,8 @@ There are five badges. Three are generic and need no account. Two belong to a de
 | `cms.badge.text()` | "Powered by Total CMS" in your own text color | `color`, `mono` |
 | `cms.badge.profile(handle)` | Your photo, "Total CMS designer" and @handle | `light`, `dark`, `auto` |
 | `cms.badge.earned(handle)` | "Total CMS designer" with your approved sites and extensions | `light`, `dark`, `auto` |
+| `cms.badge.builtBy(handle)` | "Built by" your studio, for a client's site | `light`, `dark`, `auto` |
+| `cms.badge.builtByText(handle)` | "Built by" your studio without the pill, for a footer line | `light`, `dark`, `auto`, `mono` |
 
 Preview every badge and theme at [totalcms.co/badges](https://totalcms.co/badges).
 
@@ -22379,25 +22512,45 @@ Pass your handle on totalcms.co, the part after `/@` in your profile's address:
 - **profile** shows your photo (or your initial), "Total CMS designer" and your handle. It is available while your profile is public.
 - **earned** shows how many of your sites and extensions are approved in the showcase, naming only the kinds you have: "3 sites", "1 extension", or "3 sites · 2 extensions". It is available once you have at least one approved item.
 
-Both link to your profile. If your profile is hidden later, the link goes to the totalcms.co home page and the image falls back to the pill, so a badge on a client's site never breaks.
+Both link to your profile, marked as yours (see below). If your profile is hidden later, the link goes to the totalcms.co home page and the image falls back to the pill, so a badge on a client's site never breaks.
 
-### On your own site: `me`
+### The `me` option
 
-On your own studio or portfolio site, pass `me: true`:
-
-```twig
-{{ cms.badge.earned('joeworkman', {me: true}) }}
-```
-
-The badge link gets `rel="me"`, which says this site and your totalcms.co profile belong to the same person. Your profile already links back to your website, so the two now point at each other, and search engines and services such as Mastodon can confirm the pair.
+A profile badge goes on your own studio or portfolio site, so its link gets `rel="me"`, which says this site and your totalcms.co profile belong to the same person. Your profile already links back to your website, so the two now point at each other, and search engines and services such as Mastodon can confirm the pair.
 
 Add your profile to your structured data as well: in **Site SEO**, add `https://totalcms.co/@your-handle` to **Social Profiles**, which becomes the Organization's `sameAs`, so your structured data lists the profile among your other accounts.
 
-Use `me` and this Social Profiles entry on your own site only. On a client's site the badge credits you, but the site is not you, and the claim would be false.
+On a site that is not yours, such as a client's, pass `me: false`. The badge still links to your profile, but the site makes no claim to be you:
+
+```twig
+{{ cms.badge.earned('joeworkman', {me: false}) }}
+```
+
+Leave the Social Profiles entry off a client's site too.
 
 A handle that is not a valid totalcms.co handle gives the pill instead.
 
 The profile badges get a height but no width: their width follows your handle and your counts, and the browser takes it from the image.
+
+## Built By Badges
+
+On a site you built for a client, credit yourself with a Built by badge:
+
+```twig
+{{ cms.badge.builtBy('joeworkman') }}
+{{ cms.badge.builtBy('joeworkman', {byName: true}) }}
+{{ cms.badge.builtBy('joeworkman', {theme: 'dark'}) }}
+{{ cms.badge.builtByText('joeworkman', {theme: 'dark', byName: true}) }}
+```
+
+- **builtBy** is a pill: the flame and "Built by **your studio**".
+- **builtByText** is the same credit without the pill: the flame and "Built by your studio" on a transparent background, 16px high, to sit in a line of footer text. `light` draws dark text for a light footer, `dark` light text for a dark one. To match the footer's own text color, use `mono` with a `color` (3 or 6 hex digits, `#` optional), which draws the words and the flame in that one color: `{{ cms.badge.builtByText('joeworkman', {theme: 'mono', color: '#5b6170'}) }}`. A missing or invalid `color` gives the default ink.
+
+totalcms.co draws both, so they show your current studio: the company on your profile, or your name when you have no company. Pass `byName: true` to credit yourself by name even when you have a company. A name longer than 40 characters is cut short. Both get a height but no width, since their width follows the name.
+
+Both link to your profile, and both are available while your profile is public. Neither ever adds `rel="me"`, even with `me: true`: the site is your client's, not yours, so it makes no claim to be you. Leave your profile out of the client's Social Profiles too.
+
+A handle that is not a valid totalcms.co handle gives the pill instead.
 
 ## Without Twig
 
@@ -24323,6 +24476,7 @@ The server then stamps `owner` on create and refuses any API read or write of so
 {% if user and site and site.owner == user.id %}
     {% set form = cms.form.builder('showcase', {
         id: site.id,
+        method: 'PATCH',
         actions: [{ action: 'message', text: 'Saved — your changes are back in the review queue.' }]
     }) %}
     {% do form.addField('name') %}
@@ -24332,6 +24486,8 @@ The server then stamps `owner` on create and refuses any API read or write of so
     <p>That submission is not yours to edit.</p>
 {% endif %}
 ```
+
+Use `method: 'PATCH'` on an edit form that shows only some of the fields. An edit form saves with `PUT` by default, which replaces the whole object, so every field the form leaves out is cleared. The owner and protected fields are kept either way (the server puts back what is stored), but `description`, images and anything else not on the form would be lost.
 
 The `if` is a belt-and-braces measure: `cms.form.builder()` itself refuses to load another member's object, rendering only "You do not have permission to edit this object." in place of the whole form (no fields, no save button), and the API returns `403` for the save. The deck item forms, `cms.form.deck()` and `cms.form.deckBuilder()`, refuse the same way when `id` names another member's object, whether they would edit one of its items (`itemId`) or add one. Keep the check in the template anyway so the page around the form (headings, other `cms.objects` calls) does not show the object either. Members are also refused the whole-collection routes beyond create, list and query (export, report, import, reindex, bulk delete and clone), so a portal cannot be used to pull the full collection.
 
@@ -29570,6 +29726,8 @@ When running from CLI, set `DOCUMENT_ROOT` so Total CMS can locate your data dir
 <?php
 
 use Monolog\Level;
+use TotalCMS\Domain\Auth\Data\Actor;
+use TotalCMS\Domain\Auth\Service\ActorContext;
 use TotalCMS\TotalCMS;
 
 // Set DOCUMENT_ROOT for CLI mode
@@ -29577,9 +29735,20 @@ $_SERVER['DOCUMENT_ROOT'] = __DIR__ . '/../public';
 
 require_once __DIR__ . '/../public/vendor/autoload.php';
 $totalcms = new TotalCMS();
+
+// Write as the system, the way the tcms command does
+$totalcms->container()->get(ActorContext::class)->set(Actor::system());
 ```
 
 In CLI mode, the constructor automatically skips session and buffer initialization since they are not needed.
+
+Set the system actor before your script writes anything. Every write is made for an actor, and a script that does not say who it is runs as an anonymous visitor. For an anonymous visitor:
+
+- on user collections, `groups`, `active` and the other account fields are dropped;
+- fields marked `protected` in the schema are not saved;
+- on an owned collection, the owner field is left empty.
+
+None of these is an error. The rest of the save goes through, and `access.log` records a "Privileged field write neutralized" warning. Scripts that only read data do not need the line.
 
 ### Logging
 
@@ -31786,7 +31955,7 @@ Files can't be uploaded through MCP — that needs an upload pipeline (multipart
 | file | `{"download": "Brochure (PDF)", "comments": "…"}` | `download`, `comments`, `tags` |
 | depot | `[{"path": "docs/guide.pdf", "comments": "…"}]` — matched by `path` | as file |
 
-`exif` and `focalpoint` merge one level deep; other keys replace. Gallery images and depot files cannot be added, removed or reordered, and naming one that is not stored is refused with the list that is. Keys that identify the file — `name`, `size`, `mime`, `width`, `height`, `hash`, `palette`, `uploadDate`, `count` — and a file's `password` / `protected` setting cannot change; echoing their stored values back is fine. `describe_collection` lists the editable keys on each media property. Video posters are uploads and stay refused.
+`exif` and `focalpoint` merge one level deep; other keys replace. Gallery images and depot files cannot be added or removed, and naming one that is not stored is refused with the list that is. A gallery list that names every stored image exactly once also sets their order — the first is the gallery's lead image — while a partial list leaves the order alone. Depot files cannot be reordered. Keys that identify the file — `name`, `size`, `mime`, `width`, `height`, `hash`, `palette`, `uploadDate`, `count` — and a file's `password` / `protected` setting cannot change; echoing their stored values back is fine. `describe_collection` lists the editable keys on each media property. Video posters are uploads and stay refused.
 
 > Reading objects with `get_object` / `query_collection` returns binary fields too. Writing a fetched object back works as long as the media values are unchanged or only their editable keys changed. Sending only the fields you changed is simpler.
 
@@ -34983,6 +35152,47 @@ public function boot(ExtensionContext $context): void
 
 Only use `$context->get()` in `boot()`, never in `register()`. The container is not fully built during registration.
 
+## Writing as the System
+
+Every object write is made for an actor: whoever is signed in, the API key or AI client that called, or an anonymous visitor. The storage layer applies that actor's rules to every save, whichever code makes it. For anyone but an admin, an API key or the system:
+
+- on a user collection (schema `auth`, or one inheriting it), `groups`, `active`, `expiration` and the other account fields are dropped on create and kept at their stored values on update;
+- fields marked `protected` in the schema are admin-only;
+- on an owned collection, the owner field is stamped with the actor.
+
+The refused fields are not an error. The rest of the save goes through, and `access.log` records a "Privileged field write neutralized" warning.
+
+So when your extension writes on a member's behalf, the save follows that member's rules. That is usually right. When the extension itself decides the write is allowed, such as creating a member account once someone in your Leadership group approves an application, run the save as the system actor:
+
+```php
+use TotalCMS\Domain\Auth\Data\Actor;
+use TotalCMS\Domain\Auth\Service\ActorContext;
+use TotalCMS\Domain\Object\Service\ObjectSaver;
+
+public function boot(ExtensionContext $context): void
+{
+    $this->actors = $context->get(ActorContext::class);
+    $this->saver  = $context->get(ObjectSaver::class);
+}
+
+private function createMember(array $record): void
+{
+    // Check first: runAs() skips every access rule for the save inside it.
+    if (!$this->approverIsLeadership()) {
+        throw new \RuntimeException('Only Leadership can approve applications');
+    }
+
+    $this->actors->runAs(
+        Actor::system(),
+        fn () => $this->saver->saveObject('members', $record) // groups and active are kept
+    );
+}
+```
+
+`runAs()` puts the previous actor back afterwards, even when the save throws. Events fired inside it still name the member who started the work: the payload's `actor.initiator` is the approver, and the Activity Log shows the system acting for them.
+
+Elevate only around the one write you have authorized yourself, never around a whole request handler. Code that runs as the system can change any field on any object.
+
 ## Logging
 
 Extensions can write to the shared `extensions.log` file (`tcms-data/.system/logs/extensions.log`) using the same logger Total CMS uses internally. Get it from the context with `$context->logger()` — it returns a `Psr\Log\LoggerInterface`.
@@ -35819,7 +36029,7 @@ tcms schema:import my-schema.json --json
 
 ### `schema:lint`
 
-Lint stored schemas without saving anything. `schema:import` validates on the way in, but schemas edited in place (by hand or by an AI agent) are never re-validated — the linter closes that gap. Errors are structural problems that break at runtime: no `id` property defined, `required`/`index` entries naming undefined properties, `inheritFrom` pointing at a missing schema, deck/card `schemaref` targets that don't exist or contain deck-incompatible types, and meta-schema violations. Warnings flag agent-legibility gaps — properties without help text (help feeds the MCP tool catalog) and schemas without a description.
+Lint stored schemas without saving anything. `schema:import` validates on the way in, but schemas edited in place (by hand or by an AI agent) are never re-validated — the linter closes that gap. Errors are structural problems that break at runtime: no `id` property defined, `required`/`index` entries naming undefined properties, `inheritFrom` pointing at a missing schema, deck/card `schemaref` targets that don't exist or contain deck-incompatible types, `formgrid` rows with a different number of names than the widest row (the browser drops the whole form layout when one row is short), and meta-schema violations. Warnings flag agent-legibility gaps — properties without help text (help feeds the MCP tool catalog) and schemas without a description.
 
 ```bash
 tcms schema:lint                 # all custom schemas
@@ -35837,6 +36047,25 @@ tcms schema:lint --json          # machine-readable report
 | `--strict` | Treat warnings as failures |
 
 Exit code is `0` when no errors were found (warnings allowed), `1` when errors were found — or warnings under `--strict` — so it slots into CI.
+
+### `schema:delete`
+
+Delete a custom schema. It goes through the same checks as deleting from the admin: reserved schemas, schemas another schema inherits from (`inheritFrom`), and schemas a collection still uses are refused, and the error names what is in the way. A copy of the schema file is saved to `.system/backups/schemas/{id}/` first.
+
+```bash
+tcms schema:delete retired
+tcms schema:delete retired --force
+```
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `id` | Yes | Schema ID |
+
+| Option | Description |
+|--------|-------------|
+| `--force, -f` | Skip the confirmation prompt |
+
+Only custom schemas can be deleted. An extension's schemas go when the extension is removed.
 
 ---
 
@@ -35920,6 +36149,28 @@ For bigger changes, pass JSON from a file or `-` for stdin; any `--set` is appli
 | `--json` | Print the saved settings |
 
 Exits `1` when the collection does not exist, when nothing is given to change, or when the save refuses the result. A collection cannot be renamed, and its storage format changes only with [`collection:convert`](#collectionconvert). Custom MCP tools (`mcp.tools`) are checked as the REST endpoints check them.
+
+### `collection:delete`
+
+Delete a collection. As in the admin, only its settings are deleted: its objects and files stay on disk, hidden, and creating a collection with the same id brings them back. The settings are saved to `.system/backups/collections/{id}/` first, and the output says how many objects were kept.
+
+```bash
+tcms collection:delete old-news
+tcms collection:delete old-news --force
+```
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `id` | Yes | Collection ID |
+
+| Option | Description |
+|--------|-------------|
+| `--force, -f` | Skip the confirmation prompt, and delete even when something still refers to the collection |
+| `--json` | Print the result as JSON |
+
+The collections the site signs people in with (`auth.collection` and the OAuth login collection) are refused, with or without `--force`.
+
+Before deleting, the command looks for things that still refer to the collection: Data Views built from it, another collection's owner or access collection setting, and `auth.publicRegistration`. If it finds any, it lists them and stops, even under `--json`; `--force` deletes anyway and prints the list. These would not break the delete, but they break later and quietly. Templates and relational fields that query the collection are not checked.
 
 ### `collection:query`
 
@@ -39551,7 +39802,8 @@ A JumpStart definition is a JSON file containing:
   },
   "schemas": [...],
   "objects": [...],
-  "factory": [...]
+  "factory": [...],
+  "accessGroups": [...]
 }
 ```
 
@@ -39579,6 +39831,29 @@ Common overrides:
 | `sortBy` | Default sort (e.g. `date:desc`, `title:asc`). |
 | `name` | Display name shown in the admin sidebar. |
 
+### Access Groups
+
+`accessGroups` holds the [access groups](docs/auth/access-groups) the JumpStart's collections and pages use, in the same shape as `tcms access-group:get`:
+
+```json
+{
+  "accessGroups": [
+    {
+      "id": "dealers",
+      "description": "Dealer portal",
+      "operations": ["read"],
+      "permissions": { "collections": { "allowed": ["price-sheets"], "operations": ["read"] } }
+    }
+  ]
+}
+```
+
+Import is **additive**. A group the site does not have is created. A group the site already has is never changed, and the import report lists it as `Access group dealers: exists, kept`. Check those lines: the same id can grant something different on this site. The `admin` group is never written.
+
+Creating a group grants permissions, so only a super admin, or `tcms jumpstart:import` on the command line, can import access groups. Any other import reports `Access groups: refused` and imports the rest.
+
+Access groups are imported first, so collections, pages and users that name a group find it. Auth collections are created before the other custom collections, so a collection whose [`ownerCollection`](docs/collections/settings#ownercollection) or [`accessCollection`](docs/collections/settings#accesscollection) names one finds it too.
+
 ## Export Behavior
 
 When you export your current CMS data to JumpStart format:
@@ -39588,6 +39863,8 @@ When you export your current CMS data to JumpStart format:
 - **Collection Definitions**: Both reserved and custom collection configurations
 - **Custom Schemas**: Any custom schemas you've created
 - **Collection Settings**: Labels, sorting, and other collection configurations
+- **Access Groups**: the groups that exported collections (`groups`, `registrationGroups`), pages (`accessGroups`) and users (`groups`) name. The built-in groups (`admin`, `default`, `editor`, `viewer`) are left out; every site has its own
+- **How collections are written**: a reserved collection (one whose id is a built-in schema, such as `blog`) exports in the object form under `reserved`, with its settings. A collection that only *uses* a built-in schema under its own id, such as a `dealers` collection on the `auth` schema or `builder-pages` on `builder-page`, exports under `custom` with its `schema` set, so it is recreated under the same id. Object counts and the storage format are left out; the importing site keeps its own.
 
 ### ❌ **What Gets Removed**
 - **Binary Uploads**: Image files, gallery images, uploaded files, and depot files are **not included** in JumpStart exports. Image, file, depot, and gallery field values are normalized/referenced but not embedded. If you need to preserve all files and binary data, use the **Export to Zip** option in each collection instead.

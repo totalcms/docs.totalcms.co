@@ -170,7 +170,7 @@ See [Navigation](/site-builder/overview#navigation/) for `subnav()` and `navTree
 
 ### Footer (`partials/footer.twig`)
 
-A simple footer with dynamic copyright year via `{{ 'now' | date('Y') }}` and the domain name.
+A simple footer with dynamic copyright year via `{{ 'now' | date('Y') }}`, the domain name, and a "Powered by Total CMS" link from [`cms.badge.text()`](/twig/badges/). Swap it for another badge or remove it.
 
 ### Stylesheet (`public/assets/style.css`)
 
