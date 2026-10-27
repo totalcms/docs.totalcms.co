@@ -1,6 +1,6 @@
 ---
 title: "Total CMS Badges"
-description: "Add a Built with Total CMS badge to a site's footer with cms.badge: generic pill, stacked and text badges, profile badges for a designer's own site, and Built by badges that credit the designer on a client's site."
+description: "Add a Built with Total CMS badge to a site footer with cms.badge: pill, stacked, and text styles, plus Built by badges that credit the designer."
 ---
 The `cms.badge` namespace writes a "Built with Total CMS" badge: a small linked image, usually for a site's footer. The images are served by totalcms.co, so a badge stays current without your site changing. A designer's badge shows their latest photo and approved work as soon as totalcms.co has it.
 

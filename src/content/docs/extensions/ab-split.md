@@ -1,6 +1,6 @@
 ---
 title: "A/B Split (Bundled Extension)"
-description: "Render an alternate page template at the same URL for a percentage of visitors. Useful for testing layout, copy, or CTA variations without changing the page URL."
+description: "Render an alternate page template at the same URL for a percentage of visitors to test layout, copy, or CTA variations."
 since: "3.5.0"
 ---
 `totalcms/ab-split` — bundled with Total CMS. Adds an `ab-split` [page feature](/site-builder/overview#page-features-middleware/) that renders an **alternate page template at the same URL** for a percentage of visitors. The visitor's bucket sticks via cookie so refreshes don't re-bucket. Use it to test layout changes, copy variations, hero swaps, CTA wording — anything where you want to measure two renders against each other without changing the URL.

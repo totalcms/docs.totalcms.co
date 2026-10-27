@@ -1,6 +1,6 @@
 ---
 title: "Podcast (Bundled Extension)"
-description: "Host a podcast from two collections: the podcast and podcast-episode schemas, a feed the directories accept at its own address, and a podcast_feed() Twig function."
+description: "Host a podcast from two collections with the podcast and podcast-episode schemas, a directory-ready feed, and the podcast_feed() Twig function."
 since: "3.6.0"
 ---
 `totalcms/podcast` — bundled with Total CMS, Standard edition and above. Ships the `podcast` (show) and `podcast-episode` schemas, serves a feed the directories accept without any page or template, and adds `podcast_feed()` for sites that want the feed on a page of their own. The RSS itself — the iTunes and Podcast Index tags — is part of core (`cms.feed.rss()` with a `podcast` block); the extension is the two schemas and the mapping from records to that block.

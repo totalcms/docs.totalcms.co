@@ -1,6 +1,6 @@
 ---
 title: "Protect (Bundled Extension)"
-description: "Gate a page behind a numeric passcode. Visitors enter a code to unlock the page — the session sticks via cookie. Useful for client previews, soft launches, and draft staging URLs."
+description: "Gate a page behind a numeric passcode that unlocks it for the session. Useful for client previews, soft launches, and draft staging URLs."
 since: "3.5.0"
 ---
 `totalcms/protect` — bundled with Total CMS. Adds a `protect` [page feature](/site-builder/overview#page-features-middleware/) that gates a page behind a **numeric passcode**. Visitors see a simple code-entry form; once they enter the correct passcode, a cookie remembers them for 7 days. No login required, no accounts — just a shareable code.

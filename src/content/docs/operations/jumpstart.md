@@ -256,7 +256,7 @@ Content-Type: application/json
 
 ### Exporting Your Data
 
-1. Go to **[Admin Utils → JumpStart](/admin/utils/jumpstart)**
+1. Go to **Admin Utils → JumpStart**
 2. Configure what to include:
    - **Also include**: Toggle checkboxes for **Objects** (collection data) and **Templates**
    - **Schemas**: Checklist of schemas to export; use the toggle to select/deselect all

@@ -114,7 +114,7 @@ The test results panel shows the JSON output of your definition. If there is an 
 
 ## Rebuilding a View
 
-Views rebuild automatically through the [Job Queue](/admin/utils/jobqueue) when dependent collections change. You can also manually rebuild a view by clicking the **Rebuild View** button in the admin interface.
+Views rebuild automatically through the **Job Queue** when dependent collections change. You can also manually rebuild a view by clicking the **Rebuild View** button in the admin interface.
 
 **Important**: The Job Queue must be running for automatic rebuilds to work. If your views are not updating after collection changes, check that the job queue is processing.
 
@@ -160,6 +160,6 @@ Common errors include:
 
 ## Access Control
 
-Data Views require the **Pro** edition or higher. Access is controlled through [Access Groups](/admin/docs/auth/access-groups) using the `dataviews` permission. Users without this permission cannot view or manage data views.
+Data Views require the **Pro** edition or higher. Access is controlled through [Access Groups](/auth/access-groups/) using the `dataviews` permission. Users without this permission cannot view or manage data views.
 
 **MCP adds the view's own `mcp.access` field.** A view surfaced to AI agents via the `mcp` card (`get_view`, `query_view`, and the `tcms://view/{id}` resource) needs the Pro edition, as on REST, and the caller must be one its `mcp.access` admits (`public` / `authenticated` / `apikey` / `admin`). A signed-in member also needs the `dataviews` permission, unless the view is public. An API key limited to some views reaches the ones its endpoints name. A view's result is built with full access, so per-collection grants and ownership do not narrow it: keep a view's `mcp.access` at `admin` (the default) unless its output is safe for everyone it admits — see [MCP Server → Data views follow the data views grant](/mcp/server#data-views-follow-the-data-views-grant/).

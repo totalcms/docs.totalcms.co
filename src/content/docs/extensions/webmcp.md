@@ -1,6 +1,6 @@
 ---
 title: "WebMCP (Bundled Extension)"
-description: "Make your forms callable by a browser AI agent, and hand it the MCP server's read tools inside the visitor's own session, through the WebMCP origin trial in Chrome 149+. Experimental."
+description: "Experimental: let a browser AI agent call your forms and the MCP server's read tools through the WebMCP origin trial in Chrome 149+."
 since: "3.6.0"
 ---
 `totalcms/webmcp` — bundled with Total CMS, off by default, **experimental**. Renders forms an AI agent in the visitor's browser can fill and submit, and hands that agent the **MCP server's read tools**, called inside the session the visitor already has. One Twig call for forms; nothing to configure for reads beyond what the MCP server already knows. Read tools need the Standard edition or above, because they are the MCP server's — Data Views tools (`list_views`/`query_view`) stay Pro and simply come back empty below it.

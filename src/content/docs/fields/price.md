@@ -1,6 +1,6 @@
 ---
 title: "Price Field"
-description: "Locale-aware currency price field — live formatting as you type, a per-currency symbol and icon, configurable currency/decimals/locale, stored as a plain number."
+description: "Locale-aware currency price field with live formatting, a per-currency symbol and icon, and configurable currency, decimals, and locale."
 updated: "2026-06-10"
 ---
 The price field is a monetary input that formats the value as currency **while you type** — `100000` becomes `$100,000.00` — while still storing a plain **number** so you can do maths, sorting, and filtering on it. Currency, decimal places, and locale are configurable per field and default sensibly from your site locale.

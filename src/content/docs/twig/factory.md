@@ -4,7 +4,7 @@ description: "Generate realistic test data in Total CMS Twig templates using Fak
 ---
 <https://fakerphp.github.io/formatters/>
 
-### Text
+## Text
 
 ```
 word()
@@ -21,7 +21,7 @@ realTextBetween($minNbChars = 160, $maxNbChars = 200, $indexSize = 2)
 styledtext($minParagraphs = 3, $maxParagraphs = 6, $includeLists = true, $includeHeadings = false)
 ```
 
-### Images
+## Images
 
 ```
 imageUrl($width = 640, $height = 480): string
@@ -33,7 +33,7 @@ imageText($width = 640, $height = 480, $textSize = 200, $bgColor = 'f8f8f8', $te
 imageShapes($width = 640, $height = 480, $bgColor = 'f8f8f8'): string
 ```
 
-### Gallery
+## Gallery
 
 ```
 gallery($count = 3, $width = 640, $height = 480): string
@@ -45,14 +45,14 @@ galleryShapes($count = 3, $width = 640, $height = 480, $bgColor = 'f8f8f8'): str
 ```
 
 
-### Tags
+## Tags
 
 ```
 factory.tags($min = 0, $max = 4, array $choices = []): array
 ```
 
 
-### Person
+## Person
 
 ```
 title($gender = null|'male'|'female')     // 'Ms.'
@@ -66,7 +66,7 @@ firstNameFemale()                         // 'Rachel'
 lastName()                                // 'Zulauf'
 ```
 
-### Address
+## Address
 
 ```
 cityPrefix()                       // 'Lake'
@@ -86,7 +86,7 @@ latitude($min = -90, $max = 90)    // 77.147489
 longitude($min = -180, $max = 180) // 86.211205
 ```
 
-### Phone Numbers
+## Phone Numbers
 
 ```
 phoneNumber()              // '827-986-5852'
@@ -95,7 +95,7 @@ tollFreePhoneNumber()      // '(888) 937-7238'
 e164PhoneNumber()          // '+27113456789'
 ```
 
-### Company
+## Company
 
 ```
 catchPhrase()   // 'Monitored regional contingency'
@@ -105,7 +105,7 @@ companySuffix() // 'and Sons'
 jobTitle()      // 'Cashier'
 ```
 
-### Internet
+## Internet
 
 ```
 email()                           // 'tkshlerin@collins.com'
@@ -128,7 +128,7 @@ macAddress()                      // '01:02:03:04:05:06'
 userAgent()                       // 'Mozilla/5.0 (Windows CE) AppleWebKit/5350...'
 ```
 
-### Date and Time
+## Date and Time
 
 ```
 unixTime($max = 'now')            // 1502284496
@@ -153,7 +153,7 @@ century()                         // 'VI'
 timezone()                        // 'Europe/Paris'
 ```
 
-### Numbers
+## Numbers
 
 ```
 randomNumber($nbDigits = null, $strict = false) // 79907610
@@ -171,7 +171,7 @@ asciify($string = '****')         // '@rg('
 regexify($string = '[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}') // 'SM0@P7.CO'
 ```
 
-### Lorem Ipsum
+## Lorem Ipsum
 
 ```
 word()                            // 'aut'
@@ -183,7 +183,7 @@ paragraphs($nb = 3, $asText = false) // Array or string of paragraphs
 text($maxNbChars = 200)           // 'Fuga totam reiciendis qui architecto...'
 ```
 
-### Miscellaneous
+## Miscellaneous
 
 ```
 boolean($chanceOfGettingTrue = 50) // true
@@ -197,7 +197,7 @@ currencyCode()                    // 'EUR'
 emoji()                           // '😁'
 ```
 
-### Color
+## Color
 
 ```
 hexColor()                        // '#fa3cc2'

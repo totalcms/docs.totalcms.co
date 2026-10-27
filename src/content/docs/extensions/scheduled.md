@@ -1,6 +1,6 @@
 ---
 title: "Scheduled (Bundled Extension)"
-description: "Time-window gating for builder pages. Only renders a page between configured start and end timestamps — useful for holiday campaigns, embargoed announcements, and time-limited sales."
+description: "Only render a builder page between set start and end times. Useful for holiday campaigns, embargoed announcements, and time-limited sales."
 since: "3.5.0"
 ---
 `totalcms/scheduled` — bundled with Total CMS. Adds a `scheduled` [page feature](/site-builder/overview#page-features-middleware/) that only renders a page during a configured **time window**. Outside the window, visitors get redirected to a fallback URL or see a 404.

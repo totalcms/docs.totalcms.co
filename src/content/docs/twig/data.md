@@ -1,6 +1,6 @@
 ---
 title: "Twig Data Reference"
-description: "Reference for the cms.data namespace providing access to text, code, styled text, toggles, dates, numbers, URLs, emails, SVGs, colors, images, galleries, files, and depot data."
+description: "Reference for the cms.data Twig namespace: read text, styled text, toggles, dates, numbers, URLs, colors, images, galleries, files, and depots."
 ---
 The data adapter provides typed access to object properties. Each method has sensible defaults for collection and property names, making single-collection use cases very concise.
 

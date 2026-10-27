@@ -1,14 +1,7 @@
 ---
 title: "Schema Reference"
----
-
-
-title: "Schema Reference"
 description: "Complete reference for Total CMS schema settings including inheritance, required fields, indexed properties, form grid layout, and categories."
-
-
-# Schema Reference
-
+---
 Schemas are the blueprints that define the structure of objects in Total CMS. They determine what properties (fields) are available, which are required, and how data is validated. Custom schemas are stored as JSON files in `/tcms-data/.schemas/`.
 
 ## Schema Settings

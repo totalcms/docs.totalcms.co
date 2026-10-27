@@ -1,7 +1,10 @@
 ---
-title: "Deck Item Label"
-description: "Customize deck item labels in the Total CMS admin using template syntax with field references, minItems, maxItems, and modalSize settings. Includes the on-disk shape of deck data and how to define a deck in a schema."
+title: "Deck"
+description: "The deck field holds repeatable groups of fields. Covers its on-disk shape, schema definition, item labels, min/max item counts, and modal size."
 ---
+
+## How a Deck Is Stored
+
 Read this first if you are writing deck data by hand — in a JumpStart file, through
 the API, or from a script. The admin handles all of this for you; these rules only
 surface when you author the JSON yourself.
@@ -91,7 +94,7 @@ between the two renders the same records.
 
 ---
 
-# Deck Item Label
+## Deck Item Label
 
 The `deckItemLabel` setting controls how deck items are labeled in the admin interface. It uses the same template syntax as the `autogen` setting (see [ID Autogen](/fields/id/) documentation), but displays raw values without slugification.
 
@@ -143,7 +146,7 @@ The `deckItemLabel` setting controls how deck items are labeled in the admin int
 
 ---
 
-# Min/Max Item Count
+## Min/Max Item Count
 
 The `minItems` and `maxItems` settings control how many items a deck field can contain.
 
@@ -185,7 +188,7 @@ The add and duplicate buttons will be disabled once 3 items exist. Removing an i
 
 ---
 
-# Modal Size
+## Modal Size
 
 The `modalSize` setting controls how large the deck item edit modal opens in the admin.
 

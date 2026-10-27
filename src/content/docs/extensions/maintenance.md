@@ -1,6 +1,6 @@
 ---
 title: "Maintenance (Bundled Extension)"
-description: "Per-page 503 maintenance mode. Take individual pages offline with a custom message while the rest of the site stays up. Logged-in admins bypass the gate automatically."
+description: "Per-page 503 maintenance mode: take single pages offline with a custom message while the rest of the site stays up. Admins bypass it."
 since: "3.5.0"
 ---
 `totalcms/maintenance` — bundled with Total CMS. Adds a `maintenance` [page feature](/site-builder/overview#page-features-middleware/) that returns a **503 Service Unavailable** response with a custom message. Different from T3's site-wide `MaintenanceModeMiddleware` — this targets individual pages so you can take one section offline while the rest of the site keeps running.

@@ -82,13 +82,18 @@ process_file() {
         } > "$dest_file"
     fi
 
-    # Rewrite image refs first: docs/<section>/images/<file> -> ./images/<file>
+    # Unlink admin UI links first: [text](/admin/...) -> **text** (they work in the in-admin docs
+    # viewer but 404 on the public site). Must run before the docs/ rewrite below, which turns links
+    # to the docs admin/ section into /admin/... too. Absorbs surrounding ** so bold links stay valid.
+    # Then rewrite image refs: docs/<section>/images/<file> -> ./images/<file>
     # (markdown lives at <section>/<page>.md so a relative ./images path resolves correctly)
     # Then rewrite remaining page refs: docs/<path> -> /<path>/
     if [[ "$(uname)" == "Darwin" ]]; then
+        sed -i '' -E 's#(\*\*)?\[([^]]+)\]\(/admin/[^)]*\)(\*\*)?#**\2**#g' "$dest_file"
         sed -i '' -E 's|\(docs/[^/)]+/images/([^)]+)\)|(./images/\1)|g' "$dest_file"
         sed -i '' -E 's|\(docs/([^)"]+)\)|(/\1/)|g' "$dest_file"
     else
+        sed -i -E 's#(\*\*)?\[([^]]+)\]\(/admin/[^)]*\)(\*\*)?#**\2**#g' "$dest_file"
         sed -i -E 's|\(docs/[^/)]+/images/([^)]+)\)|(./images/\1)|g' "$dest_file"
         sed -i -E 's|\(docs/([^)"]+)\)|(/\1/)|g' "$dest_file"
     fi

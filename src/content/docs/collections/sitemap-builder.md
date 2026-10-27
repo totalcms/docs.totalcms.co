@@ -1,6 +1,6 @@
 ---
 title: "Sitemaps"
-description: "Generate XML sitemaps for Total CMS collections and builder pages, with admin-managed defaults, a sitemap index at /sitemap.xml, and backward-compatible URL parameters."
+description: "Generate XML sitemaps for Total CMS collections and builder pages, with admin-managed defaults and a sitemap index at /sitemap.xml."
 ---
 Total CMS generates XML sitemaps for collections and builder pages, with a sitemap index that crawlers can discover via `robots.txt`.
 

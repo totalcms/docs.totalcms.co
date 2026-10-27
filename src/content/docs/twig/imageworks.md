@@ -1,6 +1,6 @@
 ---
 title: "ImageWorks"
-description: "Complete reference for ImageWorks image transformation parameters including resizing, cropping, effects, watermarks, presets, defaults, and color palette integration."
+description: "ImageWorks reference for Total CMS image transformations: resizing, cropping, effects, watermarks, presets, defaults, and color palettes."
 ---
 ImageWorks is the image processing engine in Total CMS. It transforms images on-the-fly by passing parameters to methods like `cms.media.imagePath()`, `cms.media.galleryPath()`, and `cms.render.image()`. Transformed images are cached automatically.
 
