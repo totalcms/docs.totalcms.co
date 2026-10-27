@@ -108,7 +108,7 @@ Generates: `My Article (2025)`
 }
 ```
 
-**For ID-specific autogen features** (slugification, uniqueness checking, OID padding), see the [ID Settings](/fields/id/) documentation.
+**For ID-specific autogen features** (slugification, uniqueness checking, OID padding), see the [ID Settings](/fields/id) documentation.
 
 ## Calc (Computed Fields)
 
@@ -549,7 +549,7 @@ This works transparently — no extra configuration beyond setting both `require
 
 All fields support validation rules like `pattern`, `minLength`, `maxLength`, `minimum`, `maximum`, `enum`, and more. These are added in the **Extra Schema Definitions** section of a property, not in Settings.
 
-For full details and examples, see [Schema Validation](/schemas/validation/).
+For full details and examples, see [Schema Validation](/schemas/validation).
 
 ## Reference Schema: `totalcms`
 
@@ -557,4 +557,4 @@ Total CMS ships a reserved schema named `totalcms` that demonstrates every field
 its settings in one valid file, with `totalcms-item` backing its `card` and `deck`
 examples. Read it with `tcms schema:get totalcms --json` and copy from it. Which field to
 choose for a given value, and how to read the reference schema, is covered in
-[Choosing a Field](/fields/choosing-a-field/).
+[Choosing a Field](/fields/choosing-a-field).

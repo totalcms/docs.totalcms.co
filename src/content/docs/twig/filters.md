@@ -416,7 +416,7 @@ By default both filters escape HTML in the source, so `<mark>` shows up as text.
 
 Code blocks and inline code are still escaped, so an HTML sample in a fenced block shows as code either way.
 
-Only use it on content your own editors write. With `true`, the filter no longer escapes `<script>` or event attributes, and it no longer blocks `javascript:` links. If visitors can write to the field (a public form, for example), leave it off, or turn on the field's `htmlclean` setting so unsafe HTML is stripped when the object is saved. See [Sanitizing](/fields/markdown#sanitizing/).
+Only use it on content your own editors write. With `true`, the filter no longer escapes `<script>` or event attributes, and it no longer blocks `javascript:` links. If visitors can write to the field (a public form, for example), leave it off, or turn on the field's `htmlclean` setting so unsafe HTML is stripped when the object is saved. See [Sanitizing](/fields/markdown#sanitizing).
 
 ### Email and HTML Encoding
 
@@ -546,7 +546,7 @@ Creates an obfuscated mailto link that protects email addresses from spam bots. 
 </span>
 ```
 
-**Note:** the decoder lives in `content.js`, which is emitted by `{{ cms.assetsBody() }}`. If your layout doesn't call the [core asset helpers](/twig/overview/), the address renders as plain text and never becomes a clickable link.
+**Note:** the decoder lives in `content.js`, which is emitted by `{{ cms.assetsBody() }}`. If your layout doesn't call the [core asset helpers](/twig/overview), the address renders as plain text and never becomes a clickable link.
 
 ### Typography
 
@@ -1238,7 +1238,7 @@ Converts to array.
 
 ### Debugging
 
-Decoding JSON is a function, not a filter: use `parseJson()`, described under [Functions](/twig/functions/).
+Decoding JSON is a function, not a filter: use `parseJson()`, described under [Functions](/twig/functions).
 
 #### `print_r(mixed $variable): string`
 Pretty-prints variable for debugging.
@@ -1656,7 +1656,7 @@ The date filters support natural language strings powered by Chronos:
 
 ## Collection Filtering and Sorting
 
-> **📚 Full Documentation:** For a complete reference of all 40+ filtering operators, including detailed examples and best practices, see [Collection Filtering and Sorting Guide](/twig/collection-filtering/).
+> **📚 Full Documentation:** For a complete reference of all 40+ filtering operators, including detailed examples and best practices, see [Collection Filtering and Sorting Guide](/twig/collection-filtering).
 
 ### Advanced Collection Filtering
 

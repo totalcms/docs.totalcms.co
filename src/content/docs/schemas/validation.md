@@ -22,7 +22,7 @@ By default, required string and array fields are automatically validated:
 
 You can override this behavior by explicitly setting `minLength` or `minItems`.
 
-> **Conditional required?** The schema's top-level `required` array is a hard data invariant enforced on every save. If you need a field that is only required when another field has a particular value (e.g. "email required only when notifications toggle is on"), use the form-level `settings.required` option paired with `settings.visibility` instead. See [Required (Form-Level)](/fields/all-fields#required-form-level/) in the All Fields docs.
+> **Conditional required?** The schema's top-level `required` array is a hard data invariant enforced on every save. If you need a field that is only required when another field has a particular value (e.g. "email required only when notifications toggle is on"), use the form-level `settings.required` option paired with `settings.visibility` instead. See [Required (Form-Level)](/fields/all-fields#required-form-level) in the All Fields docs.
 
 ## String Validation
 
@@ -98,7 +98,7 @@ Frequently used names:
 | `patterns.postCode.uk` | `SW1A 1AA` |
 
 Nested patterns use their dotted path, exactly as in Twig. See
-[Validation Patterns](/forms/patterns/) for the full list.
+[Validation Patterns](/forms/patterns) for the full list.
 
 An unknown name is an error on save rather than a silently broken schema, so
 a typo like `patterns.verison` tells you immediately.
@@ -505,9 +505,9 @@ With this, a member's submission is a draft until an admin approves it, and any 
 - A non-admin cannot clone an object in a collection that has protected properties, because a clone would copy values they cannot write. A public `create` does not make that clone public either. A non-admin clone whose body names a different target `collection` is refused on any collection.
 - A non-admin cannot import into a collection that has protected properties (`/api/import/collections/{collection}/...`: CSV, JSON, deck CSV, deck JSON and factory): an import upserts whole objects. Refused clones and imports are logged with `reason: protected`.
 - Over MCP, a collection with protected properties accepts writes (`create_object`, `update_object`, `patch_object`) from admin callers only.
-- Forced values apply to every authenticated non-admin write (session or OAuth user) — body routes, property routes, deck items, file and upload routes, meta writes and property deletes — in the same save, so editing `title`, adding a deck item or uploading a new image on an approved object still flips `draft` back to `true`. Anonymous public submissions through the object body routes are forced too. The exceptions: counter increments and decrements (a tick is not an edit), property, deck and file routes reached as a public submission under a public `update`, and [registration](/forms/options#public-registration-forms/), which strips protected fields but does not apply forced values.
+- Forced values apply to every authenticated non-admin write (session or OAuth user) — body routes, property routes, deck items, file and upload routes, meta writes and property deletes — in the same save, so editing `title`, adding a deck item or uploading a new image on an approved object still flips `draft` back to `true`. Anonymous public submissions through the object body routes are forced too. The exceptions: counter increments and decrements (a tick is not an edit), property, deck and file routes reached as a public submission under a public `update`, and [registration](/forms/options#public-registration-forms), which strips protected fields but does not apply forced values.
 - The fields `groups`, `active`, `expiration`, `maxLoginCount`, `passkeys`, `loginCount`, `lastlogin` and `created` are always protected on auth schemas; no flag is needed.
-- A collection's [`ownerProperty`](/collections/settings#ownerproperty/) is protected by being named on the collection.
+- A collection's [`ownerProperty`](/collections/settings#ownerproperty) is protected by being named on the collection.
 
 ## Disabling Automatic Required Validation
 

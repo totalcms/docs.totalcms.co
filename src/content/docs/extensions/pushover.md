@@ -271,12 +271,12 @@ Pushover allows 10,000 messages per month on the free tier. Each successful API 
 
 ## See Also
 
-- [Form Settings](/collections/form-settings/) - Configure form actions for collections
-- [Mailer Actions](/collections/form-settings#mailer/) - Send email notifications from form actions
-- [Webhook Actions](/collections/form-settings#webhook/) - Call external URLs from form actions
+- [Form Settings](/collections/form-settings) - Configure form actions for collections
+- [Mailer Actions](/collections/form-settings#mailer) - Send email notifications from form actions
+- [Webhook Actions](/collections/form-settings#webhook) - Call external URLs from form actions
 
 ## See also
 
-- [Page Features (Builder)](/site-builder/overview#page-features-middleware/) — the middleware framework for page features
-- [Bundled Extensions](/extensions/bundled/) — concept and list of all bundled extensions
-- [Extension Points](/extensions/extension-points/) — the full extension API
+- [Page Features (Builder)](/site-builder/overview#page-features-middleware) — the middleware framework for page features
+- [Bundled Extensions](/extensions/bundled) — concept and list of all bundled extensions
+- [Extension Points](/extensions/extension-points) — the full extension API

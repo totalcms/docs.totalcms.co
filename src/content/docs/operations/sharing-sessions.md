@@ -20,8 +20,8 @@ follows from it:
 
 Total CMS stores session files in `tcms-data/.system/sessions`, not in PHP's
 default location. The admin, the REST API, and pages built with the
-[PHP API](/apis/php-api/) all use that folder. The reasons are covered under
-[where session files are stored](/operations/security#where-session-files-are-stored/):
+[PHP API](/apis/php-api) all use that folder. The reasons are covered under
+[where session files are stored](/operations/security#where-session-files-are-stored):
 PHP's default folder is shared with every other site on the server, and a
 neighbour's cleanup can delete your session files after as little as 24
 minutes.
@@ -126,4 +126,4 @@ A conflict inside one shared folder is routine and is logged at debug only.
   app pointed at the same folder on its next request.
 - **Twig can read shared keys.** Use `sessionData.key`, or
   `sessionData['key-with-hyphens']`, as described under
-  [Twig variables](/twig/variables#session-data/).
+  [Twig variables](/twig/variables#session-data).

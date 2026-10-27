@@ -2,7 +2,7 @@
 title: "Twig Media Reference"
 description: "Reference for the cms.media namespace providing image paths, gallery paths, file downloads, and streaming URLs."
 ---
-The media adapter provides URL generation for images (with ImageWorks transformations), gallery images, file downloads, and streaming. For rendering images as HTML, see [cms.render](/twig/render/).
+The media adapter provides URL generation for images (with ImageWorks transformations), gallery images, file downloads, and streaming. For rendering images as HTML, see [cms.render](/twig/render).
 
 ## Images
 
@@ -43,7 +43,7 @@ Get the ImageWorks API URL for an image. Use this when you need just the URL (no
 | `imageworks` | array | `[]` | ImageWorks transformation parameters (`w`, `h`, `fit`, `fm`, etc.) |
 | `options` | array | `[]` | Collection context: `collection`, `property` |
 
-For available ImageWorks parameters, see the [ImageWorks Reference](/twig/imageworks/).
+For available ImageWorks parameters, see the [ImageWorks Reference](/twig/imageworks).
 
 ### imageDataUri()
 
@@ -104,8 +104,8 @@ else the vendor thumbnail string, else `''`.
 | `imageworks` | array | `[]` | ImageWorks transformation parameters |
 | `options` | array | `[]` | Collection context: `collection`, `property` |
 
-This is what [`cms.render.video()`](/twig/render#cms-render-video/) uses internally to
-resolve a poster when none is passed explicitly. See [Video](/fields/video/)
+This is what [`cms.render.video()`](/twig/render#cms-render-video) uses internally to
+resolve a poster when none is passed explicitly. See [Video](/fields/video)
 for the field's stored shape and provider list.
 
 ## Galleries

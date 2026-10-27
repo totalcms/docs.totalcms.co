@@ -38,14 +38,14 @@ The same `/mcp` URL serves three personas; the tool surface scales per caller:
 | Persona | How they authenticate | What they see |
 |---|---|---|
 | **Developer / operator** (`admin`) | `X-API-Key: <admin-key>` header on every request, with an All endpoints (`*`) key | Every tool — including the admin write tools. Same surface as the admin UI. A key limited to some collections is not an admin: see [API key authorization](#api-key-authorization). |
-| **Authenticated consumer** (`authenticated`) | `Authorization: Bearer <oauth-token>` header with at least one `mcp:*` scope | The **intersection** of what the token's scopes consent to and what the approving user's access groups grant — not every `mcp.access: 'authenticated'` collection. A blogger-group user's token can read/write the collections their groups say `blogger` can touch, plus anything marked `mcp.access: 'public'`; nothing else. Used by "Connect Claude" / "Connect Cursor" style flows where an end-user grants a third-party AI client scoped access to their content. See [The three-layer rule](#the-three-layer-rule-scope-group-exposure) and [OAuth Server](/apis/oauth/) for setup. A token approved by an **admin-group** user and carrying the `cms:admin` scope elevates to the admin persona — see [Required scopes for MCP](#required-scopes-for-mcp). |
+| **Authenticated consumer** (`authenticated`) | `Authorization: Bearer <oauth-token>` header with at least one `mcp:*` scope | The **intersection** of what the token's scopes consent to and what the approving user's access groups grant — not every `mcp.access: 'authenticated'` collection. A blogger-group user's token can read/write the collections their groups say `blogger` can touch, plus anything marked `mcp.access: 'public'`; nothing else. Used by "Connect Claude" / "Connect Cursor" style flows where an end-user grants a third-party AI client scoped access to their content. See [The three-layer rule](#the-three-layer-rule-scope-group-exposure) and [OAuth Server](/apis/oauth) for setup. A token approved by an **admin-group** user and carrying the `cms:admin` scope elevates to the admin persona — see [Required scopes for MCP](#required-scopes-for-mcp). |
 | **Public AI agent** (`public`) | No credentials (anonymous) | Only tools marked `access: public` AND only collections with `mcp.access: 'public'`. Drafts are auto-hidden. |
 
 Public content is **opt-in per collection**. `mcp.publicAccess` is on by default, so an anonymous caller can open a session, but every collection's `mcp.access` defaults to `admin` — the public persona sees nothing until the operator marks a collection's `mcp.access` as `public` in the schema editor. To refuse anonymous callers outright (401), set `mcp.publicAccess` to `false`.
 
 ### A fourth caller: the visitor's browser
 
-The bundled [WebMCP extension](/extensions/webmcp/) registers this server's read tools in the visitor's browser. Its calls reach `/mcp` with the visitor's session cookie, and a same-origin *session* is treated like an OAuth client the user approved for `cms:read` and `mcp:tools` only — **read-only and tools-only**, whatever the user could do in the admin: an administrator's session is the admin persona, any other signed-in user is the authenticated persona, reaching only collections whose MCP Access is Authenticated or Public and that their access groups grant read on — never a collection marked Admin only — and the server itself lists no write tool for either. A visitor with no session stays the same anonymous client it always was, reaching only collections whose MCP Access is Public; the server does not narrow an anonymous caller's tool list the way it does a session's, so it is the extension's own script that keeps only tools the server marks `readOnlyHint: true` — a `public`-access tool that writes would otherwise appear in an anonymous `tools/list` like any other. Nothing changes for API-key, OAuth or anonymous clients calling `/mcp` directly, outside a browser page.
+The bundled [WebMCP extension](/extensions/webmcp) registers this server's read tools in the visitor's browser. Its calls reach `/mcp` with the visitor's session cookie, and a same-origin *session* is treated like an OAuth client the user approved for `cms:read` and `mcp:tools` only — **read-only and tools-only**, whatever the user could do in the admin: an administrator's session is the admin persona, any other signed-in user is the authenticated persona, reaching only collections whose MCP Access is Authenticated or Public and that their access groups grant read on — never a collection marked Admin only — and the server itself lists no write tool for either. A visitor with no session stays the same anonymous client it always was, reaching only collections whose MCP Access is Public; the server does not narrow an anonymous caller's tool list the way it does a session's, so it is the extension's own script that keeps only tools the server marks `readOnlyHint: true` — a `public`-access tool that writes would otherwise appear in an anonymous `tools/list` like any other. Nothing changes for API-key, OAuth or anonymous clients calling `/mcp` directly, outside a browser page.
 
 ### Editions: reading everywhere, writing on Pro
 
@@ -76,7 +76,7 @@ Concretely:
 
 This is launch semantics for the AUTHENTICATED tier, not a migration: MCP had not shipped to production when the group rule landed, so there's no prior behavior to preserve. A legacy OAuth token approved before this shipped (grants created by the earlier super-admin elevation feature, for example) is unaffected for admin-group users; a non-admin user's existing token loses reach it arguably should never have had — it now sees only what their groups actually grant.
 
-> **Public access with Claude requires disabling OAuth.** claude.ai and the Claude desktop app demand a login at connector setup whenever they can discover an OAuth server on your site — they never fall back to the anonymous tier, and your consent screen requires an operator login no site visitor has. If you want visitors to connect their Claude to your public collections, turn off **Admin → Settings → OAuth Server → Enable OAuth Server**. Access is then anonymous (public) or API key (admin) — see [Running public-only MCP](/apis/oauth#running-public-only-mcp/). Clients that try anonymously first (ChatGPT connectors, Claude Code, MCP Inspector) reach the public tier either way.
+> **Public access with Claude requires disabling OAuth.** claude.ai and the Claude desktop app demand a login at connector setup whenever they can discover an OAuth server on your site — they never fall back to the anonymous tier, and your consent screen requires an operator login no site visitor has. If you want visitors to connect their Claude to your public collections, turn off **Admin → Settings → OAuth Server → Enable OAuth Server**. Access is then anonymous (public) or API key (admin) — see [Running public-only MCP](/apis/oauth#running-public-only-mcp). Clients that try anonymously first (ChatGPT connectors, Claude Code, MCP Inspector) reach the public tier either way.
 
 ---
 
@@ -135,7 +135,7 @@ API keys and OAuth both authenticate `/mcp` requests, but they serve different t
 - **Pro edition** — the OAuth server is a Pro feature (trials count). The MCP endpoint itself is not gated; only this authenticated persona is.
 - **Keys generated.** Run `tcms oauth:setup` once if you haven't already.
 - **OAuth server enabled.** Toggle on in **Admin → Settings → OAuth Server**.
-- **Read the full OAuth setup guide** at [OAuth Server](/apis/oauth/) before continuing — it covers key generation, client creation, scope definitions, and dynamic registration.
+- **Read the full OAuth setup guide** at [OAuth Server](/apis/oauth) before continuing — it covers key generation, client creation, scope definitions, and dynamic registration.
 
 ### Required scopes for MCP
 
@@ -251,13 +251,13 @@ All tool descriptions are also visible to the AI client at runtime via `tools/li
 | `create_schema` | admin‡ | Save a new schema. Errors on reserved ids and id collisions. `seedObjects` fills the new collection the call creates; if a collection with that id already exists, the schema is saved and seeding is refused (use `create_object`). |
 | `update_schema` | admin‡ | Replace an existing schema definition. Idempotent (same input → same final state). |
 | `delete_schema` | admin‡ | **Destructive.** Refuses to delete reserved schemas, inherited schemas, or schemas still used by a collection. |
-| `create_collection` | admin‡ | Create a new collection bound to a schema. Errors on duplicate id. `extra` takes any [collection setting](/collections/settings/), field overrides (`properties`) included. `publicRegistration` and `registrationGroups` in `extra` are refused unless the caller is an admin. |
+| `create_collection` | admin‡ | Create a new collection bound to a schema. Errors on duplicate id. `extra` takes any [collection setting](/collections/settings), field overrides (`properties`) included. `publicRegistration` and `registrationGroups` in `extra` are refused unless the caller is an admin. |
 | `update_collection` | admin‡ | Change an existing collection's settings. Send only what changes. The settings maps (`properties`, `customProperties`, `formSettings`, `mcp`, `seo`, `sitemap`, `feed`) merge one key at a time, and field overrides merge one attribute at a time, so `{"properties": {"price": {"label": "Cost"}}}` changes one label and keeps the rest; `null` removes a key. A missing `field` on an override is filled in from the schema. No renames; system collections refused; `publicRegistration` and `registrationGroups` admin only. An admin, or an OAuth member whose groups grant collection-settings update; never a limited API key. |
 | `delete_collection` | admin‡ | **Destructive.** Delete a collection's settings — and only those: its objects and files stay on disk, and creating a collection with the same id brings them back. The result returns the deleted settings for that, and they go to the backup history. Refuses the site's login collections (`auth.collection`, `oauth.loginCollection`) and system collections. An admin, or an OAuth member whose groups grant collection-settings delete; never a limited API key. |
 | `create_object` | admin‡ | Create a content object in a collection. Runs the same `ObjectSaver` path as the admin form — schema validation, slug generation, events. See *Binary fields* below. |
 | `update_object` | admin‡ | Update a content object by id. Idempotent. Merges like `patch_object`: omitted fields keep their values. See *Binary fields* below. |
 | `patch_object` | admin‡ | Merge a subset of fields into an existing object — omitted fields keep their current values, so no get/round-trip is needed. Containers (card/deck/list) replace whole. The safer default for targeted agent edits. See *Binary fields* below. |
-| `delete_object` | admin‡ | **Destructive.** Delete one object by id, as the admin's delete button does. Needs the `delete` grant (an API key: the DELETE method). The record stays in the [backup history](/operations/backups/) when backups are on, but its uploaded files are deleted permanently; the result lists the fields that held files and whether a backup was kept. Marked destructive, so clients ask before calling it. |
+| `delete_object` | admin‡ | **Destructive.** Delete one object by id, as the admin's delete button does. Needs the `delete` grant (an API key: the DELETE method). The record stays in the [backup history](/operations/backups) when backups are on, but its uploaded files are deleted permanently; the result lists the fields that held files and whether a backup was kept. Marked destructive, so clients ask before calling it. |
 | `list_extensions` | admin | Every installed extension with id, name, enabled flag, capabilities. |
 | `list_templates` | admin‡ | List the Site Builder Twig templates (builder templates only — reserved admin templates are never listed). Read-only. See *Site Builder templates* below. |
 | `get_template` | admin‡ | Fetch one template's raw Twig source plus the read layer it resolved from. Read-only. See *Site Builder templates* below. |
@@ -301,7 +301,7 @@ Paths are builder-relative and carry no `.twig` extension, exactly as `list_temp
 Every response reports where templates are actually edited on this install:
 
 - `git_managed: false` — templates live in `tcms-data/builder/` and are edited in the Site Builder admin UI.
-- `git_managed: true` — the project has a `builder/` directory, so templates are source-controlled and read-only to the admin UI *and* MCP alike. The git repository is the only write path. See [Site Builder](/site-builder/overview/).
+- `git_managed: true` — the project has a `builder/` directory, so templates are source-controlled and read-only to the admin UI *and* MCP alike. The git repository is the only write path. See [Site Builder](/site-builder/overview).
 
 `get_template` additionally reports the `layer` the file resolved from — `project` (git-managed source of truth), `data` (admin-edited, in `tcms-data`), or `built-in` (shipped default) — so an agent knows which file it just read.
 
@@ -597,9 +597,9 @@ tcms mcp:test list_collections --json
 
 ## Extension authoring
 
-Extensions can publish their own MCP tools and resources via `ExtensionContext::registerMcpTool()`, `registerMcpResource()`, and `registerMcpResourceTemplate()`. Custom tools and resources show up alongside the core surface — AI agents see them the same way they see `query_collection` or `tcms://blog/`. The bundled [Documentation Tools](/mcp/docs-tools/) (`docs_search`, `docs_get`, `docs_lookup`) are a real-world example — a bundled extension registering `authenticated`-access tools with the same `ExtensionContext` API a third-party extension would use.
+Extensions can publish their own MCP tools and resources via `ExtensionContext::registerMcpTool()`, `registerMcpResource()`, and `registerMcpResourceTemplate()`. Custom tools and resources show up alongside the core surface — AI agents see them the same way they see `query_collection` or `tcms://blog/`. The bundled [Documentation Tools](/mcp/docs-tools) (`docs_search`, `docs_get`, `docs_lookup`) are a real-world example — a bundled extension registering `authenticated`-access tools with the same `ExtensionContext` API a third-party extension would use.
 
-See **[Extending MCP](/mcp/extensions/)** for the full authoring guide, including registration examples, naming conventions, capability toggles, and real-world use cases.
+See **[Extending MCP](/mcp/extensions)** for the full authoring guide, including registration examples, naming conventions, capability toggles, and real-world use cases.
 
 ---
 
@@ -613,7 +613,7 @@ A 429 response includes `Retry-After`, `X-RateLimit-Limit`, and `X-RateLimit-Win
 
 **Multi-worker caveat:** APCu-only installs see a per-worker counter, so effective limit ≈ `publicIpPerMinute × worker_count`. Configure Redis for accurate accounting.
 
-**Reverse-proxy rate limits:** This is T3's *application*-layer throttle for anonymous callers. If you also rate-limit at the web server (Nginx `limit_req`, etc.), do **not** put the MCP endpoint in the same low-rate zone you use for admin login — agents batch tool calls in parallel and will hit a 1 req/s login zone instantly, surfacing as timeouts rather than clean 429s. Give `/mcp` its own generous zone with a healthy burst. See [Nginx → Rate limiting the MCP endpoint](/operations/nginx/) for a worked config.
+**Reverse-proxy rate limits:** This is T3's *application*-layer throttle for anonymous callers. If you also rate-limit at the web server (Nginx `limit_req`, etc.), do **not** put the MCP endpoint in the same low-rate zone you use for admin login — agents batch tool calls in parallel and will hit a 1 req/s login zone instantly, surfacing as timeouts rather than clean 429s. Give `/mcp` its own generous zone with a healthy burst. See [Nginx → Rate limiting the MCP endpoint](/operations/nginx) for a worked config.
 
 ### Activity log (G3)
 
@@ -656,7 +656,7 @@ Before submitting your site to Anthropic's Connector Directory, walk through:
 - [ ] Tool names ≤ 64 characters (including any `toolPrefix`).
 - [ ] Read and write operations split into separate tools (no mixed-mode tools).
 - [ ] Tool descriptions don't instruct Claude ("always do X", "you must call Y first") — Total CMS uses `setInstructions()` for cross-tool guidance.
-- [ ] Tools report errors by throwing `Mcp\Exception\ToolCallException` with a recovery hint in the message — the SDK sets `isError: true` for you (see [Extending MCP](/mcp/extensions/), "Returning data and reporting errors"). A hand-built `['isError' => true, ...]` return array does NOT set the outer `CallToolResult.isError`.
+- [ ] Tools report errors by throwing `Mcp\Exception\ToolCallException` with a recovery hint in the message — the SDK sets `isError: true` for you (see [Extending MCP](/mcp/extensions), "Returning data and reporting errors"). A hand-built `['isError' => true, ...]` return array does NOT set the outer `CallToolResult.isError`.
 - [ ] Lazy authentication verified: public tools work unauthenticated; only protected tools challenge.
 - [ ] Submission slug chosen carefully (fixed after publication).
 
@@ -676,13 +676,13 @@ Before submitting your site to Anthropic's Connector Directory, walk through:
 
 The full MCP server, including all of the following, ships in 3.5:
 
-- **Core MCP server** — `/mcp` endpoint, three personas, full tool catalog ([this page](/mcp/server/)).
+- **Core MCP server** — `/mcp` endpoint, three personas, full tool catalog ([this page](/mcp/server)).
 - **MCP resources** — collection / data-view URIs and `resources/subscribe` with SSE notifications.
-- **Saved-query tools** — JSON-defined query tools per collection, no PHP needed ([Saved-Query Tools](/mcp/saved-query-tools/)).
-- **MCP prompts** — templated workflows like "draft a blog post in our voice" or "audit broken links" ([Prompts](/mcp/prompts/)).
-- **OAuth 2.1 + PKCE** — full authorization-code flow, scoped tokens, customer-visible activity dashboard, the "connect Joe's Bistro to Claude" path ([OAuth Server](/apis/oauth/)).
+- **Saved-query tools** — JSON-defined query tools per collection, no PHP needed ([Saved-Query Tools](/mcp/saved-query-tools)).
+- **MCP prompts** — templated workflows like "draft a blog post in our voice" or "audit broken links" ([Prompts](/mcp/prompts)).
+- **OAuth 2.1 + PKCE** — full authorization-code flow, scoped tokens, customer-visible activity dashboard, the "connect Joe's Bistro to Claude" path ([OAuth Server](/apis/oauth)).
 - **Pluggable search providers** — extension hook for swapping the built-in text search for Algolia, Meilisearch, etc.; built-in `text` provider always available.
-- **Bundled documentation tools** — `docs_search`, `docs_get`, `docs_lookup`, shipped enabled by default and matched to this install's own version ([Documentation Tools](/mcp/docs-tools/)).
+- **Bundled documentation tools** — `docs_search`, `docs_get`, `docs_lookup`, shipped enabled by default and matched to this install's own version ([Documentation Tools](/mcp/docs-tools)).
 
 ## What's deferred
 

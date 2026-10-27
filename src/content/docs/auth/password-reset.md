@@ -229,7 +229,7 @@ You can customize the forgot password and reset password forms using whitelabel 
 - `whitelabel/reset-password-above.twig` - Content above the form
 - `whitelabel/reset-password-below.twig` - Content below the form
 
-See the [Whitelabel documentation](/admin/whitelabel/) for more information.
+See the [Whitelabel documentation](/admin/whitelabel) for more information.
 
 ## Troubleshooting
 
@@ -237,7 +237,7 @@ See the [Whitelabel documentation](/admin/whitelabel/) for more information.
 
 1. **Check SMTP Configuration**: Verify your SMTP settings in `config/settings.php`
 2. **Check Spam Folder**: Password reset emails may be flagged as spam
-3. **Verify Email Service**: Check `email.log` in the [logs directory](/operations/filesystem/) for sending errors
+3. **Verify Email Service**: Check `email.log` in the [logs directory](/operations/filesystem) for sending errors
 4. **Test Email Service**: Use the Mailer collection to send a test email
 
 ### Token Expired Error
@@ -253,7 +253,7 @@ If users consistently report expired tokens:
 1. Verify the mailer ID exists in the Mailer collection
 2. Check `forgotPasswordMailerId` matches exactly (case-sensitive)
 3. Ensure mailer template includes all required variables
-4. Check `email.log` in the [logs directory](/operations/filesystem/) for template rendering errors
+4. Check `email.log` in the [logs directory](/operations/filesystem) for template rendering errors
 
 ## API Reference
 
@@ -299,7 +299,7 @@ Resets a user's password using a valid token.
 
 ## Related Documentation
 
-- [Authentication Configuration](/operations/configuration/)
-- [Whitelabel Templates](/admin/whitelabel/)
-- [Email/SMTP Configuration](/operations/configuration/)
-- [Mailer Collection](/notifications/mailer/)
+- [Authentication Configuration](/operations/configuration)
+- [Whitelabel Templates](/admin/whitelabel)
+- [Email/SMTP Configuration](/operations/configuration)
+- [Mailer Collection](/notifications/mailer)

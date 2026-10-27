@@ -86,7 +86,7 @@ Every license includes **two years of updates**, from the day it is first assign
 When the update period ends, nothing stops working. The license becomes a perpetual license for the latest version released during your update period. You can keep running that version as long as you like.
 
 * **Patch releases are always available.** Bug fixes for the version you have (for example 3.6.1 to 3.6.2) install even after your update period ends.
-* **New feature releases need current updates.** The [updater](/operations/updates/) shows a renewal notice for minor and major releases once the period has ended.
+* **New feature releases need current updates.** The [updater](/operations/updates) shows a renewal notice for minor and major releases once the period has ended.
 * **Renewing is optional.** You can renew at any time, including after a lapse, with no back-payment for the gap. Renewals are bought from the License Manager.
 * **Upgrading an edition** includes at least a year of updates.
 
@@ -127,7 +127,7 @@ The file is checked before any online validation, so with it in place there is *
 
 **The domain has to match.** The file is named for the licensed domain and the token inside is signed for it, and both are compared against the domain Total CMS detects from the request. A port (`cms.internal:8080`), an IP address, a `www.` prefix, or a proxy that does not forward the Host header all count as a different domain, and the file is then ignored. When that happens the dashboard reports **Offline license file found but rejected** with the reason, and the License Manager shows a domain-mismatch badge. The fix is to set `domain` in `config/tcms.php` to the licensed domain.
 
-Installing an offline license also **disables error monitoring automatically**. A network-isolated deployment never attempts an outbound call, regardless of the settings toggle. See [Error Monitoring](/operations/security#error-monitoring/).
+Installing an offline license also **disables error monitoring automatically**. A network-isolated deployment never attempts an outbound call, regardless of the settings toggle. See [Error Monitoring](/operations/security#error-monitoring).
 
 Updates for offline deployments are downloaded separately, transferred across the network boundary by whatever process your environment permits, and installed manually.
 

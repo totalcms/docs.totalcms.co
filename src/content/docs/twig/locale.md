@@ -2,7 +2,7 @@
 title: "Twig Locale Reference"
 description: "Reference for the cms.locale namespace providing localization, translation, and language management in templates."
 ---
-The locale adapter provides localization and translation methods for internationalized templates. For broader i18n concepts and setup, see [Localization](/twig/localization/).
+The locale adapter provides localization and translation methods for internationalized templates. For broader i18n concepts and setup, see [Localization](/twig/localization).
 
 ## Language Management
 

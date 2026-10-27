@@ -135,7 +135,7 @@ $settings['session']['save_path'] = '/var/lib/tcms-sessions';
 
 Any other PHP application on the site that shares the session cookie must
 open its session in the same folder, or the two apps end up with separate
-copies of one session. See [Sharing Sessions with Other PHP Apps](/operations/sharing-sessions/).
+copies of one session. See [Sharing Sessions with Other PHP Apps](/operations/sharing-sessions).
 
 ### Sharing a login across subdomains
 
@@ -456,7 +456,7 @@ Total CMS can report application errors to the developer so bugs get discovered 
 
 **What is never sent:** the reporting client is explicitly configured to never attach request bodies, cookies, session data, IP addresses, or user information. Your content, credentials, and CMS data stay on your server.
 
-**Air-gapped deployments:** installing an [offline license](/operations/licenses#offline-licensing/) disables error monitoring automatically at the configuration layer — a network-isolated install never attempts an outbound call, regardless of the settings toggle.
+**Air-gapped deployments:** installing an [offline license](/operations/licenses#offline-licensing) disables error monitoring automatically at the configuration layer — a network-isolated install never attempts an outbound call, regardless of the settings toggle.
 
 When disabled, errors are still logged locally on your server — see the log files in your data directory.
 

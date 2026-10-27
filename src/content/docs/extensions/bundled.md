@@ -5,7 +5,7 @@ since: "3.5.0"
 ---
 Total CMS ships a small set of **bundled extensions** in the package itself (under `resources/extensions/`). They're installed automatically — no `composer require`, no upload — and, with one exception, disabled by default. Enable the ones you want from **Admin → Extensions**.
 
-The exception is `totalcms/docs` (see the table below), which ships marked `default_enabled` in its manifest — see [`default_enabled`](/extensions/manifest#default-enabled/) for the mechanism and why it's bundled-only.
+The exception is `totalcms/docs` (see the table below), which ships marked `default_enabled` in its manifest — see [`default_enabled`](/extensions/manifest#default-enabled) for the mechanism and why it's bundled-only.
 
 ## Why bundled extensions?
 
@@ -20,16 +20,16 @@ This keeps core lean for sites that don't need a particular feature, while still
 
 | Extension | Description | Docs |
 |-----------|-------------|------|
-| `totalcms/ab-split` | Render an alternate page template at the same URL for a percentage of visitors (A/B testing). | [A/B Split →](/extensions/ab-split/) |
-| `totalcms/algolia-search` | Pluggable search provider backed by Algolia. Routes MCP search tools through Algolia's hosted keyword + neural search. Pro edition. | [Algolia Search →](/extensions/algolia-search/) |
-| `totalcms/docs` | Exposes this install's own documentation to AI agents as `docs_search`, `docs_get`, and `docs_lookup` MCP tools. Enabled by default (see below); tools stay `authenticated`-only unless you opt in to public exposure. | [Documentation Tools →](/mcp/docs-tools/) |
-| `totalcms/geo-redirect` | Redirect visitors based on their country. Reads from CDN-injected headers (Cloudflare, Vercel, generic). Useful for compliance redirects and regional landing pages. | [Geo Redirect →](/extensions/geo-redirect/) |
-| `totalcms/maintenance` | Per-page 503 maintenance mode. Take individual pages offline with a custom message while the rest of the site stays up. Admins bypass automatically. | [Maintenance →](/extensions/maintenance/) |
-| `totalcms/podcast` | Host a podcast from two collections: the `podcast` and `podcast-episode` schemas, a feed the directories accept at its own address, and a `podcast_feed()` Twig function. Standard edition and above. | [Podcast →](/extensions/podcast/) |
-| `totalcms/protect` | Gate a page behind a numeric passcode. Visitors enter a code to unlock — cookie remembers them for 7 days. For client previews and soft launches. | [Protect →](/extensions/protect/) |
-| `totalcms/pushover` | Send push notifications via Pushover when forms are submitted. Supports Twig templates, image attachments, and delivery groups. Pro edition. | [Pushover →](/extensions/pushover/) |
-| `totalcms/scheduled` | Time-window gating. Only renders a page between configured start/end timestamps. For holiday campaigns, embargoed announcements, and time-limited sales. | [Scheduled →](/extensions/scheduled/) |
-| `totalcms/webmcp` | Make your forms and public collections callable by a browser AI agent inside the visitor's own session (Chrome 149+ origin trial). `webmcp_form()` annotates a form; the browser registers the MCP server's own read tools (`query_collection`, `get_object`, saved queries…), following each collection's MCP access. Experimental, off by default. | [WebMCP →](/extensions/webmcp/) |
+| `totalcms/ab-split` | Render an alternate page template at the same URL for a percentage of visitors (A/B testing). | [A/B Split →](/extensions/ab-split) |
+| `totalcms/algolia-search` | Pluggable search provider backed by Algolia. Routes MCP search tools through Algolia's hosted keyword + neural search. Pro edition. | [Algolia Search →](/extensions/algolia-search) |
+| `totalcms/docs` | Exposes this install's own documentation to AI agents as `docs_search`, `docs_get`, and `docs_lookup` MCP tools. Enabled by default (see below); tools stay `authenticated`-only unless you opt in to public exposure. | [Documentation Tools →](/mcp/docs-tools) |
+| `totalcms/geo-redirect` | Redirect visitors based on their country. Reads from CDN-injected headers (Cloudflare, Vercel, generic). Useful for compliance redirects and regional landing pages. | [Geo Redirect →](/extensions/geo-redirect) |
+| `totalcms/maintenance` | Per-page 503 maintenance mode. Take individual pages offline with a custom message while the rest of the site stays up. Admins bypass automatically. | [Maintenance →](/extensions/maintenance) |
+| `totalcms/podcast` | Host a podcast from two collections: the `podcast` and `podcast-episode` schemas, a feed the directories accept at its own address, and a `podcast_feed()` Twig function. Standard edition and above. | [Podcast →](/extensions/podcast) |
+| `totalcms/protect` | Gate a page behind a numeric passcode. Visitors enter a code to unlock — cookie remembers them for 7 days. For client previews and soft launches. | [Protect →](/extensions/protect) |
+| `totalcms/pushover` | Send push notifications via Pushover when forms are submitted. Supports Twig templates, image attachments, and delivery groups. Pro edition. | [Pushover →](/extensions/pushover) |
+| `totalcms/scheduled` | Time-window gating. Only renders a page between configured start/end timestamps. For holiday campaigns, embargoed announcements, and time-limited sales. | [Scheduled →](/extensions/scheduled) |
+| `totalcms/webmcp` | Make your forms and public collections callable by a browser AI agent inside the visitor's own session (Chrome 149+ origin trial). `webmcp_form()` annotates a form; the browser registers the MCP server's own read tools (`query_collection`, `get_object`, saved queries…), following each collection's MCP access. Experimental, off by default. | [WebMCP →](/extensions/webmcp) |
 
 ## How to enable / disable
 
@@ -73,6 +73,6 @@ If you're shipping a fork of T3 and want to add your own bundled extensions, dro
 
 ## See also
 
-- [Extensions Overview](/extensions/overview/)
-- [Extension Points](/extensions/extension-points/) — the full extension API including `addPageMiddleware()` for shipping page features
-- [Page Features (Builder)](/site-builder/overview#page-features-middleware/) — user-facing perspective on the middleware system
+- [Extensions Overview](/extensions/overview)
+- [Extension Points](/extensions/extension-points) — the full extension API including `addPageMiddleware()` for shipping page features
+- [Page Features (Builder)](/site-builder/overview#page-features-middleware) — user-facing perspective on the middleware system

@@ -54,13 +54,13 @@ Snippets are objects in a reserved `playground` collection, using the `playgroun
 
 - **Export and Import** from the actions menu (the three dots next to the page title) move snippets between installs as JSON.
 - The REST API exposes them at `/api/playground` (list, create, fetch, update, delete), gated by the same permission as the page.
-- `tcms push` and `tcms pull` never move the collection: it is a per-install scratchpad, not site content. See [Sync](/operations/sync/).
+- `tcms push` and `tcms pull` never move the collection: it is a per-install scratchpad, not site content. See [Sync](/operations/sync).
 
 ---
 
 ## Who can use it
 
-Access is a single boolean on an access group, `playground`, alongside the other admin-page permissions. A user whose groups do not grant it does not see the sidebar entry, and the page and its API return 403. See [Access Groups](/auth/access-groups/).
+Access is a single boolean on an access group, `playground`, alongside the other admin-page permissions. A user whose groups do not grant it does not see the sidebar entry, and the page and its API return 403. See [Access Groups](/auth/access-groups).
 
 The Playground renders with the permissions of the logged-in user, so a template that reads a collection the user cannot access fails the same way it would on a page.
 

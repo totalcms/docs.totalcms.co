@@ -43,7 +43,7 @@ GET /templates/grids/blog
 
 ## White Label Templates
 
-Special templates customize the admin interface. See [White Label](/admin/whitelabel/) for details.
+Special templates customize the admin interface. See [White Label](/admin/whitelabel) for details.
 
 | Template | Purpose |
 |----------|---------|

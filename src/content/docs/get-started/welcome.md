@@ -16,8 +16,8 @@ You can run a Total CMS site on any PHP host without provisioning a database or 
 ## How it works
 
 - **Content lives in flat files** — Your collections, schemas, and objects are stored as JSON on disk. No database to provision, host, or back up.
-- **[Site Builder](/site-builder/overview/) publishes pages instantly** — Add a page in the admin and it's live at its URL. No build step, no deploy, no static generation.
-- **[Twig templates](/twig/overview/) and a [REST API](/apis/rest-api/)** — Render content with Twig in-process for SSR, or hit the REST API from any frontend.
+- **[Site Builder](/site-builder/overview) publishes pages instantly** — Add a page in the admin and it's live at its URL. No build step, no deploy, no static generation.
+- **[Twig templates](/twig/overview) and a [REST API](/apis/rest-api)** — Render content with Twig in-process for SSR, or hit the REST API from any frontend.
 
 ## How content is organized
 
@@ -30,13 +30,13 @@ A handful of terms come up throughout these docs:
 | **Schema** | The definition of what properties are contained within an object |
 | **Collection** | A group of related objects that share the same schema — e.g. all your blog posts, all your gallery images |
 
-You'll see these throughout. The [Your First Site](/get-started/your-first-site/) tutorial uses them in context.
+You'll see these throughout. The [Your First Site](/get-started/your-first-site) tutorial uses them in context.
 
 > **Why flat-file?** Your content travels with your code. Copy a folder and you have a complete site. Back it up with `tar`. Move it between staging and production without a database dump-and-restore dance. Version-control your content alongside your templates. The database never goes down because there isn't one.
 
 ## What you'll build in 10 minutes
 
-The fastest way to learn Total CMS is to build something with it. The [Your First Site](/get-started/your-first-site/) tutorial walks you through:
+The fastest way to learn Total CMS is to build something with it. The [Your First Site](/get-started/your-first-site) tutorial walks you through:
 
 1. Installing Total CMS
 2. Adding your first blog post in the admin
@@ -45,7 +45,7 @@ The fastest way to learn Total CMS is to build something with it. The [Your Firs
 
 By the end, you'll have hands-on familiarity with collections, schemas, objects, the admin, the file layout, and the template engine — the foundational ideas of Total CMS, learned by doing.
 
-[**Start the tutorial →**](/get-started/your-first-site/)
+[**Start the tutorial →**](/get-started/your-first-site)
 
 ## Already installing?
 
@@ -53,14 +53,14 @@ If you'd rather skip the tutorial and go straight to setup:
 
 | Step | What it covers |
 |---|---|
-| [System Requirements](/get-started/requirements/) | Server, PHP, and extension checks |
-| [Installation](/get-started/installation/) | Composer command, setup wizard, layout options |
+| [System Requirements](/get-started/requirements) | Server, PHP, and extension checks |
+| [Installation](/get-started/installation) | Composer command, setup wizard, layout options |
 
 ## Using AI coding assistants
 
 If you use Claude Code, Cursor, Windsurf, or GitHub Copilot, point them at the Total CMS docs MCP server at `https://totalcms.co/mcp` — our own docs site, dogfooding Total CMS's built-in MCP server. Your assistant can then look up exact Twig signatures, field configurations, REST endpoints, and CLI commands on demand — no more guessing at function names from stale training data.
 
-In ChatGPT, add [Total CMS from the app directory](https://chatgpt.com/plugins/plugin_asdk_app_6abdb19953248191932b75de95b06dbd); in Claude, search its directory for Total CMS. In an editor, one JSON snippet in its config gets it working across every Total CMS project. See [Using Total CMS with AI](/extensions/ai-integration/) for the per-tool setup and the full list of MCP tools (`docs_search`, `docs_get`, `docs_lookup`, and more).
+In ChatGPT, add [Total CMS from the app directory](https://chatgpt.com/plugins/plugin_asdk_app_6abdb19953248191932b75de95b06dbd); in Claude, search its directory for Total CMS. In an editor, one JSON snippet in its config gets it working across every Total CMS project. See [Using Total CMS with AI](/extensions/ai-integration) for the per-tool setup and the full list of MCP tools (`docs_search`, `docs_get`, `docs_lookup`, and more).
 
 ## Community & support
 

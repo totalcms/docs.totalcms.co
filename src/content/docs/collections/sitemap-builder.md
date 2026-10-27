@@ -61,7 +61,7 @@ Both sitemaps skip any entry whose **SEO** card has **No Index** turned on — a
 
 This is separate from the **Include in Sitemap** toggle. That toggle keeps a record out of the sitemap without asking anyone not to index it; **No Index** does both. For collections other than the builder pages, the schema's `index` array must contain `seo` for the exclusion to take effect — the sitemap builders read the collection index, not the object files.
 
-See [SEO](/site-builder/seo/) for the card and how to add it to your own schemas.
+See [SEO](/site-builder/seo) for the card and how to add it to your own schemas.
 
 ## Per-Object Sitemap
 
@@ -102,7 +102,7 @@ This preserves backward compatibility with workflows that built sitemap URLs by 
 
 The `include` and `exclude` settings — whether saved on the collection or passed as URL parameters — control which objects appear in the sitemap.
 
-> **📖 See [Index Filter Documentation](/apis/index-filter/) for complete filtering syntax and examples.**
+> **📖 See [Index Filter Documentation](/apis/index-filter) for complete filtering syntax and examples.**
 
 ### Quick Examples
 
@@ -127,7 +127,7 @@ The `include` and `exclude` settings — whether saved on the collection or pass
 - **Shorthand**: `?include=featured` — Defaults to `featured:true`
 - **Multiple**: Use commas to separate multiple filters
 
-For complete filtering documentation including boolean/string handling, multi-criteria, precedence, and PHP usage examples, see the [Index Filter Documentation](/apis/index-filter/).
+For complete filtering documentation including boolean/string handling, multi-criteria, precedence, and PHP usage examples, see the [Index Filter Documentation](/apis/index-filter).
 
 ## Backward Compatibility
 

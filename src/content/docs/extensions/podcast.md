@@ -9,7 +9,7 @@ since: "3.6.0"
 
 1. Go to **Admin → Extensions**, find **Podcast**, click **Enable** (or run `tcms extension:enable totalcms/podcast`).
 2. Create an episodes collection from `podcast-episode`, then a Single Object Collection from `podcast` named `podcast`, and pick the episodes collection on the show record.
-3. Fill in the show and add episodes. The [Podcasts](/collections/podcast/) page walks through every field.
+3. Fill in the show and add episodes. The [Podcasts](/collections/podcast) page walks through every field.
 
 ## The feed
 
@@ -31,7 +31,7 @@ The first argument is the show collection, default `podcast`; the episodes colle
 
 ## The agent skill
 
-The extension ships an [agent skill](/extensions/extension-points#agent-skill/). While it is enabled, `tcms skill:install` puts it at `.claude/skills/totalcms-podcast/`, so Claude Code and other coding agents working in the project know the two collections, the feed addresses, `podcast_feed()` and the mistakes above without being told. Enabling in the admin installs it at once; disabling removes it.
+The extension ships an [agent skill](/extensions/extension-points#agent-skill). While it is enabled, `tcms skill:install` puts it at `.claude/skills/totalcms-podcast/`, so Claude Code and other coding agents working in the project know the two collections, the feed addresses, `podcast_feed()` and the mistakes above without being told. Enabling in the admin installs it at once; disabling removes it.
 
 ## What it replaces
 

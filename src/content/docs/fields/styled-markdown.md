@@ -7,21 +7,21 @@ related:
   - twig/markdown
   - collections/storage-format
 ---
-The `styledmarkdown` field stores a Markdown string. It uses the same editor as [Styled Text](/fields/styled-text/), limited to what Markdown can express, so editors get a toolbar and writers who know Markdown get the source.
+The `styledmarkdown` field stores a Markdown string. It uses the same editor as [Styled Text](/fields/styled-text), limited to what Markdown can express, so editors get a toolbar and writers who know Markdown get the source.
 
-For writing the Markdown source yourself, use the [`markdown`](/fields/markdown/) field. Both store the same value, so a schema can switch between them at any time.
+For writing the Markdown source yourself, use the [`markdown`](/fields/markdown) field. Both store the same value, so a schema can switch between them at any time.
 
-Use it when the content should stay as Markdown: documentation, changelogs, or bodies in a [markdown-format collection](/collections/storage-format/). Use [Styled Text](/fields/styled-text/) when editors need color, alignment, or embedded video.
+Use it when the content should stay as Markdown: documentation, changelogs, or bodies in a [markdown-format collection](/collections/storage-format). Use [Styled Text](/fields/styled-text) when editors need color, alignment, or embedded video.
 
 ## Rendering
 
-The value is Markdown source, so pass it through the [`markdown` filter](/twig/markdown/):
+The value is Markdown source, so pass it through the [`markdown` filter](/twig/markdown):
 
 ```twig
 {{ post.body|markdown }}
 ```
 
-The filter escapes any HTML in the source; to render it as markup, pass `true`: `{{ post.body|markdown(true) }}` (see [Letting HTML through](/twig/filters#letting-html-through/)). Always render the field with the filter; printing the raw value shows the Markdown source and any HTML in it.
+The filter escapes any HTML in the source; to render it as markup, pass `true`: `{{ post.body|markdown(true) }}` (see [Letting HTML through](/twig/filters#letting-html-through)). Always render the field with the filter; printing the raw value shows the Markdown source and any HTML in it.
 
 ## The editor
 
@@ -31,7 +31,7 @@ The **Source** button on the right switches to the raw Markdown and back.
 
 ### Changing the toolbar
 
-Add `toolbarConfig` to the field's settings to choose your own buttons, in the same group format [Styled Text](/fields/styled-text/) uses. These extra buttons are available but not in the default toolbar: `strike`, `undo`, `redo`, `preview`, and `fullscreen`.
+Add `toolbarConfig` to the field's settings to choose your own buttons, in the same group format [Styled Text](/fields/styled-text) uses. These extra buttons are available but not in the default toolbar: `strike`, `undo`, `redo`, `preview`, and `fullscreen`.
 
 ```json
 {
@@ -49,16 +49,16 @@ Buttons for things Markdown cannot express, such as `underline` or `align`, do n
 
 ## Settings
 
-These Styled Text settings work the same way in this field. Each links to its description on the [Styled Text](/fields/styled-text/) page.
+These Styled Text settings work the same way in this field. Each links to its description on the [Styled Text](/fields/styled-text) page.
 
 | Setting | What it does |
 |---|---|
-| [`height`, `heightMin`, `heightMax`](/fields/styled-text#editor-height/) | The editor's height. |
-| [`pasteAsPlainText`](/fields/styled-text#paste-behavior/) | Paste without formatting. |
-| [`toolbarConfig`](/fields/styled-text#toolbar-configuration/) | The toolbar buttons and their groups. See [Changing the toolbar](/fields/styled-markdown#changing-the-toolbar/) for the buttons this field has. |
-| [`headingLevels`](/fields/styled-text#heading-levels/) | The levels in the heading menu. The default is 2, 3 and 4. |
-| [`charCounterCount`, `charCounterMax`, `wordCounterCount`, `wordCounterMax`](/fields/styled-text#character-and-word-counters/) | Counters under the editor. They count the visible text, not the Markdown characters, and a maximum only highlights when it is exceeded. |
-| [`imagePreset`, `imageUploadRules`](/fields/styled-text#upload-settings/) | The preset and validation rules for image uploads. |
+| [`height`, `heightMin`, `heightMax`](/fields/styled-text#editor-height) | The editor's height. |
+| [`pasteAsPlainText`](/fields/styled-text#paste-behavior) | Paste without formatting. |
+| [`toolbarConfig`](/fields/styled-text#toolbar-configuration) | The toolbar buttons and their groups. See [Changing the toolbar](/fields/styled-markdown#changing-the-toolbar) for the buttons this field has. |
+| [`headingLevels`](/fields/styled-text#heading-levels) | The levels in the heading menu. The default is 2, 3 and 4. |
+| [`charCounterCount`, `charCounterMax`, `wordCounterCount`, `wordCounterMax`](/fields/styled-text#character-and-word-counters) | Counters under the editor. They count the visible text, not the Markdown characters, and a maximum only highlights when it is exceeded. |
+| [`imagePreset`, `imageUploadRules`](/fields/styled-text#upload-settings) | The preset and validation rules for image uploads. |
 
 Custom inline styles, custom inline classes, block classes, HTML snippets and the color palette do nothing in this field. Markdown has no syntax for them.
 
@@ -102,7 +102,7 @@ Image and file uploads work as they do in Styled Text. An uploaded image is inse
 
 ## Sanitizing
 
-A styledmarkdown field holds source, so it is stored exactly as written, the same as a [code field](/fields/code-editor/). HTML in the source is not removed when the object is saved. The `markdown` filter escapes it when the page renders, which is why code samples such as `<script>` inside a code block stay intact. `markdown(true)` lets the HTML through instead, so only use it when the people writing to the field are trusted, or when `htmlclean` is on.
+A styledmarkdown field holds source, so it is stored exactly as written, the same as a [code field](/fields/code-editor). HTML in the source is not removed when the object is saved. The `markdown` filter escapes it when the page renders, which is why code samples such as `<script>` inside a code block stay intact. `markdown(true)` lets the HTML through instead, so only use it when the people writing to the field are trusted, or when `htmlclean` is on.
 
 If people you don't fully trust can write to the field, such as visitors using a public form, turn on `htmlclean` in the field's settings so unsafe HTML is stripped when the object is saved:
 

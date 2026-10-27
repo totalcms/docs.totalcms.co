@@ -8,9 +8,9 @@ related:
   - operations/search
 updated: 2026-10-19
 ---
-Total CMS ships importers for four other sources, under **Utilities** in the sidebar's **Import** group: **Import Alloy**, **Import RSS Feed**, **Import Total CMS 1** and **Import WordPress**. Each maps its source onto object properties and queues the result into a collection you choose, leaving the source data untouched. For a spreadsheet or JSON export, see [Importing Data](/collections/import/) instead.
+Total CMS ships importers for four other sources, under **Utilities** in the sidebar's **Import** group: **Import Alloy**, **Import RSS Feed**, **Import Total CMS 1** and **Import WordPress**. Each maps its source onto object properties and queues the result into a collection you choose, leaving the source data untouched. For a spreadsheet or JSON export, see [Importing Data](/collections/import) instead.
 
-They only ever **create** objects. The RSS importer skips an entry whose id already exists, so re-polling a feed is safe; the others queue it anyway and the job fails, because Total CMS rejects a duplicate id rather than overwriting. The "update existing objects" rule in [Importing Data](/collections/import/) covers the CSV and JSON forms, not these.
+They only ever **create** objects. The RSS importer skips an entry whose id already exists, so re-polling a feed is safe; the others queue it anyway and the job fails, because Total CMS rejects a duplicate id rather than overwriting. The "update existing objects" rule in [Importing Data](/collections/import) covers the CSV and JSON forms, not these.
 
 ## WordPress
 
@@ -51,7 +51,7 @@ No CLI command.
 
 **Utilities → Import Total CMS 1.** No edition requirement. The page auto-detects a `cms-data` folder in your document root, or you can type an absolute path.
 
-Each v1 folder becomes a collection: blogs get one each on the `blog-legacy` schema (a `.posturl` file sets the collection URL and pretty-URL flag; if a non-empty collection with that id exists, the import goes to `<id>-one`), `date`, `depot`, `feed`, `file`, `gallery`, `image` and `text` map to collections of the same name, and videos become `url` objects. Templates are the other half of a v1 migration: the folder-by-folder table and the full macro → Twig mapping live in [Migrating from Total CMS v1](/operations/migration-total-cms-one/).
+Each v1 folder becomes a collection: blogs get one each on the `blog-legacy` schema (a `.posturl` file sets the collection URL and pretty-URL flag; if a non-empty collection with that id exists, the import goes to `<id>-one`), `date`, `depot`, `feed`, `file`, `gallery`, `image` and `text` map to collections of the same name, and videos become `url` objects. Templates are the other half of a v1 migration: the folder-by-folder table and the full macro → Twig mapping live in [Migrating from Total CMS v1](/operations/migration-total-cms-one).
 
 ## RSS, Atom and JSON feeds
 
@@ -78,7 +78,7 @@ Every importer above writes into the job queue rather than saving immediately, s
 php <install_dir>/resources/bin/tcms jobs:process
 ```
 
-Watch progress under **Utilities → Job Queue Manager**, which also builds that cron line. A bad item does not stop an import: the failure is logged and the importer moves on. Those messages go to `importer.log`, readable in **Utilities → Log Analyzer**, with warnings and errors mirrored into `totalcms.log`. Each imported object fires `import.created` rather than `object.created` — see [Events](/extensions/events/) if listeners or automations watch for new content.
+Watch progress under **Utilities → Job Queue Manager**, which also builds that cron line. A bad item does not stop an import: the failure is logged and the importer moves on. Those messages go to `importer.log`, readable in **Utilities → Log Analyzer**, with warnings and errors mirrored into `totalcms.log`. Each imported object fires `import.created` rather than `object.created` — see [Events](/extensions/events) if listeners or automations watch for new content.
 
 ## After importing
 
@@ -92,4 +92,4 @@ Finally, rebuild your search index. With `indexOnSave` enabled, every imported o
 tcms search:reindex
 ```
 
-See [Search Backends](/operations/search/) for the provider settings.
+See [Search Backends](/operations/search) for the provider settings.

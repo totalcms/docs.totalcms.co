@@ -86,7 +86,7 @@ The immediate use case: `resources/docs/**/*.md` already looks exactly like a ma
 | `updated` | date |
 | `content` | markdown |
 
-Since `content` is a `markdown` field (string-typed), it becomes the body of each `.md` file — the same body Total CMS's own docs already carry. Render it in a template with the `|markdown` filter (see [Twig Markdown Integration](/twig/markdown/)):
+Since `content` is a `markdown` field (string-typed), it becomes the body of each `.md` file — the same body Total CMS's own docs already carry. Render it in a template with the `|markdown` filter (see [Twig Markdown Integration](/twig/markdown)):
 
 ```twig
 {{ page.content|markdown }}

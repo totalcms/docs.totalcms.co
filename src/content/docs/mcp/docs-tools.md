@@ -44,7 +44,7 @@ Tools give an agent the ability to read the docs; they don't tell it when to bot
 | `tcms_write_content` | `collection`, `brief`, `id` (optional) | Create or edit an object safely — the schema's help text is the brief, patch rather than replace, respect each field's stored shape. |
 | `tcms_audit_seo` | `collection` (optional) | Audit the three SEO layers — Site SEO record, collection mapping and URL, the record's own card — and report what to fix in priority order. |
 
-The last three carry the judgment the terminal agent skill carries (`tcms skill:install`, see [CLI](/extensions/cli/)) — for the many users who only ever reach Total CMS through an MCP client and will never install it.
+The last three carry the judgment the terminal agent skill carries (`tcms skill:install`, see [CLI](/extensions/cli)) — for the many users who only ever reach Total CMS through an MCP client and will never install it.
 
 They're named `tcms_*` rather than `docs_*` deliberately. The tools are documentation operations; these are product workflows that *use* the documentation, and `tcms` is already this server's namespace (the `tcms://` resource URIs). The distinctive prefix also matters mechanically: a prompt in your `mcp-prompt` collection always wins over an extension-registered one of the same name, so a generic name like `explain_field` would let an operator's own prompt silently replace this one.
 
@@ -54,9 +54,9 @@ The prompt text lives in `prompts.json` inside the extension, not in its PHP. It
 
 ## Enabled by default, invisible to anonymous callers
 
-Unlike most bundled extensions (disabled until an operator opts in — see [Bundled Extensions](/extensions/bundled/)), `totalcms/docs` ships `default_enabled: true`. A fresh install has all three tools live immediately, no admin action required.
+Unlike most bundled extensions (disabled until an operator opts in — see [Bundled Extensions](/extensions/bundled)), `totalcms/docs` ships `default_enabled: true`. A fresh install has all three tools live immediately, no admin action required.
 
-That does **not** mean they're public. The tools register at `authenticated` access by default: visible to the admin persona (API key) and to any OAuth-authenticated caller, but absent from `tools/list` for anonymous callers. Listing and calling are gated separately — resolving to the authenticated persona needs any `mcp:*` scope, while actually invoking a tool needs `mcp:tools`. A token carrying only `mcp:resources` therefore sees these tools listed and is refused when it calls one. Installing or updating to a version that ships this extension changes nothing about a site's *public* MCP surface — `mcp.publicAccess` and each collection's `mcp.access` setting still govern what an anonymous agent can reach. See [Three audiences, one endpoint](/mcp/server#three-audiences-one-endpoint/) for how the personas work.
+That does **not** mean they're public. The tools register at `authenticated` access by default: visible to the admin persona (API key) and to any OAuth-authenticated caller, but absent from `tools/list` for anonymous callers. Listing and calling are gated separately — resolving to the authenticated persona needs any `mcp:*` scope, while actually invoking a tool needs `mcp:tools`. A token carrying only `mcp:resources` therefore sees these tools listed and is refused when it calls one. Installing or updating to a version that ships this extension changes nothing about a site's *public* MCP surface — `mcp.publicAccess` and each collection's `mcp.access` setting still govern what an anonymous agent can reach. See [Three audiences, one endpoint](/mcp/server#three-audiences-one-endpoint) for how the personas work.
 
 ## Exposing the tools publicly
 
@@ -90,7 +90,7 @@ The tool list shown per persona reflects whether the extension is enabled and, i
 
 ## See also
 
-- [MCP Server](/mcp/server/) — personas, transport, the full core tool catalog
-- [Extending MCP](/mcp/extensions/) — how extensions register their own tools and resources
-- [Bundled Extensions](/extensions/bundled/) — the bundled-extension model in general
-- [Extension Manifest Reference](/extensions/manifest/) — the `default_enabled` field this extension uses
+- [MCP Server](/mcp/server) — personas, transport, the full core tool catalog
+- [Extending MCP](/mcp/extensions) — how extensions register their own tools and resources
+- [Bundled Extensions](/extensions/bundled) — the bundled-extension model in general
+- [Extension Manifest Reference](/extensions/manifest) — the `default_enabled` field this extension uses

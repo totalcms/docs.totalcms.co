@@ -68,7 +68,7 @@ Pages are managed directly within the Builder — the `builder-pages` collection
 
 **Route:** `/admin/builder/page/add`
 
-Click **+ New Page** in the sidebar footer. Fill in the page fields — see [Page Schema Fields](/site-builder/overview#page-schema-fields/) for the full list. Required fields are **Title** and **Template**.
+Click **+ New Page** in the sidebar footer. Fill in the page fields — see [Page Schema Fields](/site-builder/overview#page-schema-fields) for the full list. Required fields are **Title** and **Template**.
 
 After saving, you're redirected to the page edit form.
 
@@ -115,7 +115,7 @@ Hierarchy and ordering are stored in `.order.json`, not on the page records them
 - Reordering 50 pages is one file write instead of 50
 - No event cascade fires on reorder (no index rebuild, no cache invalidation)
 
-See [Page Order](/site-builder/overview#page-order/) for the file format and reconciliation rules.
+See [Page Order](/site-builder/overview#page-order) for the file format and reconciliation rules.
 
 ## Template Editor
 
@@ -183,7 +183,7 @@ Every save captures a snapshot of the **previous** template content under `tcms-
 
 ### Restoring via CLI
 
-Use [`tcms builder:history`](/site-builder/cli#builder-history/) to list, view, or restore snapshots:
+Use [`tcms builder:history`](/site-builder/cli#builder-history) to list, view, or restore snapshots:
 
 ```bash
 # List versions
@@ -305,10 +305,10 @@ Template CRUD operations go through the standard template API at `/api/templates
 
 ## See Also
 
-- [Site Builder Overview](/site-builder/overview/)
-- [Page Schema Fields](/site-builder/overview#page-schema-fields/)
-- [Page Order](/site-builder/overview#page-order/)
+- [Site Builder Overview](/site-builder/overview)
+- [Page Schema Fields](/site-builder/overview#page-schema-fields)
+- [Page Order](/site-builder/overview#page-order)
 - [Page Inspector Overlay](#page-inspector-overlay)
 - [Live Reload Preview](#live-reload-preview)
-- [Builder CLI Commands](/site-builder/cli/) — including `builder:routes` and `builder:history`
-- [Starter Templates](/site-builder/starters/)
+- [Builder CLI Commands](/site-builder/cli) — including `builder:routes` and `builder:history`
+- [Starter Templates](/site-builder/starters)

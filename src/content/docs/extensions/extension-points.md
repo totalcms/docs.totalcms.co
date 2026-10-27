@@ -31,7 +31,7 @@ new TwigFunction('acme_banner', function (): void {
 
 Extensions register Twig **functions, filters, and globals** — never custom tags or nodes — so there is nothing else to do to be yield-ready.
 
-> **Security: Twig autoescaping is OFF.** Total CMS renders content fields as trusted author HTML/Markdown, so Twig does not escape output for you. Any value your extension prints that came from outside the admin — request input, anonymous submissions, third-party APIs — must be escaped explicitly with `{{ value | e }}` (or `| e('html_attr')` inside an attribute), or wrapped in `{% autoescape 'html' %}`. A handler that prints `{{ input }}` has no automatic XSS protection. See [Template Output Escaping](/operations/security#template-output-escaping-twig/).
+> **Security: Twig autoescaping is OFF.** Total CMS renders content fields as trusted author HTML/Markdown, so Twig does not escape output for you. Any value your extension prints that came from outside the admin — request input, anonymous submissions, third-party APIs — must be escaped explicitly with `{{ value | e }}` (or `| e('html_attr')` inside an attribute), or wrapped in `{% autoescape 'html' %}`. A handler that prints `{{ input }}` has no automatic XSS protection. See [Template Output Escaping](/operations/security#template-output-escaping-twig).
 
 ## Twig Functions
 
@@ -369,7 +369,7 @@ builds the field.
 
 ## Event Listeners
 
-Subscribe to content events. See [Events](/extensions/events/) for the full event reference.
+Subscribe to content events. See [Events](/extensions/events) for the full event reference.
 
 ```php
 public function register(ExtensionContext $context): void
@@ -385,7 +385,7 @@ public function register(ExtensionContext $context): void
 
 ## Automations
 
-Ship a server-side [automation](/automations/overview/) as part of your extension. Like the user-authored automations in the admin, an extension automation runs on a **schedule** or a content **event** — but its handler is the closure you register here, held in memory (never written to disk). The handler receives an `AutomationContext` with pre-injected services (`objectFetcher`, `objectSaver`, `objectUpdater`, `objectRemover`, `indexReader`, `mailer`, `config`, `logger`) plus the run payload (`trigger`, `args`, `event`).
+Ship a server-side [automation](/automations/overview) as part of your extension. Like the user-authored automations in the admin, an extension automation runs on a **schedule** or a content **event** — but its handler is the closure you register here, held in memory (never written to disk). The handler receives an `AutomationContext` with pre-injected services (`objectFetcher`, `objectSaver`, `objectUpdater`, `objectRemover`, `indexReader`, `mailer`, `config`, `logger`) plus the run payload (`trigger`, `args`, `event`).
 
 ```php
 public function register(ExtensionContext $context): void
@@ -480,7 +480,7 @@ Once registered, `geo-redirect` shows up in the page form's middleware multisele
 
 **Capability:** `page-middleware`
 
-See the [Page Middleware section in the Builder overview](/site-builder/overview#page-features-middleware/) for the user-facing perspective.
+See the [Page Middleware section in the Builder overview](/site-builder/overview#page-features-middleware) for the user-facing perspective.
 
 ## Form Actions
 
@@ -529,7 +529,7 @@ The handler receives `data` (the saved form fields), `channel`, `message`, and a
 
 **Naming:** Use your vendor name or a distinctive slug (e.g. `slack`, `discord`, `ntfy`). The name appears in collection action configs and must be stable once shipped.
 
-See the bundled [Pushover extension](/extensions/pushover/) for a complete working example.
+See the bundled [Pushover extension](/extensions/pushover) for a complete working example.
 
 ## Assets (CSS / JS)
 
@@ -593,7 +593,7 @@ Extension assets are merged with Total CMS core assets and emitted by these Twig
 
 `cms.adminAssetsHead()` also emits the dashboard accent setting as a `--totalform-accent` rule after its stylesheets, so the admin styles on your page use the configured brand color (`cms.adminAccentStyle()` returns just that rule for a layout that writes its own tags). `cms.adminAssetsBody()` also defines `window.TCMS_TRANSLATIONS` (the JS translation catalog for the current user's locale) and `window.TCMS_CONFIG` (the dashboard settings the admin scripts read, such as `confirmCountdown`) ahead of the script tags, so an admin page you build yourself gets the same globals the dashboard has. The public `cms.assetsBody()` never emits them.
 
-For the admin interface there's nothing to do — core admin templates already call the helpers. For public pages, your theme template needs to call `cms.assetsHead()` / `cms.assetsBody()` for extension frontend assets to render. A site can leave core frontend features it never renders out of those helpers, site-wide with `$settings['frontendAssets']['except']` or per call with `{except: [...]}` (see [Frontend Assets](/site-builder/frontend/)); extension assets always render.
+For the admin interface there's nothing to do — core admin templates already call the helpers. For public pages, your theme template needs to call `cms.assetsHead()` / `cms.assetsBody()` for extension frontend assets to render. A site can leave core frontend features it never renders out of those helpers, site-wide with `$settings['frontendAssets']['except']` or per call with `{except: [...]}` (see [Frontend Assets](/site-builder/frontend)); extension assets always render.
 
 Within each helper, output ordering is:
 1. Meta tags first (`cms.assetsHead()` / `cms.adminAssetsHead()` only — a meta tag has no body position).
@@ -830,7 +830,7 @@ public function register(ExtensionContext $context): void
 
 Provider ids must be unique across all extensions + the built-in `text` provider. The registrar logs and skips collisions during boot. When `isAvailable()` returns false, SearchService silently falls back to text search. Throwing from `search()` also triggers the fallback. Throwing from `index()` or `delete()` enqueues a retry job.
 
-See the bundled [Algolia Search extension](/extensions/algolia-search/) for a complete working example.
+See the bundled [Algolia Search extension](/extensions/algolia-search) for a complete working example.
 
 ## Agent Skill
 
@@ -850,5 +850,5 @@ While the extension is enabled, `tcms skill:install` copies that directory to `.
 
 The copy is stamped with a fingerprint of your source and with the extension id, so a later sync knows which folders are its own: a folder in `.claude/skills/` that the sync did not write — the operator's own skill, say, that happens to share the name — is never overwritten or removed.
 
-Write `SKILL.md` the way the core one is written: what the extension adds (Twig functions, CLI commands, settings, schemas), when to reach for each, and the mistakes an agent is likely to make. Paths such as `vendor/bin/tcms` are rewritten for zip installs on copy, so write for the Composer layout. There is no capability to declare and no permission toggle: the skill is text the agent reads, not code that runs. It is, though, instructions to an agent, which is why the [pre-enable review](/extensions/safety#the-pre-enable-review/) shows the full `SKILL.md` to the operator before they consent — write it to be read by them too.
+Write `SKILL.md` the way the core one is written: what the extension adds (Twig functions, CLI commands, settings, schemas), when to reach for each, and the mistakes an agent is likely to make. Paths such as `vendor/bin/tcms` are rewritten for zip installs on copy, so write for the Composer layout. There is no capability to declare and no permission toggle: the skill is text the agent reads, not code that runs. It is, though, instructions to an agent, which is why the [pre-enable review](/extensions/safety#the-pre-enable-review) shows the full `SKILL.md` to the operator before they consent — write it to be read by them too.
 

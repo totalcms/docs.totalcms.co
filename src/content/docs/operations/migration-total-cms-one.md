@@ -11,7 +11,7 @@ related:
 Total CMS 3 is a ground-up rewrite, so a v1 site moves over in two parts:
 
 1. **Your content** — the data in `cms-data/` (blogs, galleries, images, files, dates, feeds). Total CMS 3 ships a built-in importer that brings this across for you.
-2. **Your templates** — the `%macro(cmsid)%` tags scattered through your v1 HTML become `{{ cms... }}` calls inside [Twig templates](/twig/overview/). The [macro mapping table](#update-your-templates-v1-macros-twig) below covers every one.
+2. **Your templates** — the `%macro(cmsid)%` tags scattered through your v1 HTML become `{{ cms... }}` calls inside [Twig templates](/twig/overview). The [macro mapping table](#update-your-templates-v1-macros-twig) below covers every one.
 
 This page is the one-stop guide for both. Read it top to bottom before you start a migration.
 
@@ -60,15 +60,15 @@ Total CMS 3 removes that constraint: you can **define a custom schema** with pro
 
 Recommended workflow:
 
-1. **Export the v1 blog to CSV** — import it as a `blog-legacy` collection (above), then use [collection export](/collections/export/) to get a CSV.
+1. **Export the v1 blog to CSV** — import it as a `blog-legacy` collection (above), then use [collection export](/collections/export) to get a CSV.
 2. **Rename the CSV headers** to your new field names (`author` → `price`, `category` → `brand`, …).
-3. **Create your custom collection** with a matching [schema](/schemas/reference/), then **import the CSV** into it.
+3. **Create your custom collection** with a matching [schema](/schemas/reference), then **import the CSV** into it.
 
 You end up with a clean, purpose-built collection instead of a blog wearing a disguise.
 
 ## Update your templates: v1 macros → Twig
 
-Total CMS v1 injected content into a page with `%macro(cmsid)%` tags placed directly in your HTML. Total CMS 3 has no macro processor — content is pulled into [Twig templates](/twig/overview/) through the global `cms` variable instead. This section maps every v1 macro to its Total CMS 3 Twig equivalent so you can update your templates field by field.
+Total CMS v1 injected content into a page with `%macro(cmsid)%` tags placed directly in your HTML. Total CMS 3 has no macro processor — content is pulled into [Twig templates](/twig/overview) through the global `cms` variable instead. This section maps every v1 macro to its Total CMS 3 Twig equivalent so you can update your templates field by field.
 
 ### How the model changed
 
@@ -76,7 +76,7 @@ Total CMS v1 injected content into a page with `%macro(cmsid)%` tags placed dire
 |---------|--------------|-------------|
 | **Where tags live** | `%cmsText(headline)%` placed anywhere in the page HTML | `{{ cms.data.text('headline') }}` inside a `.twig` template |
 | **Content addressing** | A single global `cmsid` per content type | A **collection** + object **id**. The reserved collections (`text`, `image`, `gallery`, `file`, `toggle`, `date`, …) are the defaults, so a lone `cmsid` still maps 1:1 |
-| **Image sizes** | Fixed `Thumb` / `Square` presets baked into the macro name | Any dimensions on demand via [ImageWorks](/twig/imageworks/) options — `{w: 300, h: 300, fit: 'crop'}` |
+| **Image sizes** | Fixed `Thumb` / `Square` presets baked into the macro name | Any dimensions on demand via [ImageWorks](/twig/imageworks) options — `{w: 300, h: 300, fit: 'crop'}` |
 | **PNG output** | Separate `…Png…` macros | One option: `{fm: 'png'}` |
 | **Markdown / formatting** | Separate `…Format` macros | A Twig filter: `\| markdown` or `\| markdownInline` |
 
@@ -92,7 +92,7 @@ Because the reserved-collection defaults match v1's content types, the `cmsid` y
 | `%cmsTextStripHTML(cmsid)%` | Strip HTML | `{{ cms.data.text('cmsid') \| striptags }}` |
 | `%cmsToggle(cmsid)%` | Boolean toggle | `{{ cms.data.toggle('cmsid') }}` |
 
-> `cms.data('text', 'cmsid', 'text')` is the [callable shorthand](/twig/data#raw-data-access/) for `cms.data.raw(...)` — it returns the value exactly as stored. For everyday text use `cms.data.text('cmsid')`.
+> `cms.data('text', 'cmsid', 'text')` is the [callable shorthand](/twig/data#raw-data-access) for `cms.data.raw(...)` — it returns the value exactly as stored. For everyday text use `cms.data.text('cmsid')`.
 
 ### Image alt text
 
@@ -103,7 +103,7 @@ Because the reserved-collection defaults match v1's content types, the `cmsid` y
 
 ### Gallery alt text
 
-The v1 `Featured` / `First` / `Last` macros become the [dynamic selectors](/twig/media#galleries/) `'featured'`, `'first'`, `'last'` (and `'random'`) passed to `galleryAlt()`.
+The v1 `Featured` / `First` / `Last` macros become the [dynamic selectors](/twig/media#galleries) `'featured'`, `'first'`, `'last'` (and `'random'`) passed to `galleryAlt()`.
 
 | Total CMS v1 | Description | Total CMS 3 Twig |
 |--------------|-------------|------------------|
@@ -127,7 +127,7 @@ In v1, `Thumb` and `Square` were fixed-size presets. In T3 you request **any** s
 | `%cmsImagePngThumb(cmsid)%` | Thumbnail (PNG) | `{{ cms.media.imagePath('cmsid', {w: 300, fm: 'png'}) }}` |
 | `%cmsImagePngSquare(cmsid)%` | Square crop (PNG) | `{{ cms.media.imagePath('cmsid', {w: 300, h: 300, fit: 'crop', fm: 'png'}) }}` |
 
-> `cms.media.imagePath()` returns a **URL** for use in `src`/`url()`. To emit a complete `<img>` tag with alt text and lazy loading, use [`cms.render.image('cmsid', {w: 300})`](/twig/render#images/) instead.
+> `cms.media.imagePath()` returns a **URL** for use in `src`/`url()`. To emit a complete `<img>` tag with alt text and lazy loading, use [`cms.render.image('cmsid', {w: 300})`](/twig/render#images) instead.
 
 ### Gallery path macros
 
@@ -148,7 +148,7 @@ The `Featured` / `First` / `Last` / `Random` variants all collapse into a single
 | `%cmsGalleryImageRandomThumb(cmsid)%` | Random thumbnail | `{{ cms.media.galleryPath('cmsid', 'random', {w: 300}) }}` |
 | `%cmsGalleryImageRandomSquare(cmsid)%` | Random square | `{{ cms.media.galleryPath('cmsid', 'random', {w: 300, h: 300, fit: 'crop'}) }}` |
 
-> To render a whole gallery with a lightbox (rather than one image URL), reach for [`cms.render.gallery('cmsid')`](/twig/render#galleries/).
+> To render a whole gallery with a lightbox (rather than one image URL), reach for [`cms.render.gallery('cmsid')`](/twig/render#galleries).
 
 ### File & download macros
 
@@ -166,8 +166,8 @@ The v1 **DataStore** macros (`%cmsDataStore%`, `%cmsDataStoreDownload%`) backed 
 Migrate the pattern like this:
 
 1. **Create a custom collection** with a schema matching your form fields.
-2. **Build a form** that saves submissions into that collection with the [Form Builder](/forms/builder/) — each submission becomes an object instead of a CSV row.
-3. **Export to CSV** when you need the flat file: use [collection export](/collections/export/) in the admin, or `tcms collection:export` from the [CLI](/extensions/cli/).
+2. **Build a form** that saves submissions into that collection with the [Form Builder](/forms/builder) — each submission becomes an object instead of a CSV row.
+3. **Export to CSV** when you need the flat file: use [collection export](/collections/export) in the admin, or `tcms collection:export` from the [CLI](/extensions/cli).
 
 This gives you everything the old DataStore did (capture form data, download it as CSV) plus queryable, editable records in the admin.
 
@@ -182,7 +182,7 @@ Total CMS v1 blog post pages had their own large family of `%blogXxx()%` macros 
 <h1>{{ post.title }}</h1>
 ```
 
-> On a [Site Builder](/site-builder/overview/) blog page the matched record is already provided as `object`, so you can skip the `set` and use `object.*` directly. Everything below works the same either way — just swap `post` for your variable name.
+> On a [Site Builder](/site-builder/overview) blog page the matched record is already provided as `object`, so you can skip the `set` and use `object.*` directly. Everything below works the same either way — just swap `post` for your variable name.
 
 Migrated blogs use the **`blog-legacy`** schema, whose property names are shown below. (The v1 `permalink` becomes the object **id**.)
 
@@ -207,7 +207,7 @@ The v1 `…Format` and `…StripHTML` variants are just Twig filters on the same
 
 #### Date fields
 
-The post's `date` is stored as ISO‑8601; format it with Twig's [`date`](/twig/filters/) filter.
+The post's `date` is stored as ISO‑8601; format it with Twig's [`date`](/twig/filters) filter.
 
 | Total CMS v1 | Output | Total CMS 3 Twig |
 |--------------|--------|------------------|
@@ -237,7 +237,7 @@ A blog post has two media fields: a single **`image`** and a **`gallery`**. The 
 | `%blogImageRandom()%` | `{{ cms.media.galleryPath(post, 'random', {}, {collection: 'blog', property: 'gallery'}) }}` |
 | `%blogImageFeaturedAlt()%` | `{{ cms.render.galleryAlt(post, 'featured', {collection: 'blog', property: 'gallery'}) }}` |
 
-Apply the same `{w: 300}` / `{w: 300, h: 300, fit: 'crop'}` sizing options shown for `image` to any gallery selector (the v1 `…Thumb` / `…Square` variants), and the same `First` / `Last` / `Random` selectors to the alt calls. To emit a complete `<img>` tag (URL + dimensions + alt + lazy loading) instead of a bare URL, use [`cms.render.image(post, {w: 300}, {collection: 'blog', property: 'image'})`](/twig/render#images/); to render the whole gallery with a lightbox, use [`cms.render.gallery(post)`](/twig/render#galleries/).
+Apply the same `{w: 300}` / `{w: 300, h: 300, fit: 'crop'}` sizing options shown for `image` to any gallery selector (the v1 `…Thumb` / `…Square` variants), and the same `First` / `Last` / `Random` selectors to the alt calls. To emit a complete `<img>` tag (URL + dimensions + alt + lazy loading) instead of a bare URL, use [`cms.render.image(post, {w: 300}, {collection: 'blog', property: 'image'})`](/twig/render#images); to render the whole gallery with a lightbox, use [`cms.render.gallery(post)`](/twig/render#galleries).
 
 ### Before & after
 

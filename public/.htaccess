@@ -1,0 +1,23 @@
+# Serve the Astro build (build.format 'file', trailingSlash 'never') at slashless URLs:
+# /twig/filters is served from twig/filters.html.
+
+# Don't let mod_dir append a slash to section folders like /twig.
+DirectorySlash Off
+Options -MultiViews
+
+RewriteEngine On
+
+# /twig/filters/ -> /twig/filters
+RewriteCond %{REQUEST_URI} !^/$
+RewriteRule ^(.+)/$ /$1 [R=301,L]
+
+# /twig/filters.html -> /twig/filters (only for direct requests, not internal rewrites)
+RewriteCond %{THE_REQUEST} \s/([^?\s]+)\.html[\s?]
+RewriteCond %1 !^(index|404)$
+RewriteRule ^ /%1 [R=301,L]
+
+# /twig/filters -> twig/filters.html
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+)$ $1.html [L]
+
+ErrorDocument 404 /404.html

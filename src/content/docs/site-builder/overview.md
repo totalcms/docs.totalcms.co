@@ -181,7 +181,7 @@ A page's description and social image live on its **SEO card** (`page.seo.descri
 {% endif %}
 ```
 
-For the social tags themselves, let `cms.seo.head(page)` do the work — it resolves the card image, falls back to the site default, and emits `og:image` with its alt. See [SEO](/site-builder/seo/).
+For the social tags themselves, let `cms.seo.head(page)` do the work — it resolves the card image, falls back to the site default, and emits `og:image` with its alt. See [SEO](/site-builder/seo).
 
 ## HTTP Status Codes
 
@@ -211,7 +211,7 @@ Setup:
 
 If multiple pages have status 404, the first one found wins. If no page has status 404, Slim's plain default is used.
 
-A template can ask for the same answer itself. A collection URL matches every object, drafts included, so a page template that finds it has nothing to serve calls [`cms.notFound()`](/twig/totalcms#notfound/): rendering stops and the 404 page renders in place, at the visitor's URL, with status `404`.
+A template can ask for the same answer itself. A collection URL matches every object, drafts included, so a page template that finds it has nothing to serve calls [`cms.notFound()`](/twig/totalcms#notfound): rendering stops and the 404 page renders in place, at the visitor's URL, with status `404`.
 
 ```twig
 {% if object.draft %}{{ cms.notFound() }}{% endif %}
@@ -263,7 +263,7 @@ Failure responses:
 
 The default login signs people in against the site's main auth collection. When a page's visitors live in another one (a `dealers` collection for a client portal), pick it in the page's **Access Collection** field, which appears next to Access Groups when `auth` is enabled. Signed-out visitors then go to `/admin/login/dealers`, and come back to the page after signing in.
 
-Empty (the default) sends visitors to `/admin/login`. Protected *files* use the same idea, set on the file's collection instead: see [`accessCollection`](/collections/settings#accesscollection/).
+Empty (the default) sends visitors to `/admin/login`. Protected *files* use the same idea, set on the file's collection instead: see [`accessCollection`](/collections/settings#accesscollection).
 
 ### Registering Middleware from an Extension
 
@@ -386,11 +386,11 @@ A collection URL serves every object to anyone. To put a collection's object pag
 <div>{{ post.content | raw }}</div>
 ```
 
-4. Turn off the collection's [sitemap](/collections/sitemap-builder/) and [RSS feed](/collections/rss-feed/). The page gates the URL, but the sitemap and feed would still publish every post's title and link.
+4. Turn off the collection's [sitemap](/collections/sitemap-builder) and [RSS feed](/collections/rss-feed). The page gates the URL, but the sitemap and feed would still publish every post's title and link.
 
 Links built with `objectUrl()` keep working: they point at the same `/blog/{id}` address, which the page now answers.
 
-See [Object Linking](/twig/object-linking/) for full documentation on URL templates, canonical URLs, and the `objectUrl()` function.
+See [Object Linking](/twig/object-linking) for full documentation on URL templates, canonical URLs, and the `objectUrl()` function.
 
 ## Pages Collection
 
@@ -403,7 +403,7 @@ Page metadata is stored in the `builder-pages` collection using the `builder-pag
 | `id` | slug | Page identifier (auto-generated from title) |
 | `title` | text | Page title |
 | `route` | text | URL pattern (e.g., `/about` or `/products/{id}`) |
-| `template` | text | Page template name from `builder/pages/`. Leave empty on a page Total CMS does not serve — the record then only carries SEO for [`cms.builder.page()`](/site-builder/seo#pages-the-router-did-not-render/) |
+| `template` | text | Page template name from `builder/pages/`. Leave empty on a page Total CMS does not serve — the record then only carries SEO for [`cms.builder.page()`](/site-builder/seo#pages-the-router-did-not-render) |
 | `data` | JSON | Free-form JSON exposed as `page.data.*` |
 | `status` | select | HTTP status code returned (200, 301, 302, 404, 410, 451, 503) |
 | `redirectTo` | text | Destination for 301/302 redirects |
@@ -440,7 +440,7 @@ The order file is reconciled against the page list on every read:
 - Pages that exist but aren't in the order file are appended at the root
 - If a parent page is deleted, its children are spliced into the parent's spot so grandchildren keep their structure
 
-You don't edit `.order.json` directly — use the admin's drag-drop reorder mode (see [Builder Admin UI](/site-builder/admin#reordering-pages/)). The file is created automatically on first read, migrating from any legacy `parent`/`sort` fields if present.
+You don't edit `.order.json` directly — use the admin's drag-drop reorder mode (see [Builder Admin UI](/site-builder/admin#reordering-pages)). The file is created automatically on first read, migrating from any legacy `parent`/`sort` fields if present.
 
 ## Navigation
 
@@ -512,7 +512,7 @@ Behavior:
 - URL-encodes param values automatically.
 - Optional third argument selects a different pages collection: `cms.builder.url('about', {}, 'my-custom-pages')`.
 
-`url()` returns a **relative** path. For canonical tags, `og:url` and redirects, use `cms.builder.canonicalUrl(page)` — it resolves scheme and domain from the site config, so no template needs a hard-coded host. See [cms.builder reference](/site-builder/twig/).
+`url()` returns a **relative** path. For canonical tags, `og:url` and redirects, use `cms.builder.canonicalUrl(page)` — it resolves scheme and domain from the site config, so no template needs a hard-coded host. See [cms.builder reference](/site-builder/twig).
 
 ### Draft vs Nav
 
@@ -540,7 +540,7 @@ API routes always take priority over builder pages.
 
 The Site Builder isn't just for HTML pages. Any text-based file the web expects at a specific path — `robots.txt`, `llms.txt`, `ads.txt`, `security.txt`, `humans.txt`, `manifest.json`, custom RSS feeds — can be served as a builder page. Total CMS auto-detects the right `Content-Type` from the route's file extension.
 
-For feeds specifically, `cms.feed.rss()` builds the document for you rather than writing the XML by hand — see [Feeds](/twig/feeds/).
+For feeds specifically, `cms.feed.rss()` builds the document for you rather than writing the XML by hand — see [Feeds](/twig/feeds).
 
 ### How It Works
 
@@ -641,8 +641,8 @@ Resolution tries the path as-is, then with `.html`, then `/index.html`. Path tra
 
 ## See Also
 
-- [Frontend Assets](/site-builder/frontend/) — Vite setup, CSS/JS compilation, and build tool configuration
-- [Builder Twig Reference](/site-builder/twig/) — `nav()`, `subnav()`, `navTree()`, `css()`, `js()`, `asset()`, `preload()`
-- [Builder CLI Commands](/site-builder/cli/) — `builder:init`, `builder:routes`, `builder:history`
-- [Builder Admin UI](/site-builder/admin/) — page management, drag-drop reorder, preview pane, snapshot history
-- [Starter Templates](/site-builder/starters/)
+- [Frontend Assets](/site-builder/frontend) — Vite setup, CSS/JS compilation, and build tool configuration
+- [Builder Twig Reference](/site-builder/twig) — `nav()`, `subnav()`, `navTree()`, `css()`, `js()`, `asset()`, `preload()`
+- [Builder CLI Commands](/site-builder/cli) — `builder:init`, `builder:routes`, `builder:history`
+- [Builder Admin UI](/site-builder/admin) — page management, drag-drop reorder, preview pane, snapshot history
+- [Starter Templates](/site-builder/starters)

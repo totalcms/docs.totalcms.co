@@ -3,7 +3,7 @@ title: "Scheduled (Bundled Extension)"
 description: "Only render a builder page between set start and end times. Useful for holiday campaigns, embargoed announcements, and time-limited sales."
 since: "3.5.0"
 ---
-`totalcms/scheduled` — bundled with Total CMS. Adds a `scheduled` [page feature](/site-builder/overview#page-features-middleware/) that only renders a page during a configured **time window**. Outside the window, visitors get redirected to a fallback URL or see a 404.
+`totalcms/scheduled` — bundled with Total CMS. Adds a `scheduled` [page feature](/site-builder/overview#page-features-middleware) that only renders a page during a configured **time window**. Outside the window, visitors get redirected to a fallback URL or see a 404.
 
 ## Use cases
 
@@ -97,6 +97,6 @@ Source: `resources/extensions/totalcms/scheduled/`
 
 ## See also
 
-- [Page Features (Builder)](/site-builder/overview#page-features-middleware/) — the middleware framework this plugs into
-- [Bundled Extensions](/extensions/bundled/) — concept and list of all bundled extensions
-- [Maintenance](/extensions/maintenance/) — sibling bundled extension for per-page 503
+- [Page Features (Builder)](/site-builder/overview#page-features-middleware) — the middleware framework this plugs into
+- [Bundled Extensions](/extensions/bundled) — concept and list of all bundled extensions
+- [Maintenance](/extensions/maintenance) — sibling bundled extension for per-page 503

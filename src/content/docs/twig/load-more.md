@@ -4,7 +4,7 @@ description: "Add HTMX-powered infinite scroll and load more buttons to Total CM
 ---
 Total CMS provides "load more" helpers that render the first page of results server-side, then fetch subsequent pages via API as the user scrolls or clicks a button.
 
-The same endpoint powers live search, filtering, lazy sections and more — see [HTMX Recipes](/twig/htmx/).
+The same endpoint powers live search, filtering, lazy sections and more — see [HTMX Recipes](/twig/htmx).
 
 ## Requirements
 
@@ -16,7 +16,7 @@ The same endpoint powers live search, filtering, lazy sections and more — see 
 {{ cms.assetsBody() }}   {# just before </body>, with cms.assetsHead() in <head> #}
 ```
 
-If your layout already calls the [core asset helpers](/twig/overview/), there is nothing more to add. Without them the button renders unstyled and clicking it fetches nothing, since htmx never loads.
+If your layout already calls the [core asset helpers](/twig/overview), there is nothing more to add. Without them the button renders unstyled and clicking it fetches nothing, since htmx never loads.
 
 ## Collection Load More
 
@@ -359,7 +359,7 @@ If you pre-rendered items server-side, set `offset` to skip those:
 
 ## See Also
 
-- [URL Filters Utility](/twig/utils/) — Let visitors filter, sort, and search via URL query parameters
-- [Index Filtering](/apis/index-filter/) — Include/exclude filter syntax
-- [Total CMS Twig Adapter](/twig/totalcms/) — Full `cms` variable reference
-- [Pagination](/twig/render#pagination/) — Traditional page-based pagination
+- [URL Filters Utility](/twig/utils) — Let visitors filter, sort, and search via URL query parameters
+- [Index Filtering](/apis/index-filter) — Include/exclude filter syntax
+- [Total CMS Twig Adapter](/twig/totalcms) — Full `cms` variable reference
+- [Pagination](/twig/render#pagination) — Traditional page-based pagination

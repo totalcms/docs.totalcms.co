@@ -524,13 +524,13 @@ $parsed = $filter->parseFilterString('published:true,featured:true,status:active
 
 The `IndexFilter` service is used throughout Total CMS:
 
-- **Sitemap Builder** - Filter which objects appear in XML sitemaps ([Sitemap Documentation](/collections/sitemap-builder/))
+- **Sitemap Builder** - Filter which objects appear in XML sitemaps ([Sitemap Documentation](/collections/sitemap-builder))
 - **Collection Index API** - Filter collection objects via API endpoint
 - **RSS Feeds** - Control feed content based on object properties
-- **Data Export** - Filter which objects are included in JSON and CSV exports ([Export Documentation](/collections/export/))
-- **Form Fields** - Filter relational dropdown options ([Field Settings](/fields/relational-options#filtering-relational-options/))
+- **Data Export** - Filter which objects are included in JSON and CSV exports ([Export Documentation](/collections/export))
+- **Form Fields** - Filter relational dropdown options ([Field Settings](/fields/relational-options#filtering-relational-options))
 - **Grid Display** - Filter objects in Twig templates
-- **Gallery Launcher** - Filter gallery images via include/exclude/search ([Render Documentation](/twig/render#gallerylauncher/))
+- **Gallery Launcher** - Filter gallery images via include/exclude/search ([Render Documentation](/twig/render#gallerylauncher))
 - **Custom Services** - Build your own filtered collections
 
 ### Collection Index API
@@ -675,6 +675,6 @@ var_dump($matches); // true or false
 
 ## See Also
 
-- [URL Filters Utility](/twig/utils/) - Convert URL query parameters into include/exclude/sort/search options for visitor-facing filtering
-- [Sitemap Builder Documentation](/collections/sitemap-builder/) - Using filters in sitemaps
-- [Twig Integration](/twig/functions/) - Using filters in templates
+- [URL Filters Utility](/twig/utils) - Convert URL query parameters into include/exclude/sort/search options for visitor-facing filtering
+- [Sitemap Builder Documentation](/collections/sitemap-builder) - Using filters in sitemaps
+- [Twig Integration](/twig/functions) - Using filters in templates

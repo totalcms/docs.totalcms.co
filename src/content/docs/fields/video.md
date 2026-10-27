@@ -132,7 +132,7 @@ On save:
   allow every provider.
 - **poster** — a settings block forwarded to the poster's underlying image
   field, so the same rules (size, dimensions, file type, etc.) documented in
-  [Image & Gallery](/fields/image-gallery/) apply.
+  [Image & Gallery](/fields/image-gallery) apply.
 
 ## The ready-made Video collection
 
@@ -296,6 +296,6 @@ image upload is refused over MCP. A payload for a video property that omits
 
 The video field never accepts an upload and never stores video bytes. For
 video you host yourself — background clips, small local files — use a **file**
-field and [`cms.media.stream()`](/twig/media#stream/) / `cms.render.video()`
+field and [`cms.media.stream()`](/twig/media#stream) / `cms.render.video()`
 against that file-field value, which supports HTTP range requests for
 in-browser playback.

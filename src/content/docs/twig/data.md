@@ -174,7 +174,7 @@ Get image data as an array. Default collection: `image`, default property: `imag
 {{ img.height }}
 ```
 
-For rendering images as HTML, see [cms.render.image()](/twig/render/).
+For rendering images as HTML, see [cms.render.image()](/twig/render).
 
 ### gallery()
 
@@ -187,7 +187,7 @@ Get gallery data as an array of image objects. Default collection: `gallery`, de
 {% endfor %}
 ```
 
-For rendering galleries with lightbox support, see [cms.render.gallery()](/twig/render/).
+For rendering galleries with lightbox support, see [cms.render.gallery()](/twig/render).
 
 ### file()
 
@@ -200,7 +200,7 @@ Get file data as an array. Default collection: `file`, default property: `file`.
 {{ doc.mime }}
 ```
 
-For generating download/stream URLs, see [cms.media](/twig/media/).
+For generating download/stream URLs, see [cms.media](/twig/media).
 
 ### depot()
 
@@ -213,7 +213,7 @@ Get depot (multi-file storage) data as an array. Default collection: `depot`, de
 {% endfor %}
 ```
 
-For generating download/stream URLs, see [cms.media](/twig/media/).
+For generating download/stream URLs, see [cms.media](/twig/media).
 
 ## Options Pattern
 

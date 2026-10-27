@@ -222,7 +222,7 @@ Takes a page `id` **or** a whole page array, so a layout can pass the `page` it 
 - Everything `url()` does — base prefix, param filling, encoding — applies unchanged.
 - Returns an empty string wherever `url()` does. A missing or unrouted page never degrades to a bare domain, which would look like a working link to the homepage.
 
-> Linking to a collection object rather than a page? Use [`cms.collection.canonicalObjectUrl()`](/twig/object-linking/), which does the same job for objects.
+> Linking to a collection object rather than a page? Use [`cms.collection.canonicalObjectUrl()`](/twig/object-linking), which does the same job for objects.
 
 ## Assets
 
@@ -401,6 +401,6 @@ Templates don't change between development and production — the asset function
 
 ## See Also
 
-- [Site Builder Overview](/site-builder/overview/)
-- [Builder Admin UI](/site-builder/admin/)
-- [Collection Objects](/twig/collections/)
+- [Site Builder Overview](/site-builder/overview)
+- [Builder Admin UI](/site-builder/admin)
+- [Collection Objects](/twig/collections)

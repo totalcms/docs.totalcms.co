@@ -69,9 +69,9 @@ Use `addOnly: true` for forms on the public side of your website to prevent user
 
 `addOnly` stops a visitor editing anything. When signed-in members should edit *their own* submissions and nothing else, do not rely on the form hiding other people's ids — the form posts to the REST API, which decides on access groups alone. Instead make the collection **owned**:
 
-1. Add an `owner` text property to the schema, list it in the schema's [`index`](/schemas/reference#index/) array, and set the collection's **Owner Property** to it ([`ownerProperty`](/collections/settings#ownerproperty/)). Members' lists are scoped by filtering the index on `owner`; if it is not indexed, every member's list comes back empty.
+1. Add an `owner` text property to the schema, list it in the schema's [`index`](/schemas/reference#index) array, and set the collection's **Owner Property** to it ([`ownerProperty`](/collections/settings#ownerproperty)). Members' lists are scoped by filtering the index on `owner`; if it is not indexed, every member's list comes back empty.
 2. Grant the members' access group `create`, `read`, `update` (and `delete` if they may withdraw) on the collection.
-3. Mark the moderation fields [`protected`](/schemas/validation#protected/): `"draft": {"protected": {"value": true}}` sends every member edit back to review.
+3. Mark the moderation fields [`protected`](/schemas/validation#protected): `"draft": {"protected": {"value": true}}` sends every member edit back to review.
 
 The server then stamps `owner` on create and refuses any API read or write of someone else's object. The template, though, renders on the server with its own access to the collection: `cms.object.get()` loads any object you name, whoever is signed in. So check the owner before building the edit form:
 
@@ -125,7 +125,7 @@ For user-registration forms specifically, prefer `register: true` over plain `ad
 
 **Required server-side opt-in:**
 
-Switch on **Allow Public Registration** in the **Public Registration** section of the target collection's settings; it is offered on collections whose schema is `auth` or inherits it. Nothing is open by default, so the operator-only `auth` collection is never exposed to public signups by accident. Without it the endpoint returns `403 Forbidden` ("Public registration is not enabled for this collection."). See [`publicRegistration`](/collections/settings#publicregistration/).
+Switch on **Allow Public Registration** in the **Public Registration** section of the target collection's settings; it is offered on collections whose schema is `auth` or inherits it. Nothing is open by default, so the operator-only `auth` collection is never exposed to public signups by accident. Without it the endpoint returns `403 Forbidden` ("Public registration is not enabled for this collection."). See [`publicRegistration`](/collections/settings#publicregistration).
 
 **Registrant groups:**
 
@@ -215,9 +215,9 @@ Do not put a bot-protected form inside `{% cache %}`: a cached token expires and
 
 Signed-in visitors never see the fields and are never checked. With authentication disabled, public creates are not checked (the register endpoint still is).
 
-The endpoints check only submissions that carry the fields, so a form without `botProtection` keeps working. To refuse posts that skip the check altogether, a bot posting straight to the endpoint, switch on **Require Bot Protection** in the collection's Access Controls ([`requireBotProtection`](/collections/settings#requirebotprotection/)). The collection's register form, and its new-object forms when it allows public `create`, then include the fields without the option. A public clone is checked like a create, so on such a collection an anonymous clone is answered with a decoy and nothing is copied.
+The endpoints check only submissions that carry the fields, so a form without `botProtection` keeps working. To refuse posts that skip the check altogether, a bot posting straight to the endpoint, switch on **Require Bot Protection** in the collection's Access Controls ([`requireBotProtection`](/collections/settings#requirebotprotection)). The collection's register form, and its new-object forms when it allows public `create`, then include the fields without the option. A public clone is checked like a create, so on such a collection an anonymous clone is answered with a decoy and nothing is copied.
 
-A form's mailer action sends the bot fields with its mail, and the mailer endpoint checks them too. A mailer template with **Require Bot Protection** on adds the fields to the create and register forms that send it, without the option. See [Bot protection for form mail](/notifications/mailer#bot-protection-for-form-mail/).
+A form's mailer action sends the bot fields with its mail, and the mailer endpoint checks them too. A mailer template with **Require Bot Protection** on adds the fields to the create and register forms that send it, without the option. See [Bot protection for form mail](/notifications/mailer#bot-protection-for-form-mail).
 
 Bot protection stops naive bots. A bot that loads the form in a real browser and waits gets through, so keep email verification on where accounts reach anything of value.
 

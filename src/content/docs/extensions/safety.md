@@ -82,14 +82,14 @@ Container definitions (`container`) are deliberately **not** flagged: extensions
 
 …or when a quick **static scan** of the extension's source finds high-risk calls (`shell_exec`, `eval`, raw network requests, `base64_decode`, and similar). The scan reads the code as text — it never runs the extension to check it.
 
-Bundled extensions (the ones that ship with Total CMS) are exempt from the source scan — they version with core and ship reviewed in the package. Their capability list still shows. For extension developers: persisting files through the [storage API](/extensions/extension-points#file-storage/) instead of raw `file_put_contents()` keeps your scan clean — the flag exists for unconstrained writes, not for state kept in the sanctioned per-extension directory.
+Bundled extensions (the ones that ship with Total CMS) are exempt from the source scan — they version with core and ship reviewed in the package. Their capability list still shows. For extension developers: persisting files through the [storage API](/extensions/extension-points#file-storage) instead of raw `file_put_contents()` keeps your scan clean — the flag exists for unconstrained writes, not for state kept in the sanctioned per-extension directory.
 
 The review screen has up to four parts:
 
-1. **From the developer** — a plain-language note (the extension's [`reviewNote`](/extensions/manifest/)) explaining what it does and why it needs the access it asks for.
+1. **From the developer** — a plain-language note (the extension's [`reviewNote`](/extensions/manifest)) explaining what it does and why it needs the access it asks for.
 2. **What this extension can access** — the sensitive capabilities, in neutral terms, with a reminder that you can disable individual features afterward.
 3. **Source-code patterns to review** — any high-risk calls the scan found, with file and line. These aren't proof of anything malicious — many legitimate extensions use them — but they're worth a look.
-4. **What this extension tells AI agents** — the full text of the [agent skill](/extensions/extension-points#agent-skill/) it ships, if any. While the extension is enabled that text is installed into the project's `.claude/skills/` and read by coding agents working there, so read it as instructions you would be giving the agent yourself.
+4. **What this extension tells AI agents** — the full text of the [agent skill](/extensions/extension-points#agent-skill) it ships, if any. While the extension is enabled that text is installed into the project's `.claude/skills/` and read by coding agents working there, so read it as instructions you would be giving the agent yourself.
 
 From there you **Enable** (apply it) or **Cancel**. An extension with none of the four — no developer note, no sensitive capability, clean code, no agent skill — skips the review entirely.
 
@@ -120,10 +120,10 @@ The same check runs when you **upload** a replacement on the Extensions page or 
 
 If you're building an extension, these features shape how operators experience it:
 
-- **Write a [`reviewNote`](/extensions/manifest/).** If your extension uses any sensitive capability, the operator *will* see the review screen — your note is your chance to explain, in plain language, what you do and why. A note on its own is enough to put the review screen in front of the operator, so keep it to what they need before enabling. A good note is the difference between a confident "Enable" and a nervous one.
+- **Write a [`reviewNote`](/extensions/manifest).** If your extension uses any sensitive capability, the operator *will* see the review screen — your note is your chance to explain, in plain language, what you do and why. A note on its own is enough to put the review screen in front of the operator, so keep it to what they need before enabling. A good note is the difference between a confident "Enable" and a nervous one.
 - **You see exactly what they see.** When you enable your own extension while testing, you get the same review screen — so you can preview how it reads.
 - **Capabilities you add in an update default to off** for existing users. They'll find the new capability in your extension's settings and opt into it. Plan for that: don't assume a capability added in a point release is immediately active for everyone.
 - **The same applies while you develop.** Add a Twig function, a command or any other registration to an extension that is already enabled, and its capability is detected at the next boot and stored turned off — the function or command is simply absent, with no error in templates or `tcms list`. The log carries a warning naming the capability. Turn it on under **Admin → Extensions**, or run `tcms extension:enable <id>` again, which grants new capabilities on re-enable.
 - **Keep high-risk calls intentional and explainable.** If your code legitimately needs `file_get_contents('https://…')` or `base64_decode`, that's fine — it'll show on the review screen, and your `reviewNote` can put it in context. Avoid surprising patterns you can't justify.
 
-See the [Manifest Reference](/extensions/manifest/) for the `reviewNote` field and the full capability list.
+See the [Manifest Reference](/extensions/manifest) for the `reviewNote` field and the full capability list.

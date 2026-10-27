@@ -87,15 +87,16 @@ process_file() {
     # to the docs admin/ section into /admin/... too. Absorbs surrounding ** so bold links stay valid.
     # Then rewrite image refs: docs/<section>/images/<file> -> ./images/<file>
     # (markdown lives at <section>/<page>.md so a relative ./images path resolves correctly)
-    # Then rewrite remaining page refs: docs/<path> -> /<path>/
+    # Then rewrite remaining page refs: docs/<path>[#anchor] -> /<path>[#anchor]
+    # (no trailing slash: the site is built with trailingSlash 'never', matching Total CMS links)
     if [[ "$(uname)" == "Darwin" ]]; then
         sed -i '' -E 's#(\*\*)?\[([^]]+)\]\(/admin/[^)]*\)(\*\*)?#**\2**#g' "$dest_file"
         sed -i '' -E 's|\(docs/[^/)]+/images/([^)]+)\)|(./images/\1)|g' "$dest_file"
-        sed -i '' -E 's|\(docs/([^)"]+)\)|(/\1/)|g' "$dest_file"
+        sed -i '' -E 's|\(docs/([^)"]+)\)|(/\1)|g' "$dest_file"
     else
         sed -i -E 's#(\*\*)?\[([^]]+)\]\(/admin/[^)]*\)(\*\*)?#**\2**#g' "$dest_file"
         sed -i -E 's|\(docs/[^/)]+/images/([^)]+)\)|(./images/\1)|g' "$dest_file"
-        sed -i -E 's|\(docs/([^)"]+)\)|(/\1/)|g' "$dest_file"
+        sed -i -E 's|\(docs/([^)"]+)\)|(/\1)|g' "$dest_file"
     fi
 
     echo "  $rel_path"

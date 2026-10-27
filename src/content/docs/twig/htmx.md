@@ -40,7 +40,7 @@ as they do for JSON. Prefer the helpers, which build and escape the URL:
 
 Template ids are relative to `builder/templates/`; each template receives
 `object` and `collection`. Anonymous visitors can only reach collections
-whose [`publicOperations`](/collections/settings/) allow it, and counters
+whose [`publicOperations`](/collections/settings) allow it, and counters
 whose field has `publicIncrement` set.
 
 ## Live search
@@ -129,7 +129,7 @@ any page that relies on `DOMContentLoaded` running once.
 ## Member-only fragments
 
 A public page can carry one fragment that only logged-in members see, by
-fetching from a collection protected by [access groups](/auth/access-groups/):
+fetching from a collection protected by [access groups](/auth/access-groups):
 
 ```twig
 <div hx-get="{{ cms.render.queryUrl('member-news', {template: 'members/news', limit: 5}) }}"
@@ -177,11 +177,11 @@ come back as an error fragment listing the fields.
 `forms/thanks.twig` might be `<p class="thanks">Thanks, {{ object.email }} — we'll reply soon.</p>`.
 The `contact` collection needs `create` in its `publicOperations`. For
 deferred uploads, post-save actions and spam protection, use the
-[form builder](/forms/builder/) instead; this recipe is the simple path.
+[form builder](/forms/builder) instead; this recipe is the simple path.
 
 ## Newsletter signup through a webhook
 
-A synchronous [automation webhook](/automations/webhooks/) whose handler
+A synchronous [automation webhook](/automations/webhooks) whose handler
 returns a string answers an htmx request with that string as HTML:
 
 ```twig
@@ -206,7 +206,7 @@ fragment instead.
 
 The increment endpoint adds to a number property. Open one field to the
 public with `publicIncrement: true` in its settings, which grants nothing
-else on the object (see [Number and Range Fields](/fields/number-range/)):
+else on the object (see [Number and Range Fields](/fields/number-range)):
 
 ```twig
 <button hx-post="{{ cms.render.incrementUrl('posts', post.id, 'likes') }}"

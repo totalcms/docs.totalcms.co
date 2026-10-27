@@ -2,7 +2,7 @@
 title: "Twig Render Reference"
 description: "Reference for the cms.render namespace providing HTML rendering for images, galleries, pagination, load more, depot browsers, and clone dialogs."
 ---
-The render adapter generates complete HTML output for images, galleries, pagination, and other UI components. For URL-only access, see [cms.media](/twig/media/).
+The render adapter generates complete HTML output for images, galleries, pagination, and other UI components. For URL-only access, see [cms.media](/twig/media).
 
 ## Images
 
@@ -59,7 +59,7 @@ Images stored inside a `card` or `deck` field are addressed through the `propert
 {{ cms.render.image('post-1', {w: 800}, {property: 'mydeck.item-3.image'}) }}
 ```
 
-`cms.render.alt()` accepts the same `property: 'parent.child'` syntax. See [cms.media → Nested images](/twig/media#nested-images-cards-and-decks/) for the underlying URL convention.
+`cms.render.alt()` accepts the same `property: 'parent.child'` syntax. See [cms.media → Nested images](/twig/media#nested-images-cards-and-decks) for the underlying URL convention.
 
 ### picture()
 
@@ -102,7 +102,7 @@ Same three arguments as `image()`: the object, then **ImageWorks transforms**, t
 | `protect` | bool | `imageworks.protect` | Drag and context-menu protection on the `<img>` — see [Protecting images](#protecting-images) |
 | `collection`, `property`, `loading`, `class` | | as `image()` | Collection context, dotted nested `property`, lazy loading, extra class |
 
-Every `w` descriptor is the width ImageWorks will actually deliver for that candidate, after `crop`, `h` and `fit` are applied — never the requested number. A `crop` rect (`crop: '520,717,0,100'`, as width, height, x, y) is cut before anything is sized, so the rect is the source: candidates wider than it are dropped, its width joins as the largest, and the `<img>` carries the rect's dimensions. Two requested widths that clamp to one delivered width collapse into one candidate. A GIF gets no `<source>` children at all, since re-encoding to a still format would drop its animation. Change the defaults site-wide under `imageworks.picture` in `config/tcms.php`; see [Format & Quality](/twig/imageworks#format--quality/) for the format list.
+Every `w` descriptor is the width ImageWorks will actually deliver for that candidate, after `crop`, `h` and `fit` are applied — never the requested number. A `crop` rect (`crop: '520,717,0,100'`, as width, height, x, y) is cut before anything is sized, so the rect is the source: candidates wider than it are dropped, its width joins as the largest, and the `<img>` carries the rect's dimensions. Two requested widths that clamp to one delivered width collapse into one candidate. A GIF gets no `<source>` children at all, since re-encoding to a still format would drop its animation. Change the defaults site-wide under `imageworks.picture` in `config/tcms.php`; see [Format & Quality](/twig/imageworks#format--quality) for the format list.
 
 #### Light and dark mode
 
@@ -185,7 +185,7 @@ provider.
 | `facade` | bool | `true` | Click-to-play poster with a play button; the iframe loads on click. Set `false` for an eager iframe. Ignored for the `file` provider, and for any value where no poster or thumbnail resolves, which renders the eager iframe instead (an `unknown` URL has no vendor thumbnail, so the poster must be uploaded) |
 
 An `unknown` provider URL is never modified — it renders as a generic iframe
-with the author's URL exactly as pasted. See [Video](/fields/video/) for
+with the author's URL exactly as pasted. See [Video](/fields/video) for
 the full provider table and field settings.
 
 ## Galleries
@@ -244,7 +244,7 @@ Every option that is not one of Total CMS's own (`collection`, `property`, `capt
 {{ cms.render.gallery('vacation', {w: 300, h: 300, fit: 'crop'}, {}, {zoomFromOrigin: false}) }}
 ```
 
-For caption templates and sorting details, see [totalcms.md](/twig/totalcms/).
+For caption templates and sorting details, see [totalcms.md](/twig/totalcms).
 
 ### galleryLauncher()
 
@@ -292,9 +292,9 @@ Generate a hidden template element with gallery data for programmatic lightbox i
 }) }}
 ```
 
-Filtering uses the same syntax as [Index Filtering](/apis/index-filter/), including [wildcard patterns](/apis/index-filter#wildcard-patterns/) for flexible string matching.
+Filtering uses the same syntax as [Index Filtering](/apis/index-filter), including [wildcard patterns](/apis/index-filter#wildcard-patterns) for flexible string matching.
 
-For complete launcher usage with trigger methods and opening at specific images, see [totalcms.md](/twig/totalcms/).
+For complete launcher usage with trigger methods and opening at specific images, see [totalcms.md](/twig/totalcms).
 
 ### galleryImage()
 
@@ -390,7 +390,7 @@ Generate an HTMX-powered "load more" trigger for paginated collection loading.
 }) }}
 ```
 
-See [Load More Documentation](/twig/load-more/) for full options and examples.
+See [Load More Documentation](/twig/load-more) for full options and examples.
 
 ### loadMoreDataView()
 
@@ -414,7 +414,7 @@ Generate a standalone HTMX button that appends items into an external container.
 }) }}
 ```
 
-See [Load More Documentation](/twig/load-more/) for full options and examples.
+See [Load More Documentation](/twig/load-more) for full options and examples.
 
 ### loadMoreDataViewButton()
 
@@ -433,7 +433,7 @@ Generate a standalone HTMX button for paginated DataView loading into an externa
 
 The HTML-fragment endpoints behind Load More, exposed for your own `hx-get`
 and `hx-post` attributes. Each returns a raw URL; Twig's autoescape handles it
-inside an attribute. See [HTMX Recipes](/twig/htmx/) for complete examples.
+inside an attribute. See [HTMX Recipes](/twig/htmx) for complete examples.
 
 ### queryUrl()
 
@@ -535,4 +535,4 @@ The render adapter includes a `grid` sub-object with helper methods for content 
 {{ cms.render.grid.meta(item.author) }}             {# Render metadata (author, date) #}
 ```
 
-See [cmsgrid tag](/twig/cmsgrid-tag/) for the `{% cmsgrid %}` template tag documentation.
+See [cmsgrid tag](/twig/cmsgrid-tag) for the `{% cmsgrid %}` template tag documentation.

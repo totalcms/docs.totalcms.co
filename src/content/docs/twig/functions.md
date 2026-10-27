@@ -582,7 +582,7 @@ Common Chronos properties: `age`, `year`, `month`, `day`, `hour`, `minute`, `day
 
 Common Chronos methods: `format()`, `diffInYears()`, `diffInMonths()`, `diffInDays()`, `addDays()`, `subWeeks()`, `startOfMonth()`, `isPast()`, `isFuture()`, `isWeekend()`.
 
-For everyday formatting, prefer the `dateFormat`, `dateRelative`, `dateAdd`, and related filters in [Twig Filters](/twig/filters/) — they're safer (string in, string out) and match the rest of the date toolkit. Reach for `parseDate()` only when you need a Chronos property or method that isn't already wrapped.
+For everyday formatting, prefer the `dateFormat`, `dateRelative`, `dateAdd`, and related filters in [Twig Filters](/twig/filters) — they're safer (string in, string out) and match the rest of the date toolkit. Reach for `parseDate()` only when you need a Chronos property or method that isn't already wrapped.
 
 ## File System Functions
 
@@ -841,13 +841,13 @@ Total CMS provides comprehensive access control functions for checking user perm
 {% if cms.auth.isAdmin() %}...{% endif %}
 ```
 
-For complete documentation including practical examples, access group configuration, and best practices, see the [Access Groups Documentation](/auth/access-groups/).
+For complete documentation including practical examples, access group configuration, and best practices, see the [Access Groups Documentation](/auth/access-groups).
 
 ## Related Documentation
 
-- [Access Groups](/auth/access-groups/) - Complete access control documentation
-- [Twig Variables](/twig/variables/) - Available variables in templates
-- [Twig Filters](/twig/filters/) - Available filters for data transformation
-- [CMS Grid Tag](/twig/cmsgrid-tag/) - Grid rendering system
+- [Access Groups](/auth/access-groups) - Complete access control documentation
+- [Twig Variables](/twig/variables) - Available variables in templates
+- [Twig Filters](/twig/filters) - Available filters for data transformation
+- [CMS Grid Tag](/twig/cmsgrid-tag) - Grid rendering system
 
 Remember: These functions help you create dynamic, robust templates that handle various data types and conditions gracefully!

@@ -73,7 +73,7 @@ The **Feeds** utility on a collection (`/admin/collections/{collection}/-feeds`)
 
 ## Locking a Feed Down Further
 
-Anyone who can reach an enabled feed can use `include` and `exclude` to filter it by any indexed property. If that is more than you want, leave **Publish RSS Feed** off and serve the feed from a Site Builder page with [`cms.feed.rss()`](/twig/feeds/) instead. The template then decides exactly which objects and fields go out, and no URL parameter can change it.
+Anyone who can reach an enabled feed can use `include` and `exclude` to filter it by any indexed property. If that is more than you want, leave **Publish RSS Feed** off and serve the feed from a Site Builder page with [`cms.feed.rss()`](/twig/feeds) instead. The template then decides exactly which objects and fields go out, and no URL parameter can change it.
 
 ## Upgrading from 3.6.1 or Earlier
 

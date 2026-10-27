@@ -364,7 +364,7 @@ tcms collection:import blog posts.json --format=json --json
 
 ### `collection:convert`
 
-Convert a collection between `json` and `markdown` object storage; see [Storage Format](/collections/storage-format/) for how the conversion works and how to read its output.
+Convert a collection between `json` and `markdown` object storage; see [Storage Format](/collections/storage-format) for how the conversion works and how to read its output.
 
 ```bash
 tcms collection:convert docs --to=markdown
@@ -385,7 +385,7 @@ tcms collection:convert docs --to=json --json
 
 ## Access Group Commands
 
-[Access groups](/auth/access-groups/) live in `.system/access-groups.json`, not in a collection, so these commands are how a script or agent reads and changes them. Changing a group needs the Access Groups edition, as the admin page does; reading works on every edition.
+[Access groups](/auth/access-groups) live in `.system/access-groups.json`, not in a collection, so these commands are how a script or agent reads and changes them. Changing a group needs the Access Groups edition, as the admin page does; reading works on every edition.
 
 ### `access-group:list`
 
@@ -725,9 +725,9 @@ tcms jumpstart:import my-site.json --json
 
 ## Sync Commands
 
-Push and pull schemas, templates, site-machinery objects, and collection settings between a local development instance and a production server. Configure the production server URL and API key in **Settings > Sync** in the admin dashboard. Full details, including the object-seeding workflow: [Sync guide](/operations/sync/).
+Push and pull schemas, templates, site-machinery objects, and collection settings between a local development instance and a production server. Configure the production server URL and API key in **Settings > Sync** in the admin dashboard. Full details, including the object-seeding workflow: [Sync guide](/operations/sync).
 
-> **3.5.1 note:** `--collections` now means collection *settings* (it used to mean objects from five allowlisted collections). The flag formerly named `collection-meta` is gone — `--collections` does its job now. Objects for those five collections move via their own feature flags instead (`--pages`, `--dataviews`, `--mailer`, `--mcp-prompts`, `--automations`), and any other collection's object data can be seeded with `--objects`. Full breaking-changes writeup: [Sync guide](/operations/sync/).
+> **3.5.1 note:** `--collections` now means collection *settings* (it used to mean objects from five allowlisted collections). The flag formerly named `collection-meta` is gone — `--collections` does its job now. Objects for those five collections move via their own feature flags instead (`--pages`, `--dataviews`, `--mailer`, `--mcp-prompts`, `--automations`), and any other collection's object data can be seeded with `--objects`. Full breaking-changes writeup: [Sync guide](/operations/sync).
 
 ### `push`
 
@@ -792,7 +792,7 @@ tcms pull --collections=comparisons
 
 **Filter semantics:** a bare `tcms push` or `tcms pull` is a full mirror of schemas, templates, the five feature-flagged collections, and collection settings — it never seeds `--objects`, which only runs when named explicitly. The moment any filter flag is given, the categories you did not mention are excluded entirely, so `tcms push --schemas=blog` moves the blog schema and nothing else.
 
-**Backups:** before an overwrite lands, the receiving instance snapshots the current version to `tcms-data/.system/backups/{schemas,objects}/...` (ten most recent per item). See the [Sync guide](/operations/sync/) for details.
+**Backups:** before an overwrite lands, the receiving instance snapshots the current version to `tcms-data/.system/backups/{schemas,objects}/...` (ten most recent per item). See the [Sync guide](/operations/sync) for details.
 
 ---
 
@@ -869,7 +869,7 @@ Webhook and event triggers do not depend on this command — webhooks fire on HT
 
 ## MCP Commands
 
-See the [MCP Server guide](/mcp/server/) for the full server documentation.
+See the [MCP Server guide](/mcp/server) for the full server documentation.
 
 ### `mcp:status`
 
@@ -893,7 +893,7 @@ tcms mcp:test query_collection --params='{"collection":"blog"}' --persona=public
 
 ## Backup Commands
 
-Every object save keeps the version it replaced and every delete keeps the final state, under `tcms-data/.system/backups/objects/`. These two commands read that history back. See [Backups](/operations/backups/) for what is kept and for how long.
+Every object save keeps the version it replaced and every delete keeps the final state, under `tcms-data/.system/backups/objects/`. These two commands read that history back. See [Backups](/operations/backups) for what is kept and for how long.
 
 ### `backup:list`
 
@@ -1093,7 +1093,7 @@ tcms extension:enable acme/seo-pro --json
 |----------|----------|-------------|
 | `id` | Yes | Extension ID (e.g. `vendor/extension-name`) |
 
-Running it again on an extension that is already enabled keeps the operator's permission choices and turns **on** any capability the extension has gained since. That is the quick way to pick up a new registration while developing an extension: a capability Total CMS first sees at boot is added turned **off** (see [Stability & Safety](/extensions/safety#updates/)), and the log says so with a warning naming the capability.
+Running it again on an extension that is already enabled keeps the operator's permission choices and turns **on** any capability the extension has gained since. That is the quick way to pick up a new registration while developing an extension: a capability Total CMS first sees at boot is added turned **off** (see [Stability & Safety](/extensions/safety#updates)), and the log says so with a warning naming the capability.
 
 ### `extension:disable`
 
@@ -1152,7 +1152,7 @@ The skill's paths are rewritten to match the layout it is installed into. Compos
 
 Installing overwrites the existing copy — the skill is core-owned, so keep local notes outside `.claude/skills/totalcms/`.
 
-The same run installs the skill of every enabled extension that ships one (a `skill/` directory next to its manifest — see [Agent Skill](/extensions/extension-points#agent-skill/)) into `.claude/skills/{vendor}-{name}/`, and removes the folder of any extension that has since been disabled or removed. Only folders the command wrote are ever touched. `--check` covers them too, and exits `1` when any is stale.
+The same run installs the skill of every enabled extension that ships one (a `skill/` directory next to its manifest — see [Agent Skill](/extensions/extension-points#agent-skill)) into `.claude/skills/{vendor}-{name}/`, and removes the folder of any extension that has since been disabled or removed. Only folders the command wrote are ever touched. `--check` covers them too, and exits `1` when any is stale.
 
 #### Checking whether the installed skill is stale
 

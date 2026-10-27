@@ -144,7 +144,7 @@ If you've been splitting locales into separate fields (`title_en`, `title_de`, `
 3. Edit the schema. Replace the per-locale fields with a single localized field (same base name — e.g. `title`). Save the schema.
 4. Rename the headers the old CSV from `title_en` / `title_de` to `title.en_US` / `title.de`.
 
-See a list of [currently supported locales](/operations/supported-locales/).
+See a list of [currently supported locales](/operations/supported-locales).
 
 ## Advanced: Configuring Locales in Code
 

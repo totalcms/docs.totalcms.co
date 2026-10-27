@@ -8,27 +8,27 @@ The Total CMS Twig Adapter provides access to all CMS data and functionality thr
 
 | Namespace | Description | Documentation |
 |-----------|-------------|---------------|
-| `cms.admin.*` | Dashboard stats, job queue, dev mode, URL helpers | [Admin Reference](/admin/twig/) |
-| `cms.auth.*` | Login/logout, user info, access control, passkeys | [Auth Reference](/auth/twig/) |
-| `cms.builder.*` | Site Builder navigation and asset helpers | [Builder Reference](/site-builder/twig/) |
-| `cms.barcode.*` | Barcode generation (Code 128, EAN-13, UPC-A, etc.) | [Barcode Reference](/twig/barcodes/) |
-| `cms.collection.*` | Collection listing, objects, search, URLs, navigation | [Collections Reference](/twig/collections/) |
-| `cms.data.*` | Typed data access (text, toggle, date, color, etc.) | [Data Reference](/twig/data/) |
-| `cms.edition.*` | Edition detection and feature gating | [Edition Reference](/twig/edition/) |
-| `cms.feed.*` | RSS and Atom feed generation (podcasts: the bundled [Podcast extension](/extensions/podcast/)) | [Feeds Reference](/twig/feeds/) |
-| `cms.locale.*` | Localization and translations | [Locale Reference](/twig/locale/) |
-| `cms.media.*` | Image paths, gallery paths, downloads, streaming | [Media Reference](/twig/media/) |
-| `cms.qrcode.*` | QR code generation | [QR Code Reference](/twig/qrcodes/) |
-| `cms.render.*` | HTML rendering for images, galleries, pagination | [Render Reference](/twig/render/) |
-| `cms.schema.*` | Schema listing, fetching, inheritance, decks | [Schemas Reference](/schemas/twig/) |
-| `cms.seo.*` | `<head>` markup: title, description, canonical, Open Graph, Twitter, JSON-LD | [SEO Reference](/site-builder/seo/) |
-| `cms.view.*` | Pre-computed data views | [Views Reference](/twig/views/) |
+| `cms.admin.*` | Dashboard stats, job queue, dev mode, URL helpers | [Admin Reference](/admin/twig) |
+| `cms.auth.*` | Login/logout, user info, access control, passkeys | [Auth Reference](/auth/twig) |
+| `cms.builder.*` | Site Builder navigation and asset helpers | [Builder Reference](/site-builder/twig) |
+| `cms.barcode.*` | Barcode generation (Code 128, EAN-13, UPC-A, etc.) | [Barcode Reference](/twig/barcodes) |
+| `cms.collection.*` | Collection listing, objects, search, URLs, navigation | [Collections Reference](/twig/collections) |
+| `cms.data.*` | Typed data access (text, toggle, date, color, etc.) | [Data Reference](/twig/data) |
+| `cms.edition.*` | Edition detection and feature gating | [Edition Reference](/twig/edition) |
+| `cms.feed.*` | RSS and Atom feed generation (podcasts: the bundled [Podcast extension](/extensions/podcast)) | [Feeds Reference](/twig/feeds) |
+| `cms.locale.*` | Localization and translations | [Locale Reference](/twig/locale) |
+| `cms.media.*` | Image paths, gallery paths, downloads, streaming | [Media Reference](/twig/media) |
+| `cms.qrcode.*` | QR code generation | [QR Code Reference](/twig/qrcodes) |
+| `cms.render.*` | HTML rendering for images, galleries, pagination | [Render Reference](/twig/render) |
+| `cms.schema.*` | Schema listing, fetching, inheritance, decks | [Schemas Reference](/schemas/twig) |
+| `cms.seo.*` | `<head>` markup: title, description, canonical, Open Graph, Twitter, JSON-LD | [SEO Reference](/site-builder/seo) |
+| `cms.view.*` | Pre-computed data views | [Views Reference](/twig/views) |
 
 **Standalone systems:**
 
 | System | Description | Documentation |
 |--------|-------------|---------------|
-| ImageWorks | Image transformation, watermarks, presets, caching | [ImageWorks Reference](/twig/imageworks/) |
+| ImageWorks | Image transformation, watermarks, presets, caching | [ImageWorks Reference](/twig/imageworks) |
 
 ## Root-Level Properties
 
@@ -77,7 +77,7 @@ Log messages from templates. Written to `twig.log` and viewable in the admin log
 
 ### notFound()
 
-Stop rendering and answer the request as a 404. The site's [custom 404 page](/site-builder/overview#custom-404-page/) renders at the visitor's own URL with status `404` — no redirect, so the URL stays in the address bar, and crawlers and link checkers see the not-found they need to drop or flag the link. Nothing after the call is rendered.
+Stop rendering and answer the request as a 404. The site's [custom 404 page](/site-builder/overview#custom-404-page) renders at the visitor's own URL with status `404` — no redirect, so the URL stays in the address bar, and crawlers and link checkers see the not-found they need to drop or flag the link. Nothing after the call is rendered.
 
 Use it in a page template that discovers it has nothing to show: a draft reached through a collection URL, a record marked not to render, a lookup that came back empty.
 
@@ -91,7 +91,7 @@ Use it in a page template that discovers it has nothing to show: a draft reached
 {% if post is empty %}{{ cms.notFound() }}{% endif %}
 ```
 
-[`cms.collection.redirectIfNotFound()`](/twig/collections#redirectifnotfound/) is the older alternative: it sends the visitor to the 404 page's own address with a `302`. Prefer `notFound()` unless the move itself is what you want.
+[`cms.collection.redirectIfNotFound()`](/twig/collections#redirectifnotfound) is the older alternative: it sends the visitor to the 404 page's own address with a `302`. Prefer `notFound()` unless the move itself is what you want.
 
 ### redirect()
 
@@ -109,7 +109,7 @@ Use it for a forwarding page whose target depends on data. A redirect that never
 
 ## ImageWorks
 
-For the complete ImageWorks reference (resizing, cropping, effects, watermarks, presets, defaults, color palettes), see the dedicated [ImageWorks documentation](/twig/imageworks/).
+For the complete ImageWorks reference (resizing, cropping, effects, watermarks, presets, defaults, color palettes), see the dedicated [ImageWorks documentation](/twig/imageworks).
 
 ## Gallery Captions
 

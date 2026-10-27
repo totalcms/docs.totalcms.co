@@ -173,7 +173,7 @@ The file format objects in this collection are stored in: `json` (each object is
 }
 ```
 
-**Fixed after creation.** Choose the format when creating the collection; the setting shows disabled in the form afterwards, with a hint pointing at `tcms collection:convert`. Posting a changed `format` through the API is rejected with a 400 — the setting and the files on disk must always agree, and only the convert command changes both. See [Storage Format](/collections/storage-format/) for the file layout, body rules, and the convert command.
+**Fixed after creation.** Choose the format when creating the collection; the setting shows disabled in the form afterwards, with a hint pointing at `tcms collection:convert`. Posting a changed `format` through the API is rejected with a 400 — the setting and the files on disk must always agree, and only the convert command changes both. See [Storage Format](/collections/storage-format) for the file layout, body rules, and the convert command.
 
 ---
 
@@ -372,7 +372,7 @@ The auth collection a signed-out visitor signs in to when they open a protected 
 
 Empty sends visitors to the default login (`/admin/login`), which signs people in against the site's main auth collection. A portal whose users live in their own auth collection (a `dealers` collection on the `auth` schema) cannot sign in there, so set this to that collection and visitors go to `/admin/login/dealers` instead. Either way the visitor returns to the file after signing in.
 
-Site Builder pages have their own **Access Collection** field, next to Access Groups: see [Members in Their Own Auth Collection](/site-builder/overview#members-in-their-own-auth-collection/).
+Site Builder pages have their own **Access Collection** field, next to Access Groups: see [Members in Their Own Auth Collection](/site-builder/overview#members-in-their-own-auth-collection).
 
 This only chooses where a signed-out visitor is sent. Who may open the file is still decided by [`groups`](#groups). Saving a collection whose `accessCollection` is missing or is not an auth collection (its schema is not `auth` and does not inherit from it) is rejected.
 
@@ -403,7 +403,7 @@ Operations that unauthenticated users can perform on this collection via the API
 - `create` without authentication can lead to spam; [`requireBotProtection`](#requirebotprotection) turns naive bots away
 - `update` and `delete` are rarely appropriate for public access
 - Consider rate limiting for public endpoints
-- Public counters (likes, "was this helpful") are not a collection operation: set `publicIncrement: true` on the number field instead — see [Number and Range Fields](/fields/number-range/)
+- Public counters (likes, "was this helpful") are not a collection operation: set `publicIncrement: true` on the number field instead — see [Number and Range Fields](/fields/number-range)
 
 **Common patterns:**
 ```json
@@ -426,7 +426,7 @@ Operations that unauthenticated users can perform on this collection via the API
 **Required:** No
 **Default:** `false`
 
-Public registrations and public creates must pass the form's [bot protection](/forms/options#bot-protection/) (a honeypot and a signed time trap). A submission without it is answered as a success but nothing is saved. Shown as **Require Bot Protection** in the Access Controls section. Signed-in users and API keys are never checked.
+Public registrations and public creates must pass the form's [bot protection](/forms/options#bot-protection) (a honeypot and a signed time trap). A submission without it is answered as a success but nothing is saved. Shown as **Require Bot Protection** in the Access Controls section. Signed-in users and API keys are never checked.
 
 ```json
 {
@@ -445,7 +445,7 @@ With it on, the collection's register form, and its new-object forms when public
 **Required:** No
 **Default:** `false`
 
-Lets anonymous visitors create their own account in this collection through [`POST /admin/register/{collection}`](/forms/options#public-registration-forms/). Only collections whose schema is `auth` or inherits it have it.
+Lets anonymous visitors create their own account in this collection through [`POST /admin/register/{collection}`](/forms/options#public-registration-forms). Only collections whose schema is `auth` or inherits it have it.
 
 ```json
 {
@@ -455,7 +455,7 @@ Lets anonymous visitors create their own account in this collection through [`PO
 
 Switch it on with **Allow Public Registration** in the **Public Registration** section of the collection form. The field is hidden on other collections, and on the new-collection form until the collection is saved. With it off the endpoint returns `403` "Public registration is not enabled for this collection." Installs that opted collections in through the older `config.auth.publicRegistration` list keep working; new setups use this toggle.
 
-An enabled collection can also be [impersonated](/operations/impersonation/), like the default auth collection.
+An enabled collection can also be [impersonated](/operations/impersonation), like the default auth collection.
 
 Turning it on reveals two more fields: **Require Email Verification** (`requireEmailVerification`, off by default) and **Registration Groups** (below).
 
@@ -467,7 +467,7 @@ Turning it on reveals two more fields: **Require Email Verification** (`requireE
 **Required:** No
 **Default:** `false`
 
-New registrants are created inactive and must click a link in a verification email before they can sign in. Shown as **Require Email Verification** once [`publicRegistration`](#publicregistration) is on. With it off, a registrant is signed in as soon as the account is created. See [Email Verification](/forms/options#email-verification/) for the full flow.
+New registrants are created inactive and must click a link in a verification email before they can sign in. Shown as **Require Email Verification** once [`publicRegistration`](#publicregistration) is on. With it off, a registrant is signed in as soon as the account is created. See [Email Verification](/forms/options#email-verification) for the full flow.
 
 ```json
 {
@@ -516,7 +516,7 @@ The property that holds the id of the user who owns each object. Setting it make
 Pick it from the **Owner Property** select on the collection form, which lists the schema's string properties and lists of strings (not galleries or other lists of objects); choose "None" to clear it. The list is empty on a new collection until it is saved with its schema. The property must exist in the schema and be listed in the schema's `index`. It can be a string or a list of strings. A plain text field is enough, and a `relational` field pointing at the users collection makes the admin table show names. The stored value is the user id alone. Saving a collection whose `ownerProperty` is not a string property or a list of strings, is not in the schema, or is not in the `index` is rejected with a 400 that names the problem, so add the property to the schema first.
 
 - **String or list.** A string holds one user id. A list (`type: array` with string items, or the `list` property type) holds several, and each listed user owns the object. The check is an exact string comparison between the user's id and the stored value, or each entry of it. On create the server stamps `[userId]` (an anonymous public submission stamps `[]`). Members cannot change the field on update: what they send is reverted to the stored value, so only super admins and API keys add or remove co-owners. A `multicheckbox`, `multiselect` or `checklist` array works too, but the admin form shows a user id that is not one of its options, so prefer `list`.
-- **In the index.** The property must be in the schema's [`index`](/schemas/reference#index/) array, and saving the collection is rejected otherwise. Members' queries and index reads are scoped by matching this property on the collection index, by exact comparison with the user's id (case-sensitive, no wildcards).
+- **In the index.** The property must be in the schema's [`index`](/schemas/reference#index) array, and saving the collection is rejected otherwise. Members' queries and index reads are scoped by matching this property on the collection index, by exact comparison with the user's id (case-sensitive, no wildcards).
 
 Because the owner value does not record which auth collection the id came from, a site with several auth collections must keep user ids unique across them, or set [`ownerCollection`](#ownercollection).
 
@@ -548,9 +548,9 @@ Access groups grant operations per collection. On an owned collection the same g
 - **List and query** — `GET /api/collections/{c}/index` and `/query` return only the user's own objects. `ids=`, `filter=` and `search=` cannot widen that.
 - **Bulk delete, reindex and clone** — refused for scoped members; super admins, API keys and admin bearer tokens are unaffected. Bulk and reindex cannot be scoped; a clone would copy another object's owner.
 - **Whole-collection routes are an allow-list.** A scoped member can create (`POST /api/collections/{collection}`), list (`/query` and `/index`, both scoped) and open the admin collection page (not its export, import, factory, sitemap or feeds pages). Every other route that has no object id is refused with `403`: export (`/api/export/collections/{collection}/...`), report (`/api/report/collections/{collection}/...`), import (`/api/import/collections/{collection}/...`), reindex, bulk delete, and duplicating another object from the admin ("duplicate" on the add page), as well as `object-clone`.
-- The owner property itself cannot be changed by its owner. It is protected by being named here; see [protected](/schemas/validation#protected/) for the per-field version.
+- The owner property itself cannot be changed by its owner. It is protected by being named here; see [protected](/schemas/validation#protected) for the per-field version.
 - **Protected properties on property routes.** On every collection, owned or not, a non-admin write to a protected property (or the owner property) through any property route — `PUT`/`PATCH`/`DELETE .../{id}/{property}`, deck items, files, folders, meta, counters and `/api/upload/*` — is refused with `403`; the access log says `reason: protected`.
-- **Forced values on every write.** A [`protected: {"value": X}`](/schemas/validation#protected/) property is written as `X` on every authenticated non-admin write (session or OAuth user) — body routes, property routes, deck items, file and upload routes, meta writes and property deletes — so uploading a new screenshot to an approved object sends it back to review. Anonymous public submissions through the object body routes are forced too. The exceptions: counter increments and decrements (a tick is not an edit), property, deck and file routes reached as a public submission under a public `update`, and [registration](/forms/options#public-registration-forms/), which strips protected fields but does not apply forced values.
+- **Forced values on every write.** A [`protected: {"value": X}`](/schemas/validation#protected) property is written as `X` on every authenticated non-admin write (session or OAuth user) — body routes, property routes, deck items, file and upload routes, meta writes and property deletes — so uploading a new screenshot to an approved object sends it back to review. Anonymous public submissions through the object body routes are forced too. The exceptions: counter increments and decrements (a tick is not an edit), property, deck and file routes reached as a public submission under a public `update`, and [registration](/forms/options#public-registration-forms), which strips protected fields but does not apply forced values.
 - **Clone and import on protected collections.** On every collection, owned or not, that has protected properties (or an owner property), a non-admin clone (`POST .../{id}/clone`) and every collection import (`/api/import/collections/{collection}/...`: CSV, JSON, deck CSV, deck JSON and factory) are refused with `403` and `reason: protected`: both copy or upsert whole objects with no field policy. A non-admin clone whose body names a different target `collection` is refused on any collection. Under a public `create`, neither kind of clone is public.
 
 Who is scoped: everyone who is not a super admin (a member of the `admin` group in the default auth collection), whether they sign in through a custom auth collection or the dashboard. A dashboard editor on an owned collection therefore sees only their own objects in the collection table. Staff who must moderate every object are super admins. API keys and OAuth tokens issued to admins are untouched; an OAuth token issued to a non-admin is scoped like that user's session.
@@ -559,7 +559,7 @@ Who is scoped: everyone who is not a super admin (a member of the `admin` group 
 
 **Public operations bypass ownership.** Public requests skip access control entirely, so any `publicOperations` other than `create` — public `read`, `update` or `delete` — skip the owner check too: anyone could read, change or delete any member's object. An owned collection should enable public `create` at most. (Public `create` does not open clone on an owned collection, or on any collection with protected properties.)
 
-Pair this with [`protected`](/schemas/validation#protected/) on a `draft` field — `"protected": {"value": true}` — and every member edit goes back to the review queue while an admin's approval is the only way out of it. The [member portal pattern](/forms/options#member-portals-owned-collections/) shows the form side.
+Pair this with [`protected`](/schemas/validation#protected) on a `draft` field — `"protected": {"value": true}` — and every member edit goes back to the review queue while an admin's approval is the only way out of it. The [member portal pattern](/forms/options#member-portals-owned-collections) shows the form side.
 
 ---
 
@@ -597,7 +597,7 @@ Defines custom sort orders for the `manualSort` Twig filter. Keys are property n
 - Multiple sort orders can be defined for different use cases
 - Centralized configuration for consistent ordering
 
-See [Collection Filtering - manualSort Filter](/twig/collection-filtering#manualsort-filter/) for complete usage documentation.
+See [Collection Filtering - manualSort Filter](/twig/collection-filtering#manualsort-filter) for complete usage documentation.
 
 ---
 
@@ -637,7 +637,7 @@ Customizes the behavior and appearance of object creation/edit forms.
 | `editActions` | array | Actions after editing object |
 | `deleteActions` | array | Actions after deleting object |
 
-See [Collection Form Settings](/collections/form-settings/) for complete documentation on form actions and help styles.
+See [Collection Form Settings](/collections/form-settings) for complete documentation on form actions and help styles.
 
 ---
 
@@ -858,7 +858,7 @@ A fully configured collection metadata file:
 
 ## See Also
 
-- [Collection Form Settings](/collections/form-settings/) - Detailed form customization
-- [Collection Filtering](/twig/collection-filtering/) - Filtering and sorting collections
-- [Field Settings](/fields/styled-text/) - Schema field configuration
-- [Twig Filters Reference](/twig/filters/) - All available Twig filters
+- [Collection Form Settings](/collections/form-settings) - Detailed form customization
+- [Collection Filtering](/twig/collection-filtering) - Filtering and sorting collections
+- [Field Settings](/fields/styled-text) - Schema field configuration
+- [Twig Filters Reference](/twig/filters) - All available Twig filters

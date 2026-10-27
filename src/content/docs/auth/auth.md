@@ -26,7 +26,7 @@ If a user is inside of the default auth collection and is added to the admin gro
 ## Customizing the login screen
 
 You can customize the login screen through adding the following templates into the CMS. Check out the
-[Whitelabel documentation](/admin/whitelabel/) for more information on how to do this.
+[Whitelabel documentation](/admin/whitelabel) for more information on how to do this.
 
 * `whitelabel/login-above.twig` : Contents that will be added above the login form. This will replace the default content that
 already exists.

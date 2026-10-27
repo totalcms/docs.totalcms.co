@@ -37,4 +37,4 @@ If the variable name contains a hyphen, use bracket notation instead:
 
 Keys written by another PHP application only appear here when that
 application stores its sessions in the same folder as Total CMS. See
-[Sharing Sessions with Other PHP Apps](/operations/sharing-sessions/).
+[Sharing Sessions with Other PHP Apps](/operations/sharing-sessions).

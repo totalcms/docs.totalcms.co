@@ -13,21 +13,21 @@ There are two Markdown fields, and they store the same thing:
 | Field | How you edit |
 |---|---|
 | `markdown` | You write the Markdown source. Nothing is rewritten, and footnotes, raw HTML and anything else Markdown allows are kept. |
-| [`styledmarkdown`](/fields/styled-markdown/) | A visual editor writes the Markdown for you. Best for editors who don't know Markdown. |
+| [`styledmarkdown`](/fields/styled-markdown) | A visual editor writes the Markdown for you. Best for editors who don't know Markdown. |
 
 Because the stored value is the same, you can change a field from one to the other in the schema at any time.
 
 ## Rendering
 
-The value is Markdown source, so pass it through the [`markdown` filter](/twig/markdown/):
+The value is Markdown source, so pass it through the [`markdown` filter](/twig/markdown):
 
 ```twig
 {{ post.body|markdown }}
 ```
 
-The filter escapes any HTML in the source; to render it as markup, pass `true`: `{{ post.body|markdown(true) }}` (see [Letting HTML through](/twig/filters#letting-html-through/)). Always render the field with the filter; printing the raw value shows the Markdown source and any HTML in it.
+The filter escapes any HTML in the source; to render it as markup, pass `true`: `{{ post.body|markdown(true) }}` (see [Letting HTML through](/twig/filters#letting-html-through)). Always render the field with the filter; printing the raw value shows the Markdown source and any HTML in it.
 
-To caption an image, give it a title on a line of its own: `![Alt](url "Caption")` renders as a `<figure>` with a `<figcaption>`. See [Image captions](/twig/markdown#image-captions/). To open a link in a new tab, title it `external`: `[Text](url "external")`. See [Links that open in a new tab](/twig/markdown#links-that-open-in-a-new-tab/).
+To caption an image, give it a title on a line of its own: `![Alt](url "Caption")` renders as a `<figure>` with a `<figcaption>`. See [Image captions](/twig/markdown#image-captions). To open a link in a new tab, title it `external`: `[Text](url "external")`. See [Links that open in a new tab](/twig/markdown#links-that-open-in-a-new-tab).
 
 ## The editor
 
@@ -49,7 +49,7 @@ The toolbar inserts syntax at the cursor or around the selected text:
 
 ### Changing the toolbar
 
-Add `toolbarConfig` to the field's settings to choose your own buttons, in the same group format [Styled Text](/fields/styled-text#toolbar-configuration/) uses. The buttons are `heading`, `bold`, `italic`, `strike`, `inlineCode`, `bulletList`, `orderedList`, `blockquote`, `codeBlock`, `horizontalRule`, `link`, `image`, `file`, `table`, `preview` and `fullscreen`. `strike` is not in the default toolbar.
+Add `toolbarConfig` to the field's settings to choose your own buttons, in the same group format [Styled Text](/fields/styled-text#toolbar-configuration) uses. The buttons are `heading`, `bold`, `italic`, `strike`, `inlineCode`, `bulletList`, `orderedList`, `blockquote`, `codeBlock`, `horizontalRule`, `link`, `image`, `file`, `table`, `preview` and `fullscreen`. `strike` is not in the default toolbar.
 
 ```json
 {
@@ -63,18 +63,18 @@ Add `toolbarConfig` to the field's settings to choose your own buttons, in the s
 
 ## Settings
 
-These Styled Text settings work the same way in this field. Each links to its description on the [Styled Text](/fields/styled-text/) page.
+These Styled Text settings work the same way in this field. Each links to its description on the [Styled Text](/fields/styled-text) page.
 
 | Setting | What it does |
 |---|---|
-| [`height`, `heightMin`, `heightMax`](/fields/styled-text#editor-height/) | The editor's height. |
-| [`toolbarConfig`](/fields/styled-text#toolbar-configuration/) | The toolbar buttons and their groups. |
-| [`headingLevels`](/fields/styled-text#heading-levels/) | The levels in the heading menu. The default is 2, 3 and 4. |
-| [`imagePreset`, `imageUploadRules`](/fields/styled-text#upload-settings/) | The preset and validation rules for image uploads. |
+| [`height`, `heightMin`, `heightMax`](/fields/styled-text#editor-height) | The editor's height. |
+| [`toolbarConfig`](/fields/styled-text#toolbar-configuration) | The toolbar buttons and their groups. |
+| [`headingLevels`](/fields/styled-text#heading-levels) | The levels in the heading menu. The default is 2, 3 and 4. |
+| [`imagePreset`, `imageUploadRules`](/fields/styled-text#upload-settings) | The preset and validation rules for image uploads. |
 
 ## Sanitizing
 
-A markdown field holds source, so it is stored exactly as written, the same as a [code field](/fields/code-editor/). HTML in the source is not removed when the object is saved. The `markdown` filter escapes it when the page renders, which is why code samples such as `<script>` inside a code block stay intact. `markdown(true)` lets the HTML through instead, so only use it when the people writing to the field are trusted, or when `htmlclean` is on.
+A markdown field holds source, so it is stored exactly as written, the same as a [code field](/fields/code-editor). HTML in the source is not removed when the object is saved. The `markdown` filter escapes it when the page renders, which is why code samples such as `<script>` inside a code block stay intact. `markdown(true)` lets the HTML through instead, so only use it when the people writing to the field are trusted, or when `htmlclean` is on.
 
 If people you don't fully trust can write to the field, such as visitors using a public form, turn on `htmlclean` so unsafe HTML is stripped when the object is saved:
 

@@ -343,7 +343,7 @@ ParsedownExtra runs in **safe mode** by default, which:
 - Protects against XSS (Cross-Site Scripting) attacks
 - Maintains the security of user-generated content
 
-`markdown(true)` and `markdownInline(true)` switch safe mode off for that call: HTML in the source is output as markup and `javascript:` links are no longer blocked. Use them only for content written by people you trust. For a field that visitors can write to, such as one filled in through a public form, keep the default, or turn on the field's `htmlclean` setting so unsafe HTML is stripped when the object is saved (see [Sanitizing](/fields/markdown#sanitizing/)).
+`markdown(true)` and `markdownInline(true)` switch safe mode off for that call: HTML in the source is output as markup and `javascript:` links are no longer blocked. Use them only for content written by people you trust. For a field that visitors can write to, such as one filled in through a public form, keep the default, or turn on the field's `htmlclean` setting so unsafe HTML is stripped when the object is saved (see [Sanitizing](/fields/markdown#sanitizing)).
 
 ```twig
 {# Safe processing of user-generated markdown #}

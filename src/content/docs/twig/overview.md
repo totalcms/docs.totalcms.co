@@ -63,11 +63,11 @@ The most important Twig variable in Total CMS is `cms`, which fetches content fr
 {% set coolguy = cms.collection.object('users', 'joeworkman') %}
 ```
 
-For more information, check out the [Total CMS Content with Twig](/twig/totalcms/) docs.
+For more information, check out the [Total CMS Content with Twig](/twig/totalcms) docs.
 
 ## Frontend Assets
 
-Total CMS ships stylesheets and scripts that its own Twig output depends on — grid layout, galleries, pagination, icons, and the JavaScript that turns [`mailto`](/twig/filters/) addresses into real links. Two helpers emit them, and every layout you write should call both:
+Total CMS ships stylesheets and scripts that its own Twig output depends on — grid layout, galleries, pagination, icons, and the JavaScript that turns [`mailto`](/twig/filters) addresses into real links. Two helpers emit them, and every layout you write should call both:
 
 ```twig
 <!DOCTYPE html>
@@ -88,7 +88,7 @@ Total CMS ships stylesheets and scripts that its own Twig output depends on — 
 </html>
 ```
 
-`cms.assetsHead()` emits the core stylesheets and preload hints. `cms.assetsBody()` emits the core scripts, which belong at the end of the body. Both also render any assets registered by [extensions](/extensions/extension-points/), so an extension that ships CSS or JS works without you changing your layout. A site that never renders a core feature can leave its files out — site-wide with the `frontendAssets.except` setting, or per page with `cms.assetsHead({except: ['gallery']})` and the same on the body call; see [Frontend Assets](/site-builder/frontend/).
+`cms.assetsHead()` emits the core stylesheets and preload hints. `cms.assetsBody()` emits the core scripts, which belong at the end of the body. Both also render any assets registered by [extensions](/extensions/extension-points), so an extension that ships CSS or JS works without you changing your layout. A site that never renders a core feature can leave its files out — site-wide with the `frontendAssets.except` setting, or per page with `cms.assetsHead({except: ['gallery']})` and the same on the body call; see [Frontend Assets](/site-builder/frontend).
 
 Order matters in the head: put `cms.assetsHead()` **before** your own stylesheet so your rules override the defaults rather than the other way round.
 
@@ -100,9 +100,9 @@ Nothing errors. The page renders, the markup is correct, and things quietly look
 |---|---|
 | `cms-grid.css` | `{% cmsgrid %}` renders as an unstyled stack |
 | `gallery.css` / `gallery.js` | galleries don't lay out, lightbox never opens |
-| `pagination.css` | [Load More](/twig/load-more/) controls render unstyled |
+| `pagination.css` | [Load More](/twig/load-more) controls render unstyled |
 | `content.css` / `icons.css` | default content styles and icons are missing |
-| `content.js` | [`mailto`](/twig/filters/) addresses stay inert text |
+| `content.js` | [`mailto`](/twig/filters) addresses stay inert text |
 | `htmx.min.js` | Load More and other interactive fragments never fetch |
 
 Because the symptom is "my grid looks wrong" rather than an error, this is worth checking first when a template misbehaves for no apparent reason.
@@ -369,8 +369,8 @@ Enable debug mode to use the `dump()` function:
 ## Resources
 
 - [Official Twig Documentation](https://twig.symfony.com/doc/)
-- [Total CMS Filters Reference](/twig/filters/)
-- [Total CMS Functions Reference](/twig/functions/)
-- [Total CMS Form Helpers](/forms/overview/)
+- [Total CMS Filters Reference](/twig/filters)
+- [Total CMS Functions Reference](/twig/functions)
+- [Total CMS Form Helpers](/forms/overview)
 
 Remember: Twig makes your templates more maintainable, secure, and easier to work with. Take advantage of its features to create clean, efficient templates!

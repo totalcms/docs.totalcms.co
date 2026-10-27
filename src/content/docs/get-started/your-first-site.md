@@ -10,7 +10,7 @@ By the end of this page you'll have a real blog post rendering on a public URL �
 
 ## Prerequisites
 
-If Total CMS isn't installed yet, follow the [Installation](/get-started/installation/) guide first. When the wizard asks for a starter pack, the **minimal** starter is the cleanest base for this tutorial.
+If Total CMS isn't installed yet, follow the [Installation](/get-started/installation) guide first. When the wizard asks for a starter pack, the **minimal** starter is the cleanest base for this tutorial.
 
 > Picked a different starter? Not a problem. The `blog`, `business`, and `portfolio` starters already include builder pages and templates — you can still follow along, but consider using a unique URL like `/posts` in step 4 so it doesn't collide with what's already there.
 
@@ -149,9 +149,9 @@ Everything else in Total CMS — custom fields, forms, auth, extensions, APIs �
 
 ## Where to next
 
-- **[Site Builder Overview](/site-builder/overview/)** — page records, routes, templates in depth
-- **[Twig Overview](/twig/overview/)** — the template engine and the `cms.*` API surface
-- **[Collections](/twig/collections/)** — loading and filtering content in templates
-- **[Collection Filtering](/twig/collection-filtering/)** — pagination, sorting, where-clauses for your post list
-- **[Media](/twig/media/)** — adding images and image variants to your posts
-- **[Schemas](/schemas/reference/)** — defining your own collection shapes (products, team members, anything)
+- **[Site Builder Overview](/site-builder/overview)** — page records, routes, templates in depth
+- **[Twig Overview](/twig/overview)** — the template engine and the `cms.*` API surface
+- **[Collections](/twig/collections)** — loading and filtering content in templates
+- **[Collection Filtering](/twig/collection-filtering)** — pagination, sorting, where-clauses for your post list
+- **[Media](/twig/media)** — adding images and image variants to your posts
+- **[Schemas](/schemas/reference)** — defining your own collection shapes (products, team members, anything)

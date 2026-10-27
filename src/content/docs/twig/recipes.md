@@ -15,12 +15,12 @@ The rest of the Twig section is organised by primitive: one page per filter
 family, one per adapter. This page is organised by outcome. Each recipe is a
 problem you are likely to hit, the template that solves it, and a note or two
 on why it is written that way. Every helper used here is documented in
-[Filters](/twig/filters/), [Functions](/twig/functions/),
-[Collection Filtering](/twig/collection-filtering/) or the adapter pages,
+[Filters](/twig/filters), [Functions](/twig/functions),
+[Collection Filtering](/twig/collection-filtering) or the adapter pages,
 so follow the links when you want the full option list.
 
 Recipes that fetch content from the server without a page reload live on
-[HTMX Recipes](/twig/htmx/). Everything here renders on the server.
+[HTMX Recipes](/twig/htmx). Everything here renders on the server.
 
 ## Content stored in the CMS
 
@@ -75,7 +75,7 @@ admin rather than in a template file:
 
 Missing snippets render nothing, so a template never breaks because an
 editor deleted one. Wrap a snippet that queries collections in a
-[`{% cache %}`](/twig/cache-tag/) tag when it appears on every page.
+[`{% cache %}`](/twig/cache-tag) tag when it appears on every page.
 
 ### Pick a partial from a field value
 
@@ -157,7 +157,7 @@ then size each link by frequency:
 {% endif %}
 ```
 
-The link format is the one [`cms.utils.urlFilters()`](/twig/utils/) reads,
+The link format is the one [`cms.utils.urlFilters()`](/twig/utils) reads,
 so the target page can filter on it with no extra code. See the
 query-string recipe below.
 
@@ -278,7 +278,7 @@ sorted list. `cms.utils.urlFilters()` parses the query string into the same
 Because the state lives in the URL, results are bookmarkable and
 shareable, and the tag-cloud links above land on a working filtered page.
 For the same thing without a reload, see
-[faceted filtering](/twig/htmx#faceted-filtering/).
+[faceted filtering](/twig/htmx#faceted-filtering).
 
 ## Dates and scheduling
 
@@ -438,7 +438,7 @@ Site SEO record, so nothing on the object is required for it to work.
 - The pieces are available separately as `cms.seo.title()`, `meta()`,
   `og()`, `canonical()` and `jsonld()` when a layout places them itself.
 
-Full reference: [SEO](/site-builder/seo/).
+Full reference: [SEO](/site-builder/seo).
 
 ### JSON-LD for types core does not emit
 
@@ -555,7 +555,7 @@ to the current page afterwards by default:
 
 This only hides markup. Files the block links to should live in a
 protected collection or a password-guarded depot so the URL itself is not
-enough. See [Access Groups](/auth/access-groups/). Do not wrap a gated
+enough. See [Access Groups](/auth/access-groups). Do not wrap a gated
 block in `{% cache … shared=true %}`.
 
 ### Signed links that cannot be forged

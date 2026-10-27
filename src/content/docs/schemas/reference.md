@@ -77,7 +77,7 @@ The property definitions that make up this schema. Each key is a property name, 
 }
 ```
 
-See [Schema Validation](/schemas/validation/) for validation options and [Field Settings](/fields/all-fields/) for field configuration.
+See [Schema Validation](/schemas/validation) for validation options and [Field Settings](/fields/all-fields) for field configuration.
 
 
 
@@ -130,7 +130,7 @@ A text-based grid layout for arranging form fields in the admin interface. Uses 
 }
 ```
 
-See [Form Grid Layout](/schemas/formgrid/) for complete documentation.
+See [Form Grid Layout](/schemas/formgrid) for complete documentation.
 
 
 
@@ -222,7 +222,7 @@ The resolved `article` schema will have properties: `title`, `author`, `date` (f
 {% endfor %}
 ```
 
-See [cms.schema.inheritedProperties()](/schemas/twig#inheritedproperties/) for more details.
+See [cms.schema.inheritedProperties()](/schemas/twig#inheritedproperties) for more details.
 
 
 
@@ -268,7 +268,7 @@ See [cms.schema.inheritedProperties()](/schemas/twig#inheritedproperties/) for m
 
 ## See Also
 
-- [Schema Validation](/schemas/validation/) - Validation rules for schema properties
-- [Form Grid Layout](/schemas/formgrid/) - Arranging fields in the admin form
-- [Collection Settings](/collections/settings/) - Collection-level configuration
-- [cms.schema](/schemas/twig/) - Twig functions for accessing schemas
+- [Schema Validation](/schemas/validation) - Validation rules for schema properties
+- [Form Grid Layout](/schemas/formgrid) - Arranging fields in the admin form
+- [Collection Settings](/collections/settings) - Collection-level configuration
+- [cms.schema](/schemas/twig) - Twig functions for accessing schemas

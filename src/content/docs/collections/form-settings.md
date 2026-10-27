@@ -391,7 +391,7 @@ The `pushover` action comes from the bundled **Pushover** extension, not from co
 }
 ```
 
-For every property (priority, sound, links, image attachments, delivery groups) and the setup steps, see [Pushover Push Notifications](/extensions/pushover/).
+For every property (priority, sound, links, image attachments, delivery groups) and the setup steps, see [Pushover Push Notifications](/extensions/pushover).
 
 ## Complete Examples
 

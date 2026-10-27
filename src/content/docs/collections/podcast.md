@@ -111,7 +111,7 @@ address: apps re-fetch with it and the show's identifier derives from it.
 Either way the feed is the show's details, the episodes newest first, an
 enclosure for each audio file, and the iTunes and Podcast Index tags the
 directories read. If you would rather build the feed by hand from your own
-schema, [Feeds](/twig/feeds/) shows the `podcast` block that this fills
+schema, [Feeds](/twig/feeds) shows the `podcast` block that this fills
 in for you.
 
 ## 5. Validate and submit
@@ -158,5 +158,5 @@ includes validators and re-downloads; treat it as a trend, not an audit.
 Linked episodes are not counted, because the audio never passes through
 Total CMS. Independent podcasters use a prefix analytics service in front of
 the audio URL instead. If you build your feed by hand from
-[Feeds](/twig/feeds/), the prefix is one string change on the enclosure
+[Feeds](/twig/feeds), the prefix is one string change on the enclosure
 URL.

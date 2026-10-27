@@ -15,7 +15,7 @@ You'll be up and running in under 5 minutes. The setup wizard handles everything
 composer create-project totalcms/totalcms my-site
 ```
 
-This downloads Total CMS into `my-site/`, then runs a short post-install script that asks you a few setup questions. Make sure your server meets the [System Requirements](/get-started/requirements/) before installing.
+This downloads Total CMS into `my-site/`, then runs a short post-install script that asks you a few setup questions. Make sure your server meets the [System Requirements](/get-started/requirements) before installing.
 
 ### What the install asks
 
@@ -125,7 +125,7 @@ Choose your preferred language for the admin interface:
 
 ### 2. Environment check
 
-The wizard verifies your server meets the [System Requirements](/get-started/requirements/). All required PHP extensions must pass; recommended ones show as suggestions.
+The wizard verifies your server meets the [System Requirements](/get-started/requirements). All required PHP extensions must pass; recommended ones show as suggestions.
 
 If something's missing, you'll see exactly what to install. Fix it, refresh, and the check re-runs automatically.
 
@@ -157,7 +157,7 @@ This account has full privileges, including installing extensions and modifying 
 
 Your license is validated automatically. New installations start with a free trial; if you've already purchased a license for this domain, it's detected on first run.
 
-Local development domains are free. On `localhost`, `127.0.0.1`, or any `.localhost` or `.test` domain, Total CMS runs with every Pro feature and needs no trial or license key. A `.local` domain is not one of them and starts a normal trial. See [Development Domains](/operations/licenses#development-domains/).
+Local development domains are free. On `localhost`, `127.0.0.1`, or any `.localhost` or `.test` domain, Total CMS runs with every Pro feature and needs no trial or license key. A `.local` domain is not one of them and starts a normal trial. See [Development Domains](/operations/licenses#development-domains).
 
 You can change the license later from **Settings → License Manager** in the admin.
 
@@ -167,7 +167,7 @@ You can change the license later from **Settings → License Manager** in the ad
 
 Choose whether Total CMS may report application errors to the developer. Leaving this on means bugs get discovered and fixed quickly — often before you notice anything went wrong, and without you having to file a report.
 
-Reports contain only the error and where it occurred in the code. No content, credentials, or private data ever leaves your server — the reporting client is explicitly configured to never attach request bodies, cookies, session data, or IP addresses. See [Error Monitoring](/operations/security#error-monitoring/) for the full details.
+Reports contain only the error and where it occurred in the code. No content, credentials, or private data ever leaves your server — the reporting client is explicitly configured to never attach request bodies, cookies, session data, or IP addresses. See [Error Monitoring](/operations/security#error-monitoring) for the full details.
 
 You can change this choice at any time in **Settings → General** ("Share Application Errors with Developer").
 
@@ -183,8 +183,8 @@ The wizard renders the exact rewrite-rule snippets you need for your server. For
 
 After the wizard completes, you land in the admin dashboard. From here:
 
-- Follow the [Your First Site](/get-started/your-first-site/) tutorial to add content and render it on a public page (about 10 minutes)
-- Or take the [Dashboard tour](/admin/dashboard/) for an overview of the admin
+- Follow the [Your First Site](/get-started/your-first-site) tutorial to add content and render it on a public page (about 10 minutes)
+- Or take the [Dashboard tour](/admin/dashboard) for an overview of the admin
 
 ![Admin Dashboard](./images/wizard-dash.jpg)
 
@@ -263,7 +263,7 @@ A minimal virtual host:
 
 ### Nginx
 
-Nginx needs a full server block with explicit rewriting and PHP-FPM proxying. See [Nginx Configuration](/operations/nginx/) for the complete reference.
+Nginx needs a full server block with explicit rewriting and PHP-FPM proxying. See [Nginx Configuration](/operations/nginx) for the complete reference.
 
 ### Caddy and FrankenPHP
 
@@ -281,7 +281,7 @@ T3 ships with a CLI tool for routine operations — collection management, JumpS
 php my-site/resources/bin/tcms info
 ```
 
-See [CLI Commands](/extensions/cli/) for the full reference.
+See [CLI Commands](/extensions/cli) for the full reference.
 
 ## Troubleshooting
 
@@ -326,7 +326,7 @@ Check `my-site/logs/` for specific error messages. Common causes:
 URL rewriting isn't working.
 
 - **Apache:** verify `mod_rewrite` is enabled and the virtual host has `AllowOverride All`
-- **Nginx / Caddy / FrankenPHP:** check the `try_files` directive — see [Nginx Configuration](/operations/nginx/)
+- **Nginx / Caddy / FrankenPHP:** check the `try_files` directive — see [Nginx Configuration](/operations/nginx)
 
 ### License validation fails
 
@@ -340,4 +340,4 @@ If something's still not working:
 
 1. Check `my-site/logs/` for specific error messages
 2. Search the [Community Forum](https://community.weavers.space/total-cms)
-3. Review the [Deployment Guide](/operations/deployment/) for production-specific issues
+3. Review the [Deployment Guide](/operations/deployment) for production-specific issues

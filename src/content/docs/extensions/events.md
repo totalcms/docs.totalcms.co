@@ -375,7 +375,7 @@ $context->addEventListener('file.downloaded', function (array $payload): void {
 
 Each listener is wrapped in a try/catch. If your listener throws:
 
-1. The exception is logged to `extensions.log` in the [logs directory](/operations/filesystem/)
+1. The exception is logged to `extensions.log` in the [logs directory](/operations/filesystem)
 2. Other listeners for the same event continue executing
 3. The core operation that triggered the event is not affected (it already completed)
 

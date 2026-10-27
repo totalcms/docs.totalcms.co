@@ -96,7 +96,7 @@ between the two renders the same records.
 
 ## Deck Item Label
 
-The `deckItemLabel` setting controls how deck items are labeled in the admin interface. It uses the same template syntax as the `autogen` setting (see [ID Autogen](/fields/id/) documentation), but displays raw values without slugification.
+The `deckItemLabel` setting controls how deck items are labeled in the admin interface. It uses the same template syntax as the `autogen` setting (see [ID Autogen](/fields/id) documentation), but displays raw values without slugification.
 
 **Default:** `${id}` (displays the item's ID)
 

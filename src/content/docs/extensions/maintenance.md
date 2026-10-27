@@ -3,7 +3,7 @@ title: "Maintenance (Bundled Extension)"
 description: "Per-page 503 maintenance mode: take single pages offline with a custom message while the rest of the site stays up. Admins bypass it."
 since: "3.5.0"
 ---
-`totalcms/maintenance` — bundled with Total CMS. Adds a `maintenance` [page feature](/site-builder/overview#page-features-middleware/) that returns a **503 Service Unavailable** response with a custom message. Different from T3's site-wide `MaintenanceModeMiddleware` — this targets individual pages so you can take one section offline while the rest of the site keeps running.
+`totalcms/maintenance` — bundled with Total CMS. Adds a `maintenance` [page feature](/site-builder/overview#page-features-middleware) that returns a **503 Service Unavailable** response with a custom message. Different from T3's site-wide `MaintenanceModeMiddleware` — this targets individual pages so you can take one section offline while the rest of the site keeps running.
 
 ## Use cases
 
@@ -96,6 +96,6 @@ Source: `resources/extensions/totalcms/maintenance/`
 
 ## See also
 
-- [Page Features (Builder)](/site-builder/overview#page-features-middleware/) — the middleware framework this plugs into
-- [Bundled Extensions](/extensions/bundled/) — concept and list of all bundled extensions
-- [Scheduled](/extensions/scheduled/) — sibling bundled extension for time-window gating
+- [Page Features (Builder)](/site-builder/overview#page-features-middleware) — the middleware framework this plugs into
+- [Bundled Extensions](/extensions/bundled) — concept and list of all bundled extensions
+- [Scheduled](/extensions/scheduled) — sibling bundled extension for time-window gating

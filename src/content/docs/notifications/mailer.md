@@ -27,7 +27,7 @@ Templates are stored as objects in the reserved `mailer` collection, so they can
 | Mailer templates, form actions, and every other single send | Standard and above |
 | Bulk Send | Pro and above |
 
-On Lite, mailer form actions are removed from forms, and any attempt to send a template fails with *"Mailer actions require the Standard edition or higher"*. The built-in password reset and verification emails still send on Lite, as long as no template is picked for them in Settings → Auth. If one is picked, those emails fail on Lite, silently, because the auth flows never reveal whether an email went out. Clear the selection to go back to the built-in emails. See [Licenses](/operations/licenses/) for the full edition matrix.
+On Lite, mailer form actions are removed from forms, and any attempt to send a template fails with *"Mailer actions require the Standard edition or higher"*. The built-in password reset and verification emails still send on Lite, as long as no template is picked for them in Settings → Auth. If one is picked, those emails fail on Lite, silently, because the auth flows never reveal whether an email went out. Clear the selection to go back to the built-in emails. See [Licenses](/operations/licenses) for the full edition matrix.
 
 ## Setting up SMTP
 
@@ -164,7 +164,7 @@ Add a `mailer` action to a form and the email is sent after the form saves succe
 {{ form.build() }}
 ```
 
-Use `newActions` for new objects, `editActions` for edits, and `deleteActions` for deletes. Actions run in order; if an email fails, the remaining actions stop unless the action has `continue: true`. To send it from the admin's own add and edit forms for a collection, put the action in the collection's [form settings](/collections/form-settings/) — those settings don't apply to forms you build on your site, which need the action in their own options. More on building forms in [Form Builder](/forms/builder/) and on actions in [Form Options](/forms/options/).
+Use `newActions` for new objects, `editActions` for edits, and `deleteActions` for deletes. Actions run in order; if an email fails, the remaining actions stop unless the action has `continue: true`. To send it from the admin's own add and edit forms for a collection, put the action in the collection's [form settings](/collections/form-settings) — those settings don't apply to forms you build on your site, which need the action in their own options. More on building forms in [Form Builder](/forms/builder) and on actions in [Form Options](/forms/options).
 
 `data` in the template is the form's field values as submitted, and `user` is the signed-in user, if there is one.
 
@@ -177,7 +177,7 @@ contact-confirm   To: {{ data.email }}          Subject: Thanks, {{ data.name }}
 
 ## Password reset and verification emails
 
-Total CMS has built-in emails for password resets and email verification. To send your own design instead, create a template and select it in **Settings → Auth** as the **Password Reset Email Template** or **Email Verification Template** (`forgotPasswordMailerId` and `verificationMailerId`). Use `{{ data.resetUrl }}` or `{{ data.verifyUrl }}` for the link; the full variable lists are in the [table above](#template-variables) and in [Password Reset](/auth/password-reset/). Custom auth templates need the Standard edition.
+Total CMS has built-in emails for password resets and email verification. To send your own design instead, create a template and select it in **Settings → Auth** as the **Password Reset Email Template** or **Email Verification Template** (`forgotPasswordMailerId` and `verificationMailerId`). Use `{{ data.resetUrl }}` or `{{ data.verifyUrl }}` for the link; the full variable lists are in the [table above](#template-variables) and in [Password Reset](/auth/password-reset). Custom auth templates need the Standard edition.
 
 ## Sending from automations and PHP
 
@@ -187,9 +187,9 @@ Automation handlers get the Mailer as `$ctx->mailer`:
 $ctx->mailer->sendEmail('weekly-digest', ['posts' => $posts->all()]);
 ```
 
-Each automation can also name an **error mailer**, sent in production when a run fails, with `data.automation` and `data.error`. See [Automation Handlers](/automations/handlers/).
+Each automation can also name an **error mailer**, sent in production when a run fails, with `data.automation` and `data.error`. See [Automation Handlers](/automations/handlers).
 
-In your own PHP, `$totalcms->mailer()` returns the same service ([PHP API](/apis/php-api/)):
+In your own PHP, `$totalcms->mailer()` returns the same service ([PHP API](/apis/php-api)):
 
 ```php
 $result = $totalcms->mailer()->sendEmail('order-confirmation', [
@@ -225,7 +225,7 @@ It returns `{"success": true, "message": "..."}`. It responds with `400` for a m
 
 ### Bot protection for form mail
 
-A form's mailer action sends the form's data, so when the form has [bot protection](/forms/options#bot-protection/) the mail request carries the same honeypot and signed token as the save, and the endpoint checks them. A failed check answers with the usual success and sends nothing; an expired token gets the `422` reload message.
+A form's mailer action sends the form's data, so when the form has [bot protection](/forms/options#bot-protection) the mail request carries the same honeypot and signed token as the save, and the endpoint checks them. A failed check answers with the usual success and sends nothing; an expired token gets the `422` reload message.
 
 As with the save, a request without the fields is not checked, so a bot can skip the form and post to the endpoint directly. Switch on **Require Bot Protection** on the template to refuse that: the endpoint then sends the template only for a request that passes the check, or for a signed-in visitor. A create or register form whose mailer action uses the template renders the fields by itself, without the `botProtection` option.
 
@@ -244,7 +244,7 @@ Bulk Send appears at the bottom of a template's edit page, once the template has
 | Field | What it does |
 |---|---|
 | Collection | The collection to send to |
-| Include Filter / Exclude Filter | [Index filters](/apis/index-filter/) to narrow the audience, e.g. include `subscribed:true`, exclude `status:bounced` |
+| Include Filter / Exclude Filter | [Index filters](/apis/index-filter) to narrow the audience, e.g. include `subscribed:true`, exclude `status:bounced` |
 | Specific Objects | Pick individual objects instead. When any are picked, the filters are ignored |
 | Override To Email | Send every email to this address instead — for proofing (see below) |
 | Schedule | Send at a later date and time, in your site's timezone. Leave empty to send on the next queue run |
@@ -257,7 +257,7 @@ Pick an object under **Preview** to see the subject, recipient, and HTML body th
 
 ### How sends are processed
 
-Queuing doesn't send anything by itself. Emails go out as the job queue runs, from the `tcms jobs:process` cron job, or the `/cron/jobs` URL on hosts without cron (see [Cron URLs](/operations/cron-urls/)). A site with no job runner set up will queue emails forever.
+Queuing doesn't send anything by itself. Emails go out as the job queue runs, from the `tcms jobs:process` cron job, or the `/cron/jobs` URL on hosts without cron (see [Cron URLs](/operations/cron-urls)). A site with no job runner set up will queue emails forever.
 
 Each email job:
 
@@ -317,7 +317,7 @@ These return HTML fragments for the admin UI (except `objects`, which returns JS
 
 ## Permissions
 
-The **Mailer** page and the Bulk Send endpoints require the `mailer` permission in the user's [access group](/auth/access-groups/). The built-in Admin and Editor groups have it; Viewer and Default don't. Admins always have access.
+The **Mailer** page and the Bulk Send endpoints require the `mailer` permission in the user's [access group](/auth/access-groups). The built-in Admin and Editor groups have it; Viewer and Default don't. Admins always have access.
 
 Templates are also ordinary objects in the `mailer` collection, so the collection permissions of an access group apply to reading and editing them through the REST API.
 

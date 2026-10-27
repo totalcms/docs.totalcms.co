@@ -57,7 +57,7 @@ Get the number of objects in a collection using cached metadata. This is much mo
 
 ### objects()
 
-Get all objects from a collection. Takes the collection id and nothing else — to narrow the result, pipe it through the [`filterCollection`](/twig/collection-filtering/) and sorting filters.
+Get all objects from a collection. Takes the collection id and nothing else — to narrow the result, pipe it through the [`filterCollection`](/twig/collection-filtering) and sorting filters.
 
 ```twig
 {% for post in cms.collection.objects('blog') %}
@@ -68,7 +68,7 @@ Get all objects from a collection. Takes the collection id and nothing else — 
 {% endfor %}
 ```
 
-**`objects()` returns index data, not full records.** Each entry holds only the properties listed in the schema's [`index`](/schemas/reference#index/) array (plus `id`). A property that is not indexed is simply absent from every entry, so `post.body` on a non-indexed `body` prints nothing rather than erroring. Either add the property to the schema's `index`, or fetch the full record per object with `object()` when you need it:
+**`objects()` returns index data, not full records.** Each entry holds only the properties listed in the schema's [`index`](/schemas/reference#index) array (plus `id`). A property that is not indexed is simply absent from every entry, so `post.body` on a non-indexed `body` prints nothing rather than erroring. Either add the property to the schema's `index`, or fetch the full record per object with `object()` when you need it:
 
 ```twig
 {% for entry in cms.collection.objects('blog') %}
@@ -159,7 +159,7 @@ Results are plain object arrays in ranked order — the same shape `search()` re
 
 - Ranks by term coverage, not field position, and returns partial matches instead of requiring every term.
 - Does **not** support `field:value` scoped queries or explicit `and`/`or` operators — use `search()` for those.
-- Opt-in and additive; `cms.collection.search()` is unchanged. See the [relevance ranking notes](/operations/search#relevance-ranking-mcp-programmatic-search/).
+- Opt-in and additive; `cms.collection.search()` is unchanged. See the [relevance ranking notes](/operations/search#relevance-ranking-mcp-programmatic-search).
 
 ## URL Generation
 
@@ -254,7 +254,7 @@ Check if an object's generated URL has empty segments due to missing template da
 
 ### redirectIfNotFound()
 
-Redirect to the 404 page if the provided object is empty or null. The visitor is sent to the 404 page's own address with a `302` — the URL they typed is lost, and a crawler records a redirect rather than a missing page. On a Site Builder site, prefer [`cms.notFound()`](/twig/totalcms#notfound/), which renders the 404 page in place with a real `404` status.
+Redirect to the 404 page if the provided object is empty or null. The visitor is sent to the 404 page's own address with a `302` — the URL they typed is lost, and a crawler records a redirect rather than a missing page. On a Site Builder site, prefer [`cms.notFound()`](/twig/totalcms#notfound), which renders the 404 page in place with a real `404` status.
 
 ```twig
 {% set post = cms.collection.object('blog', id) %}

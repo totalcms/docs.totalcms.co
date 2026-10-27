@@ -59,11 +59,11 @@ happen. Every one of those has a field built for it.
 | a fixed group of related fields | `card` | Address, hero, author block. Shape comes from another schema. |
 | a repeating list of structured items | `deck` | Features, FAQs, team members. `deckTable` edits the same data as a grid, image and file columns included. |
 | text translated per locale | `localizedtext`, `localizedtextarea`, `localizedstyledtext` | Pro edition. |
-| search-engine metadata for a public page | `card` referencing `seo` | See [SEO](/site-builder/seo#adding-the-card-to-your-own-schema/). Index it. |
+| search-engine metadata for a public page | `card` referencing `seo` | See [SEO](/site-builder/seo#adding-the-card-to-your-own-schema). Index it. |
 
 A computed value is not a field type. Put `calc` in the settings of a
 `number` or `price` field and it becomes read-only and derived. See
-[All Field Settings](/fields/all-fields#calc-computed-fields/).
+[All Field Settings](/fields/all-fields#calc-computed-fields).
 
 ## Which "category" do you mean?
 
@@ -83,7 +83,7 @@ as a suggestion while still allowing new ones, so the list of categories
 grows with the content and never needs a schema edit. That is how the
 built-in `blog` schema's `categories` and `tags` work. Static `options` is
 the opposite: the choices are fixed until someone changes the schema. See
-[Property Options](/fields/property-options/).
+[Property Options](/fields/property-options).
 
 `Internal` is a reserved schema category. Total CMS uses it for the
 embedded sub-schemas that only appear as cards inside another schema and
@@ -129,4 +129,4 @@ demonstrated on it, as is the `seo` card.
 - **A deck with one field per item.** Use a `list`.
 - **Help text that restates the label.** Help is read by editors in the form
   and by AI agents through MCP. Say what the value is for and what good
-  looks like. See [Editing Content with AI Agents](/mcp/agent-editing#writing-for-agents/).
+  looks like. See [Editing Content with AI Agents](/mcp/agent-editing#writing-for-agents).

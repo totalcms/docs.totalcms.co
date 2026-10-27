@@ -3,7 +3,7 @@ title: "Algolia Search (Bundled Extension)"
 description: "Algolia search provider for Total CMS. Routes MCP search tools through Algolia's hosted keyword and neural search instead of built-in search."
 since: "3.5.0"
 ---
-`totalcms/algolia-search` — bundled with Total CMS. Implements the [`SearchProvider`](/extensions/extension-points/) interface against [Algolia](https://www.algolia.com), letting you swap T3's built-in text search for Algolia's hosted search index. When the active search provider is `algolia`, every MCP `search_collection` call (and any future REST or site-wide search consumer) routes through your Algolia account.
+`totalcms/algolia-search` — bundled with Total CMS. Implements the [`SearchProvider`](/extensions/extension-points) interface against [Algolia](https://www.algolia.com), letting you swap T3's built-in text search for Algolia's hosted search index. When the active search provider is `algolia`, every MCP `search_collection` call (and any future REST or site-wide search consumer) routes through your Algolia account.
 
 Pro edition or higher is required.
 
@@ -87,7 +87,7 @@ You can opt a single collection out of Algolia even when the site-wide active pr
 - **SKU-heavy collections** where exact substring matches are what you actually want (Algolia's typo-tolerance hurts more than it helps).
 - **Tiny collections** where the round-trip to Algolia costs more than scanning T3's in-memory index.
 
-The override is a flat field on the `mcp-collection` card schema — see [MCP Server](/mcp/server/) for the broader settings layout.
+The override is a flat field on the `mcp-collection` card schema — see [MCP Server](/mcp/server) for the broader settings layout.
 
 ## Reindexing manually
 
@@ -147,6 +147,6 @@ Source: `resources/extensions/totalcms/algolia-search/`
 
 ## See also
 
-- [Extension Points](/extensions/extension-points/) — including `registerSearchProvider()` for shipping your own search provider
-- [Bundled Extensions](/extensions/bundled/) — concept and list of all bundled extensions
-- [MCP Server](/mcp/server/) — the primary consumer of search in 3.5
+- [Extension Points](/extensions/extension-points) — including `registerSearchProvider()` for shipping your own search provider
+- [Bundled Extensions](/extensions/bundled) — concept and list of all bundled extensions
+- [MCP Server](/mcp/server) — the primary consumer of search in 3.5

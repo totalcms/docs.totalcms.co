@@ -39,7 +39,7 @@ RFC-2822 dates and the `atom:link` self reference are handled for you.
 
 The route's extension sets the `Content-Type`, so `/changelog/rss` and
 `/changelog/feed.rss` both serve `application/rss+xml`. See
-[Site Builder](/site-builder/overview/) for how that works.
+[Site Builder](/site-builder/overview) for how that works.
 
 ## Feed details
 
@@ -123,7 +123,7 @@ If your show uses the bundled Podcast extension's `podcast` and
 the feed at its own address, and `podcast_feed()` fills the block
 in from those collections, serves uploaded audio through the counted
 streaming route or links to audio hosted elsewhere, and takes the feed URL
-from the show record. See [Podcasts](/collections/podcast/). What follows
+from the show record. See [Podcasts](/collections/podcast). What follows
 is for feeds built from your own schema.
 
 ```twig
@@ -219,7 +219,7 @@ Serve it from a route ending in `.xml`, and remember `meta.self`.
 
 A collection can also publish a feed at `/feed/rss/{collection}` without any
 template: turn on **Publish RSS Feed** in the collection's settings. See
-[RSS Feeds](/collections/rss-feed/).
+[RSS Feeds](/collections/rss-feed).
 
 That endpoint maps fields by name — which property is the title, which is the
 content — and that is its limit: it cannot build a title out of two fields or

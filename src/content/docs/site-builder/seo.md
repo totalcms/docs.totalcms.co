@@ -46,13 +46,13 @@ For a page rendered from a starter, the output looks like this:
 
 ### No `|raw`
 
-`cms.seo.head()` returns markup, not a string — print it with plain `{{ }}`. Adding `|raw` is unnecessary, and every value inside it is escaped by Total CMS before it reaches the page, exactly like [`cms.assetsHead()`](/site-builder/frontend/).
+`cms.seo.head()` returns markup, not a string — print it with plain `{{ }}`. Adding `|raw` is unnecessary, and every value inside it is escaped by Total CMS before it reaches the page, exactly like [`cms.assetsHead()`](/site-builder/frontend).
 
 ### Remove Your Own Tags
 
 `head()` emits `<title>` and `<meta name="description">`. If your layout already has its own, delete them — otherwise the page ships two of each and crawlers pick whichever they like.
 
-The four bundled [starter templates](/site-builder/starters/) already do this. Their layouts carry:
+The four bundled [starter templates](/site-builder/starters) already do this. Their layouts carry:
 
 ```twig
 {% block seo %}{{ cms.seo.head(page|default(null)) }}{% endblock %}
@@ -123,9 +123,9 @@ One card instead of two homes for the same value, and everything on this page ap
 {{ page.seo.image.alt }}
 ```
 
-A hero image is the case that needs a little more than a rename: the image is nested inside a card now, so `imagePath()` wants the dotted path — `{collection: 'builder-pages', property: 'seo.image'}`. See [Page Description and Image](/site-builder/overview/) for the full call.
+A hero image is the case that needs a little more than a rename: the image is nested inside a card now, so `imagePath()` wants the dotted path — `{collection: 'builder-pages', property: 'seo.image'}`. See [Page Description and Image](/site-builder/overview) for the full call.
 
-If your layout only calls `cms.seo.head(page)` there is nothing to rename at all — the head was already reading through the card. The bundled [starter templates](/site-builder/starters/) are already updated.
+If your layout only calls `cms.seo.head(page)` there is nothing to rename at all — the head was already reading through the card. The bundled [starter templates](/site-builder/starters) are already updated.
 
 ### Placeholders in the Title
 
@@ -230,7 +230,7 @@ Open **Site SEO** in the collections sidebar and edit its one record. If it is n
 tcms collection:create seo-site
 ```
 
-`seo-site` is a reserved id, so no `--schema` is needed — the collection is created with its shipped name and singleton flag, the same result **Project Setup → Setup Default Collections** gives but for that one collection instead of every default. Either route is safe on an existing site: both create what is missing and leave the rest alone. See the [CLI reference](/extensions/cli/) for the rest of `collection:create`.
+`seo-site` is a reserved id, so no `--schema` is needed — the collection is created with its shipped name and singleton flag, the same result **Project Setup → Setup Default Collections** gives but for that one collection instead of every default. Either route is safe on an existing site: both create what is missing and leave the rest alone. See the [CLI reference](/extensions/cli) for the rest of `collection:create`.
 
 | Setting | Notes |
 |---|---|
@@ -450,7 +450,7 @@ That single change is what gives the post its own title, its own canonical URL, 
 
 Always pass `{collection: 'blog'}`. An object array does not carry the name of the collection it came from, and without it Total CMS cannot read the collection's mapping, resolve the object's URL or build the image.
 
-> **The reserved `blog` collection ships with no URL.** Set **URL** on the collection (e.g. `/blog/{id}`) to match the route your page uses, or objects in it get no canonical, no `og:url` and no Article node — all three are anchored to the object's address. See [Collection Settings](/collections/settings#url/).
+> **The reserved `blog` collection ships with no URL.** Set **URL** on the collection (e.g. `/blog/{id}`) to match the route your page uses, or objects in it get no canonical, no `og:url` and no Article node — all three are anchored to the object's address. See [Collection Settings](/collections/settings#url).
 
 The same call works for any collection — products, events, team members — once its URL is set.
 
@@ -594,7 +594,7 @@ The **Include in Sitemap** toggle is unchanged and independent. Off keeps a reco
 
 **A noindexed page also gets no `<link rel="canonical">`.** Declaring a canonical URL is telling a crawler "this is the address to index"; asking not to be indexed at the same time is a mixed signal, and the two together are a documented way to have the directive ignored. So `head()` and `cms.seo.canonical()` both drop the tag when **No Index** is on. `og:url` still prints: it is an identity for a share card, not an instruction to a search engine.
 
-For collections other than the Site Builder pages, remember the [index requirement](#adding-the-card-to-your-own-schema) — the sitemap builder reads the collection index, so `seo` must be in the schema's `index` array. See [Sitemaps](/collections/sitemap-builder/).
+For collections other than the Site Builder pages, remember the [index requirement](#adding-the-card-to-your-own-schema) — the sitemap builder reads the collection index, so `seo` must be in the schema's `index` array. See [Sitemaps](/collections/sitemap-builder).
 
 ### robots.txt
 
@@ -613,7 +613,7 @@ A sitemap tells crawlers what exists; IndexNow tells them what just changed, the
 
 What is submitted is exactly what the sitemap would list, decided by the same rules: the collection's sitemap must be on, its include/exclude filters must admit the object, and the SEO card must not say **No Index**. A draft stays out for the same reason it stays out of the sitemap — the collection's `exclude` filter — and a post moved back to draft, noindexed or deleted is submitted too, so the engines recrawl and drop it quickly rather than at the next scheduled visit.
 
-Imports count too: a CSV or JSON import that publishes a hundred posts submits their hundred URLs together when it completes. Submissions are queued, never sent during a save, and coalesced: every URL that changes between two runs of [`tcms jobs:process`](/extensions/cli#jobs-process/) — every minute under the standard cron — goes out as one request, up to the protocol's 10,000 URLs, and a record saved five times in that window is submitted once. A rate limit or outage puts the unsent URLs back for the next run; a rejected submission is logged once under `indexnow` and dropped. Clearing the job queue discards the pending submissions with it.
+Imports count too: a CSV or JSON import that publishes a hundred posts submits their hundred URLs together when it completes. Submissions are queued, never sent during a save, and coalesced: every URL that changes between two runs of [`tcms jobs:process`](/extensions/cli#jobs-process) — every minute under the standard cron — goes out as one request, up to the protocol's 10,000 URLs, and a record saved five times in that window is submitted once. A rate limit or outage puts the unsent URLs back for the next run; a rejected submission is logged once under `indexnow` and dropped. Clearing the job queue discards the pending submissions with it.
 
 The key the engines verify against is generated for you the first time the form is saved with the toggle on, and served at `/{key}.txt`. It is not an API key: IndexNow has no accounts, registration or vendor credentials. The key is a token this site made up, and hosting it at that address is the whole proof that the submissions come from here. If a submission is rejected, that file being unreachable is the usual reason — a rewrite rule or a static `.txt` handler in front of PHP.
 
@@ -632,6 +632,6 @@ The last three are the remit of the **SEO Pro** extension planned for 3.6.
 
 ## See Also
 
-- [Sitemaps](/collections/sitemap-builder/)
-- [Builder Twig Reference](/site-builder/twig/)
-- [Starter Templates](/site-builder/starters/)
+- [Sitemaps](/collections/sitemap-builder)
+- [Builder Twig Reference](/site-builder/twig)
+- [Starter Templates](/site-builder/starters)

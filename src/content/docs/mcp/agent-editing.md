@@ -11,7 +11,7 @@ related:
 The MCP server lets an AI agent (Claude Code, Cursor, claude.ai, …) read and
 write your site's content directly. This page is the workflow guide: which tool
 to reach for, and the one rule that keeps writes safe. For setup and the full
-tool catalog, see [MCP Server](/mcp/server/).
+tool catalog, see [MCP Server](/mcp/server).
 
 Writes require the **admin persona** (an `X-API-Key` header) or an OAuth token
 with write access. If `update_object` is missing from the agent's tool list,
@@ -31,7 +31,7 @@ Three read tools, three jobs:
 query/search results and only those filter or sort. Everything else exists on
 the object and comes back from `get_object` alone.
 
-If the site defines [saved-query tools](/mcp/saved-query-tools/), prefer
+If the site defines [saved-query tools](/mcp/saved-query-tools), prefer
 them when one matches the task — they encode the site owner's intended query.
 
 ## Writing: patch by default
@@ -55,11 +55,11 @@ Three merge rules to know:
   fields keep their uploaded files. Send a metadata edit to change alt text,
   tags, a focal point or a download label — `{"alt": "…"}` for an image, a
   list matched by `name` for a gallery or by `path` for a depot. See
-  [Binary fields](/mcp/server#binary-fields-on-the-object-write-tools/).
+  [Binary fields](/mcp/server#binary-fields-on-the-object-write-tools).
 
 ### Owned collections and site-set fields
 
-On a collection with an [owner property](/collections/settings#ownerproperty/),
+On a collection with an [owner property](/collections/settings#ownerproperty),
 a signed-in member works on their own objects: reads return theirs (drafts
 included) plus published ones, `create_object` records them as the owner
 whatever the payload says, and writing to someone else's object answers
@@ -153,7 +153,7 @@ not a follow-up.
 ## Guiding the agent
 
 Beyond the description slots above, one more site-side feature shapes what
-agents produce: **[Prompts](/mcp/prompts/)** deliver editorial guidance
+agents produce: **[Prompts](/mcp/prompts)** deliver editorial guidance
 (brand voice, per-collection editing instructions) straight into the agent's
 client. A `brand_voice` prompt is the cheapest way to keep agent-written
 copy on-message.

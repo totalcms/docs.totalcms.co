@@ -34,7 +34,7 @@ Deletes, bulk deletes, refusals and failed MCP calls are marked as **warning**, 
 
 ## Who Did It
 
-Each row records the actor the [event payload](/extensions/events/) carries:
+Each row records the actor the [event payload](/extensions/events) carries:
 
 - **Who**: the user and their auth collection, or the API key, or `system` for CLI commands and background jobs.
 - **via**: the OAuth client a member connected through, such as an AI assistant. Filter on the client ID to see everything that client did.
@@ -44,7 +44,7 @@ Each row records the actor the [event payload](/extensions/events/) carries:
 
 Filter by event, kind of actor, collection, level and date range. The **User, key or client** box matches a user ID, an API key ID or an OAuth client ID, so one box finds a member, a key or an AI client. Clicking a user, event or collection in the table adds it to the filters.
 
-Access is the same as the other utilities: admins see it, and an [access group](/auth/access-groups/) can grant it under **Specific Utilities → Activity Log**.
+Access is the same as the other utilities: admins see it, and an [access group](/auth/access-groups) can grant it under **Specific Utilities → Activity Log**.
 
 ## Exporting to CSV
 
@@ -78,4 +78,4 @@ Rows live in a SQLite database at `tcms-data/.system/activity`, which survives a
 
 ## Reacting to Downloads
 
-`file.downloaded` is a core event, so it can also trigger an [automation](/automations/overview/) or an [extension listener](/extensions/events/), for example to email someone when a member downloads a contract.
+`file.downloaded` is a core event, so it can also trigger an [automation](/automations/overview) or an [extension listener](/extensions/events), for example to email someone when a member downloads a contract.

@@ -232,7 +232,7 @@ location = /admin/login {
 }
 ```
 
-`burst` absorbs the parallel spike; `nodelay` serves the burst immediately rather than queuing it (queuing also reads as latency to the agent). Tune `rate`/`burst` up if you run many concurrent agents. Total CMS also applies its own per-IP throttle for anonymous MCP callers (`mcp.publicIpPerMinute`) — the Nginx zone sits in front of it; size the Nginx limit at or above the application limit so legitimate traffic isn't cut off before T3's own 429 logic runs. See [MCP Server → Rate limiting](/mcp/server/) for the application-layer side.
+`burst` absorbs the parallel spike; `nodelay` serves the burst immediately rather than queuing it (queuing also reads as latency to the agent). Tune `rate`/`burst` up if you run many concurrent agents. Total CMS also applies its own per-IP throttle for anonymous MCP callers (`mcp.publicIpPerMinute`) — the Nginx zone sits in front of it; size the Nginx limit at or above the application limit so legitimate traffic isn't cut off before T3's own 429 logic runs. See [MCP Server → Rate limiting](/mcp/server) for the application-layer side.
 
 ## Verifying Your Configuration
 

@@ -49,7 +49,7 @@ function bullet(array $entry, string $srcDocs): ?string
 	}
 	$fm = frontmatter($mdFile);
 	$desc = $fm['description'] ?? '';
-	$url = SITE . '/' . $entry['path'] . '/';
+	$url = SITE . '/' . $entry['path'];
 	$line = "- [{$entry['title']}]($url)";
 	if ($desc !== '') {
 		$line .= ": $desc";

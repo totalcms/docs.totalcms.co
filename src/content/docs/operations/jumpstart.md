@@ -82,7 +82,7 @@ Common overrides:
 
 ### Access Groups
 
-`accessGroups` holds the [access groups](/auth/access-groups/) the JumpStart's collections and pages use, in the same shape as `tcms access-group:get`:
+`accessGroups` holds the [access groups](/auth/access-groups) the JumpStart's collections and pages use, in the same shape as `tcms access-group:get`:
 
 ```json
 {
@@ -101,7 +101,7 @@ Import is **additive**. A group the site does not have is created. A group the s
 
 Creating a group grants permissions, so only a super admin, or `tcms jumpstart:import` on the command line, can import access groups. Any other import reports `Access groups: refused` and imports the rest.
 
-Access groups are imported first, so collections, pages and users that name a group find it. Auth collections are created before the other custom collections, so a collection whose [`ownerCollection`](/collections/settings#ownercollection/) or [`accessCollection`](/collections/settings#accesscollection/) names one finds it too.
+Access groups are imported first, so collections, pages and users that name a group find it. Auth collections are created before the other custom collections, so a collection whose [`ownerCollection`](/collections/settings#ownercollection) or [`accessCollection`](/collections/settings#accesscollection) names one finds it too.
 
 ## Export Behavior
 
@@ -294,6 +294,6 @@ Total CMS includes a demo JumpStart file at `resources/jumpstart/demo.json` that
 ---
 
 **Related Documentation:**
-- [Factory Documentation](/twig/factory/) - Learn more about factory data generation
-- [Import/Export](/collections/import/) - General import/export functionality
-- [Schema Reference](/schemas/reference/) - Understanding Total CMS data structures
+- [Factory Documentation](/twig/factory) - Learn more about factory data generation
+- [Import/Export](/collections/import) - General import/export functionality
+- [Schema Reference](/schemas/reference) - Understanding Total CMS data structures

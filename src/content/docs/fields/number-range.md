@@ -33,6 +33,6 @@ With `publicIncrement` set, unauthenticated callers may `POST` to the field's
 `/increment` and `/decrement` routes; every other write still needs
 authentication or the collection's `publicOperations`. Anonymous counter
 writes are limited to 60 per minute per IP. Treat the number as a soft
-signal, not a vote: anyone can call it. The [HTMX Recipes](/twig/htmx/)
+signal, not a vote: anyone can call it. The [HTMX Recipes](/twig/htmx)
 page shows the one-line like button.
 

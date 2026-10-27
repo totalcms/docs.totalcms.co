@@ -34,11 +34,11 @@ tcms-data/extensions/
             assets/             # CSS, JS, images
 ```
 
-Total CMS also ships **bundled extensions** in `resources/extensions/` — included with every install but disabled by default. They appear in the admin alongside user-installed extensions but cannot be removed (only disabled). See [Bundled Extensions](/extensions/bundled/).
+Total CMS also ships **bundled extensions** in `resources/extensions/` — included with every install but disabled by default. They appear in the admin alongside user-installed extensions but cannot be removed (only disabled). See [Bundled Extensions](/extensions/bundled).
 
 ### Installing an Extension
 
-The quickest way to install an extension is to upload it: on the **Extensions** page click **Install Extension** and drop the zip the developer gave you onto the panel (or click it to choose the file). The upload starts at once. Total CMS unpacks it into `tcms-data/extensions/{vendor}/{name}/` and brings you back to the Extensions page with the new extension highlighted. It stays disabled until you enable it. When there is something to read first — the developer left a note, the extension uses a sensitive capability (public routes, event listeners, automations, MCP tools or resources), it ships an agent skill, or the source scan flagged something — you land on its [review page](/extensions/safety#the-pre-enable-review/) instead, and enable it from there.
+The quickest way to install an extension is to upload it: on the **Extensions** page click **Install Extension** and drop the zip the developer gave you onto the panel (or click it to choose the file). The upload starts at once. Total CMS unpacks it into `tcms-data/extensions/{vendor}/{name}/` and brings you back to the Extensions page with the new extension highlighted. It stays disabled until you enable it. When there is something to read first — the developer left a note, the extension uses a sensitive capability (public routes, event listeners, automations, MCP tools or resources), it ships an agent skill, or the source scan flagged something — you land on its [review page](/extensions/safety#the-pre-enable-review) instead, and enable it from there.
 
 The same install runs from the CLI:
 
@@ -51,7 +51,7 @@ Uploads require a signed-in admin browser session; API keys and OAuth tokens are
 
 **What the zip looks like.** The extension folder, zipped — `seo-pro/extension.json`, `seo-pro/Extension.php` and so on inside a single top-level folder (a zip with `extension.json` at its root also works). Right-click → Compress on a Mac produces exactly this, and so does `tcms extension:package`. The folder name does not matter: the install location comes from the `id` in `extension.json`.
 
-**Updating.** Upload a newer zip of an extension you installed this way and its files are replaced. Its enabled state, permissions and settings are kept. The new code is scanned on the way in; if an enabled extension's update adds risky code patterns it is disabled until you review it, exactly as described in [Stability & Safety](/extensions/safety#updates/).
+**Updating.** Upload a newer zip of an extension you installed this way and its files are replaced. Its enabled state, permissions and settings are kept. The new code is scanned on the way in; if an enabled extension's update adds risky code patterns it is disabled until you review it, exactly as described in [Stability & Safety](/extensions/safety#updates).
 
 **What cannot be installed over.** An id that belongs to a bundled extension, a Composer package or a project extension is refused — the package, Composer or your repository owns those files, and the upload would be undone or would shadow code your site thinks it is running. The message names the owner and the way to change it.
 
@@ -91,7 +91,7 @@ That is the whole install. Total CMS asks Composer which installed packages have
 
 A Composer extension shows a **Composer** badge in the admin and reports the version Composer installed, not the one in its `extension.json`. It can be disabled but not removed from the admin or CLI, for the same reason as bundled and project extensions: the files belong to Composer. `tcms extension:remove` says so and names the `composer remove` command to run instead.
 
-An update that changes the extension's source is treated like any other extension update: it goes through the same [safety review](/extensions/safety/), and one that introduces high-risk code patterns is disabled until an operator reviews it.
+An update that changes the extension's source is treated like any other extension update: it goes through the same [safety review](/extensions/safety), and one that introduces high-risk code patterns is disabled until an operator reviews it.
 
 **Publishing one.** An extension is a Composer package when its `composer.json` says so:
 
@@ -175,7 +175,7 @@ Extension-provided schemas always require Pro or higher, regardless of the `min_
 
 A broken extension cannot crash Total CMS. If an extension throws an exception during `register()` or `boot()`:
 
-- The exception is caught and logged to `extensions.log` in the [logs directory](/operations/filesystem/)
+- The exception is caught and logged to `extensions.log` in the [logs directory](/operations/filesystem)
 - The error is recorded in the extension's state (visible in the admin UI)
 - Other extensions continue loading normally
 - The site operates without the broken extension
@@ -212,7 +212,7 @@ While developing, you can also clone straight into `tcms-data/extensions/your-ve
 
 ## Next Steps
 
-- [Manifest Reference](/extensions/manifest/) -- all manifest fields explained
-- [Extension Points](/extensions/extension-points/) -- what extensions can do
-- [Events](/extensions/events/) -- subscribing to content events
-- [Schemas](/extensions/schemas/) -- providing schemas from extensions
+- [Manifest Reference](/extensions/manifest) -- all manifest fields explained
+- [Extension Points](/extensions/extension-points) -- what extensions can do
+- [Events](/extensions/events) -- subscribing to content events
+- [Schemas](/extensions/schemas) -- providing schemas from extensions

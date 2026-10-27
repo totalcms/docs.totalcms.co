@@ -2,7 +2,7 @@
 title: "Radio & Checklist"
 description: "Configure radio button and checklist fields in Total CMS with responsive fieldGrid and fieldColumns layout settings for multi-column option displays."
 ---
-Radio and Checklist fields allow users to select options from multiple choices. For how to define options, see [All Field Settings](/fields/static-options/).
+Radio and Checklist fields allow users to select options from multiple choices. For how to define options, see [All Field Settings](/fields/static-options).
 
 > The `checklist` field type was previously named `multicheckbox`. The old name still works as a permanent alias, so existing schemas need no changes.
 
@@ -114,6 +114,6 @@ If no options are checked, the user sees: *"Please select at least one option."*
 
 ### Schema-Level Required
 
-Both field types also respect the schema's top-level `required` array. For checklist specifically, an empty array (`[]`) is rejected by the schema validator at save time, mirroring the client-side "at least one" check. See [Schema Validation](/schemas/validation#required-fields/) for details.
+Both field types also respect the schema's top-level `required` array. For checklist specifically, an empty array (`[]`) is rejected by the schema validator at save time, mirroring the client-side "at least one" check. See [Schema Validation](/schemas/validation#required-fields) for details.
 
-For conditional required scenarios — where the field is only required based on another field's value — use `settings.required` paired with `settings.visibility` and **leave the field out of the schema's `required` array**. See [Required (Form-Level)](/fields/all-fields#required-form-level/).
+For conditional required scenarios — where the field is only required based on another field's value — use `settings.required` paired with `settings.visibility` and **leave the field out of the schema's `required` array**. See [Required (Form-Level)](/fields/all-fields#required-form-level).

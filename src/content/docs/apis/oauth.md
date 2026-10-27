@@ -52,7 +52,7 @@ The private key is the root of trust for every token your site issues. The key l
 
 ---
 
-> **Behind a firewall?** User-agent-filtering WAF rules (7G/8G and similar) block OAuth discovery and token requests from non-browser clients. If a client reports the server as incompatible or a connector asks for manual credentials despite dynamic registration being enabled, check the firewall before the OAuth config — see [MCP Server](/mcp/server/) for the symptom guide.
+> **Behind a firewall?** User-agent-filtering WAF rules (7G/8G and similar) block OAuth discovery and token requests from non-browser clients. If a client reports the server as incompatible or a connector asks for manual credentials despite dynamic registration being enabled, check the firewall before the OAuth config — see [MCP Server](/mcp/server) for the symptom guide.
 
 ## Setting up a static client
 
@@ -229,7 +229,7 @@ With it set:
 - **Staff can sign in there too.** During an OAuth sign-in only, a login on that page that matches no member is tried against the default user collection, so staff connect an AI client from the same page. Outside an OAuth flow the page behaves as any other collection's login. A super admin always signs in as themselves, as on every login page.
 - **Other collections cannot authorize.** A session from any other auth collection is treated as signed out at `/oauth/authorize` and on approval, and the refusal is logged as `login_collection.rejected`.
 
-The token records the collection its user signed in from (`users:jane`), so a member's token is scoped to that member: on an [owned collection](/collections/settings#ownerproperty/) they see and edit their own objects. Tokens already issued are unaffected by a change to this setting.
+The token records the collection its user signed in from (`users:jane`), so a member's token is scoped to that member: on an [owned collection](/collections/settings#ownerproperty) they see and edit their own objects. Tokens already issued are unaffected by a change to this setting.
 
 ---
 
@@ -366,7 +366,7 @@ Either alone stays at the authenticated tier: an admin who granted a read-only t
 
 This is a **stricter** bar than simply holding `cms:admin` — see the widened issuance rule above. A non-admin user whose groups grant, say, `schemas` permission can request and receive `cms:admin`, and that token really does authorize schema writes over REST and MCP — but it never elevates to the unrestricted admin persona, because admin-group membership is the one requirement group grants can't substitute for. Elevation is all-or-nothing by design; a token that reaches everything is meant to mean the approving human can reach everything too.
 
-For a complete breakdown of which scopes unlock which MCP capabilities, and a worked example of configuring Claude Desktop with a static OAuth client, see [Connecting an AI client via OAuth](/mcp/server#connecting-an-ai-client-via-oauth/).
+For a complete breakdown of which scopes unlock which MCP capabilities, and a worked example of configuring Claude Desktop with a static OAuth client, see [Connecting an AI client via OAuth](/mcp/server#connecting-an-ai-client-via-oauth).
 
 ---
 

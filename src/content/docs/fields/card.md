@@ -105,7 +105,7 @@ Images and files stored inside a card are addressed by **dot-notation** in the `
 {{ cms.media.download('post-1', {property: 'mycard.attachment'}) }}
 ```
 
-The first segment is the card field's name on the parent object; subsequent segments walk down into the card. The Image Builder dialog (opened from the admin form) emits the correct dotted-property macro automatically. See [cms.media → Nested images](/twig/media#nested-images-cards-and-decks/) for full reference.
+The first segment is the card field's name on the parent object; subsequent segments walk down into the card. The Image Builder dialog (opened from the admin form) emits the correct dotted-property macro automatically. See [cms.media → Nested images](/twig/media#nested-images-cards-and-decks) for full reference.
 
 ## Complete Example
 
