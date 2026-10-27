@@ -34,7 +34,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 
 ### Get Started
 - [Welcome](https://docs.totalcms.co/get-started/welcome): Total CMS is a flat-file PHP content management system for site builders, developers, and agencies. Get oriented and start building.
-- [Requirements](https://docs.totalcms.co/get-started/requirements): Server, PHP, and browser requirements for running Total CMS. Required and recommended PHP extensions, supported web servers, and admin dashboard browser support.
+- [Requirements](https://docs.totalcms.co/get-started/requirements): Server, PHP, and browser requirements for Total CMS: required and recommended PHP extensions, supported web servers, and admin browsers.
 - [Installation](https://docs.totalcms.co/get-started/installation): Install Total CMS with Composer or zip download. The setup wizard walks you through the rest in under 5 minutes.
 - [Your First Site](https://docs.totalcms.co/get-started/your-first-site): Hands-on tutorial: add a blog post in the admin, write a short Twig template, and see it render on a public page. About 10 minutes.
 
@@ -46,12 +46,12 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Importing Data](https://docs.totalcms.co/collections/import): Import data into Total CMS collections from CSV and JSON files, update existing objects, and process images and files via the job queue.
 - [Migrating from another CMS](https://docs.totalcms.co/collections/migrate): Move content into Total CMS from a WordPress WXR export, Alloy, Total CMS 1, or an RSS/Atom/JSON feed using the built-in platform importers.
 - [Exporting Data](https://docs.totalcms.co/collections/export): Export Total CMS collection data as JSON, CSV, or ZIP archives with include and exclude filtering for backups and migrations.
-- [Sitemap Builder](https://docs.totalcms.co/collections/sitemap-builder): Generate XML sitemaps for Total CMS collections and builder pages, with admin-managed defaults, a sitemap index at /sitemap.xml, and backward-compatible URL parameters.
-- [RSS Feeds](https://docs.totalcms.co/collections/rss-feed): Publish a collection as an RSS feed at /feed/rss/{collection}: turn it on per collection, map the fields, choose what is left out, and build filtered variants with URL parameters.
-- [Podcasts](https://docs.totalcms.co/collections/podcast): Publish a podcast from Total CMS: create the show and episode collections from the built-in schemas, upload episodes, and serve a feed Apple Podcasts and Spotify accept with one line of Twig.
+- [Sitemap Builder](https://docs.totalcms.co/collections/sitemap-builder): Generate XML sitemaps for Total CMS collections and builder pages, with admin-managed defaults and a sitemap index at /sitemap.xml.
+- [RSS Feeds](https://docs.totalcms.co/collections/rss-feed): Publish a collection as an RSS feed at /feed/rss/{collection}: enable it, map the fields, and build filtered variants with URL parameters.
+- [Podcasts](https://docs.totalcms.co/collections/podcast): Publish a podcast from Total CMS: create show and episode collections from built-in schemas and serve a feed Apple Podcasts and Spotify accept.
 
 ### Schemas
-- [Schema Reference](https://docs.totalcms.co/schemas/reference)
+- [Schema Reference](https://docs.totalcms.co/schemas/reference): Complete reference for Total CMS schema settings including inheritance, required fields, indexed properties, form grid layout, and categories.
 - [Schema Validation](https://docs.totalcms.co/schemas/validation): Validate Total CMS schema data with JSON Schema keywords for strings, numbers, arrays, enums, unique constraints, and regex patterns.
 - [Form Grid Layout](https://docs.totalcms.co/schemas/formgrid): Arrange admin form fields in multi-column layouts using CSS Grid syntax with column spanning, dividers, and section headers in Total CMS schemas.
 - [Schemas in Twig](https://docs.totalcms.co/schemas/twig): Reference for the cms.schema namespace providing schema listing, fetching, category grouping, inheritance, and deck compatibility.
@@ -59,13 +59,13 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 ### Fields
 
 #### Field Types
-- [Choosing a Field](https://docs.totalcms.co/fields/choosing-a-field): Which Total CMS field type to use for a given kind of value, why text is the last resort, the five things 'category' can mean, and where the reference schema that demonstrates every field lives.
+- [Choosing a Field](https://docs.totalcms.co/fields/choosing-a-field): Which Total CMS field type to use for each kind of value, why text is the last resort, and what 'category' can mean in a schema.
 - [All Fields](https://docs.totalcms.co/fields/all-fields): Universal settings for all Total CMS field types including help text, autogen, calc (computed fields), hidden fields, and conditional visibility.
 - [Card](https://docs.totalcms.co/fields/card): Group related fields into a single nested object using the card field type — a single-instance deck whose shape is defined by another schema via schemaref.
 - [Code Editor](https://docs.totalcms.co/fields/code-editor): Configure the CodeMirror-powered code editor field in Total CMS with syntax highlighting modes, HTML sanitization, and embed code support.
-- [Color](https://docs.totalcms.co/fields/color): Color picker field — renders the native swatch picker, accepts hex/rgb/hsl/oklch input, and stores both hex and OKLCH so templates can output any CSS color format.
+- [Color](https://docs.totalcms.co/fields/color): Color picker field that accepts hex, rgb, hsl, or oklch input and stores both hex and OKLCH so templates can output any CSS color format.
 - [Date](https://docs.totalcms.co/fields/date): Auto-populate date fields in Total CMS with onCreate and onUpdate settings for automatic timestamps when objects are created or modified.
-- [Deck](https://docs.totalcms.co/fields/deck): Customize deck item labels in the Total CMS admin using template syntax with field references, minItems, maxItems, and modalSize settings. Includes the on-disk shape of deck data and how to define a deck in a schema.
+- [Deck](https://docs.totalcms.co/fields/deck): The deck field holds repeatable groups of fields. Covers its on-disk shape, schema definition, item labels, min/max item counts, and modal size.
 - [File & Depot](https://docs.totalcms.co/fields/file-depot): Configure file and depot upload fields in Total CMS with size limits, file type restrictions, filename validation, and collection-based access control.
 - [ID](https://docs.totalcms.co/fields/id): Auto-generate object IDs in Total CMS from field values using autogen templates with variables like uuid, date components, and custom formats.
 - [Image & Gallery](https://docs.totalcms.co/fields/image-gallery): Configure image and gallery upload fields in Total CMS with validation rules, location stripping, and image or text watermark settings.
@@ -74,15 +74,15 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Markdown](https://docs.totalcms.co/fields/markdown): The markdown field is a Markdown source editor with a toolbar, preview and fullscreen. It stores what you write; render it with the markdown filter.
 - [Number & Range](https://docs.totalcms.co/fields/number-range): Configure number and range input fields in Total CMS with min, max, and step settings for precise numeric value control.
 - [Password](https://docs.totalcms.co/fields/password): Set up password fields in Total CMS with automatic confirmation input, match validation, and customizable placeholder text.
-- [Price](https://docs.totalcms.co/fields/price): Locale-aware currency price field — live formatting as you type, a per-currency symbol and icon, configurable currency/decimals/locale, stored as a plain number.
+- [Price](https://docs.totalcms.co/fields/price): Locale-aware currency price field with live formatting, a per-currency symbol and icon, and configurable currency, decimals, and locale.
 - [Radio & Checklist](https://docs.totalcms.co/fields/radio-checklist): Configure radio button and checklist fields in Total CMS with responsive fieldGrid and fieldColumns layout settings for multi-column option displays.
 - [Secret](https://docs.totalcms.co/fields/secret): Mask plaintext-stored sensitive values like API keys and tokens using the secret field type, with a built-in show/hide toggle and password-manager opt-out.
 - [Select](https://docs.totalcms.co/fields/select): Configure select and multiselect dropdown fields in Total CMS with the clearValue button setting for optional selection clearing.
-- [Styled Markdown](https://docs.totalcms.co/fields/styled-markdown): The styledmarkdown field edits Markdown in the Styled Text visual editor, with a source mode and preview. It stores Markdown source; render it with the markdown filter.
+- [Styled Markdown](https://docs.totalcms.co/fields/styled-markdown): The styledmarkdown field edits Markdown in the Styled Text visual editor, with a source mode and preview, and stores Markdown source.
 - [Styled Text](https://docs.totalcms.co/fields/styled-text): Configure the Tiptap rich text editor in Total CMS with toolbar options, inline styles, HTML snippets, color palettes, and image upload rules.
 - [SVG](https://docs.totalcms.co/fields/svg): Configure SVG field sanitization in Total CMS to prevent XSS attacks, with the option to disable svgclean for trusted content.
 - [Text Inputs](https://docs.totalcms.co/fields/text-inputs): Configure text and textarea fields in Total CMS with maxlength, minlength, pattern validation, readonly, disabled, rows, and HTML sanitization settings.
-- [Video](https://docs.totalcms.co/fields/video): Configure the video field in Total CMS: paste a URL from YouTube, Vimeo, Livid, Bunny, Cloudflare Stream, Loom, Wistia, Publitio or Jet-Stream (or a direct MP4/WebM link), and render it with cms.render.video().
+- [Video](https://docs.totalcms.co/fields/video): Configure the Total CMS video field: paste a YouTube, Vimeo, Bunny, Loom, Wistia, or direct MP4 link and render it with cms.render.video().
 
 #### Field Options
 - [Static Options](https://docs.totalcms.co/fields/static-options): Define static options for select, radio, checklist, and list fields in Total CMS using simple lists, label/value pairs, or grouped options.
@@ -93,7 +93,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 
 ### Site Builder
 - [Site Builder Overview](https://docs.totalcms.co/site-builder/overview): Build complete websites within Total CMS using Twig templates, page routes, and automatic URL routing — no external tools required.
-- [Builder CLI](https://docs.totalcms.co/site-builder/cli): CLI reference for the Site Builder: scaffold sites from starter templates, install a frontend pipeline, list registered routes, and manage template version history.
+- [Builder CLI](https://docs.totalcms.co/site-builder/cli): Site Builder CLI reference: scaffold sites from starter templates, install a frontend pipeline, list routes, and manage template history.
 - [Builder Admin UI](https://docs.totalcms.co/site-builder/admin): Use the admin interface to manage builder templates, preview pages, reorder the page tree, and restore previous template versions.
 - [Starter Templates](https://docs.totalcms.co/site-builder/starters): Scaffold a complete working site in seconds with bundled starter templates for business, blog, portfolio, and minimal sites.
 - [Frontend Assets](https://docs.totalcms.co/site-builder/frontend): Set up Vite (or any build tool) to compile CSS and JavaScript for your Site Builder site.
@@ -106,9 +106,9 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Twig Overview](https://docs.totalcms.co/twig/overview): Learn Twig templating basics in Total CMS including variables, filters, functions, template inheritance, and working with collections and images.
 - [CMS Variables](https://docs.totalcms.co/twig/variables): Access URL query parameters, POST request data, and session variables in Total CMS Twig templates using getData, postData, and sessionData.
 - [CMS Content](https://docs.totalcms.co/twig/totalcms): Overview of the cms global variable in Twig templates with links to per-namespace documentation.
-- [Data](https://docs.totalcms.co/twig/data): Reference for the cms.data namespace providing access to text, code, styled text, toggles, dates, numbers, URLs, emails, SVGs, colors, images, galleries, files, and depot data.
+- [Data](https://docs.totalcms.co/twig/data): Reference for the cms.data Twig namespace: read text, styled text, toggles, dates, numbers, URLs, colors, images, galleries, files, and depots.
 - [Render](https://docs.totalcms.co/twig/render): Reference for the cms.render namespace providing HTML rendering for images, galleries, pagination, load more, depot browsers, and clone dialogs.
-- [Colors](https://docs.totalcms.co/twig/colors): Read, output, and manipulate color-field values in Twig — emit any CSS color format (hex/rgb/hsl/oklch), set alpha, and lighten/darken/shift colors with OKLCH-based adjustment filters.
+- [Colors](https://docs.totalcms.co/twig/colors): Output and adjust color-field values in Twig: emit hex, rgb, hsl, or oklch, set alpha, and lighten, darken, or shift colors with OKLCH filters.
 - [Templates](https://docs.totalcms.co/twig/templates): Create reusable Twig templates in Total CMS, organize them in folders, and use the Template Designer for seamless development-to-production sync.
 - [Conditionals](https://docs.totalcms.co/twig/conditionals): Master Twig conditional statements in Total CMS for comparisons, existence checks, array and string tests, date logic, and CMS-specific conditions.
 - [Markdown](https://docs.totalcms.co/twig/markdown): Convert markdown to HTML in Total CMS Twig templates using ParsedownExtra with block and inline rendering via the markdown filter.
@@ -119,11 +119,11 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Object Linking](https://docs.totalcms.co/twig/object-linking): Generate SEO-friendly URLs for Total CMS collection objects using URL templates, canonical URLs, and automatic redirect handling.
 - [Views](https://docs.totalcms.co/twig/views): Reference for the cms.view namespace providing access to pre-computed data views.
 - [CMS Grid Tag](https://docs.totalcms.co/twig/cmsgrid-tag): Display Total CMS collections in customizable grid layouts using the cmsgrid Twig tag with built-in CSS classes, helper methods, and templates.
-- [Cache Tag](https://docs.totalcms.co/twig/cache-tag): Cache a rendered block of Twig with the {% cache %} tag — TTL plus optional collection tags that auto-invalidate when content changes, backed by the Total CMS cache backends.
+- [Cache Tag](https://docs.totalcms.co/twig/cache-tag): Cache a rendered block of Twig with the {% cache %} tag, using a TTL and optional collection tags that invalidate when content changes.
 - [Load More](https://docs.totalcms.co/twig/load-more): Add HTMX-powered infinite scroll and load more buttons to Total CMS collection pages with server-side first page rendering and API pagination.
-- [HTMX Recipes](https://docs.totalcms.co/twig/htmx): Live search, faceted filtering, lazy sections, polling widgets, quick-view modals, zero-JavaScript forms, likes and boosted navigation — all from the Total CMS API and the htmx that already ships on every page.
-- [Twig Recipes](https://docs.totalcms.co/twig/recipes): Ready-to-paste Twig patterns for Total CMS: render stored content as Twig, archives, tag clouds, related posts, prev/next, scheduled publishing, calendars, SEO heads for detail pages, extra JSON-LD types, obfuscated contact details, daily picks, fragment caching, member-only blocks and signed links.
-- [Twig Playground](https://docs.totalcms.co/twig/playground): Write Twig in the admin, render it against your real content, and keep the snippets that work. The Playground is where you learn Total CMS Twig and prototype a template before it goes into a page.
+- [HTMX Recipes](https://docs.totalcms.co/twig/htmx): Build live search, faceted filters, lazy sections, quick-view modals, and zero-JavaScript forms with the Total CMS API and the bundled htmx.
+- [Twig Recipes](https://docs.totalcms.co/twig/recipes): Ready-to-paste Twig patterns for Total CMS: archives, tag clouds, related posts, prev/next links, calendars, SEO heads, member-only blocks, and more.
+- [Twig Playground](https://docs.totalcms.co/twig/playground): Write Twig in the admin, render it against your real content, and save the snippets that work. Learn Total CMS Twig and prototype templates.
 
 #### Filters & Functions
 - [Twig Filters](https://docs.totalcms.co/twig/filters): Complete reference for Total CMS Twig filters including text processing, color manipulation, array handling, date formatting, and markdown conversion.
@@ -132,11 +132,11 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Edition Helpers](https://docs.totalcms.co/twig/edition): Reference for the cms.edition namespace providing edition detection, feature gating, and license level information.
 - [Barcodes](https://docs.totalcms.co/twig/barcodes): Generate barcodes in Total CMS Twig templates with 16+ formats including Code 128, EAN-13, UPC-A, QR, and DataMatrix with SVG output and styling.
 - [QR Codes](https://docs.totalcms.co/twig/qrcodes): Generate QR codes in Total CMS Twig templates for URLs, vCard contacts, WiFi credentials, calendar events, GPS locations, and SMS or email links.
-- [Badges](https://docs.totalcms.co/twig/badges): Add a Built with Total CMS badge to a site's footer with cms.badge: generic pill, stacked and text badges, profile badges for a designer's own site, and Built by badges that credit the designer on a client's site.
+- [Badges](https://docs.totalcms.co/twig/badges): Add a Built with Total CMS badge to a site footer with cms.badge: pill, stacked, and text styles, plus Built by badges that credit the designer.
 
 #### Media
 - [Media](https://docs.totalcms.co/twig/media): Reference for the cms.media namespace providing image paths, gallery paths, file downloads, and streaming URLs.
-- [ImageWorks](https://docs.totalcms.co/twig/imageworks): Complete reference for ImageWorks image transformation parameters including resizing, cropping, effects, watermarks, presets, defaults, and color palette integration.
+- [ImageWorks](https://docs.totalcms.co/twig/imageworks): ImageWorks reference for Total CMS image transformations: resizing, cropping, effects, watermarks, presets, defaults, and color palettes.
 
 #### Internationalization
 - [Locale](https://docs.totalcms.co/twig/locale): Reference for the cms.locale namespace providing localization, translation, and language management in templates.
@@ -153,11 +153,11 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Specialized Forms](https://docs.totalcms.co/forms/specialized): Schema forms, collection forms, import forms, job queue management, and factory forms.
 
 ### Automations
-- [Overview](https://docs.totalcms.co/automations/overview): Run server-side PHP on a schedule, a webhook, or a content event.
-- [Triggers](https://docs.totalcms.co/automations/triggers): Schedule, webhook, and event triggers for automations.
-- [Writing Handlers](https://docs.totalcms.co/automations/handlers): The PHP handler and the AutomationContext API.
-- [Webhooks](https://docs.totalcms.co/automations/webhooks): Authenticating and calling automation webhooks.
-- [Extension Automations](https://docs.totalcms.co/automations/extensions): Ship automations from an extension with addAutomation().
+- [Overview](https://docs.totalcms.co/automations/overview): Automations run PHP handlers in Total CMS on a cron schedule, an incoming webhook, or a content event, with no separate worker service to deploy.
+- [Triggers](https://docs.totalcms.co/automations/triggers): Configure when an automation runs: cron schedules, incoming webhooks, and content events such as an object being created, alone or combined.
+- [Writing Handlers](https://docs.totalcms.co/automations/handlers): Write the PHP handler an automation runs: a closure that receives the AutomationContext API for reading, saving, and removing objects.
+- [Webhooks](https://docs.totalcms.co/automations/webhooks): Call automation webhooks at POST /automations/{id}: choose none, sameOrigin, or apiKey authentication, sync or async runs, and the payload.
+- [Extension Automations](https://docs.totalcms.co/automations/extensions): Ship automations from a Total CMS extension with addAutomation(), so a recurring job or event reaction installs without manual setup.
 
 ### Admin
 - [Dashboard](https://docs.totalcms.co/admin/dashboard): Navigate the Total CMS admin dashboard to manage collections, edit content, configure settings, and use the built-in form builder.
@@ -178,7 +178,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [PHP API](https://docs.totalcms.co/apis/php-api): Use the TotalCMS PHP class for server-side page rendering with Twig templates and CLI automation scripts with full method reference.
 - [API Keys](https://docs.totalcms.co/apis/api-keys): Create and manage token-based API keys for Total CMS REST API authentication with scoped method and path permissions and usage tracking.
 - [OAuth Server](https://docs.totalcms.co/apis/oauth): Connect external services and AI clients to your T3 site via OAuth 2.1
-- [Index Filter](https://docs.totalcms.co/apis/index-filter): Filter and sort Total CMS collection indexes with include, exclude, and sort criteria for sitemaps, RSS feeds, and API endpoints using boolean, string, and array values.
+- [Index Filter](https://docs.totalcms.co/apis/index-filter): Filter and sort Total CMS collection indexes with include, exclude, and sort criteria for sitemaps, RSS feeds, and API endpoints.
 - [WordPress Publishing](https://docs.totalcms.co/apis/wordpress-publishing): Publish to Total CMS from desktop and iOS writing apps that speak the WordPress XML-RPC API — MarsEdit, Byword, Ulysses, Open Live Writer.
 
 ### MCP
@@ -186,10 +186,10 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Connecting AI Clients](https://docs.totalcms.co/mcp/connect): Copy-paste setup for connecting Claude, Cursor, and VS Code to your site's MCP server, with and without an API key.
 - [Editing with AI Agents](https://docs.totalcms.co/mcp/agent-editing): The safe workflow for reading and writing site content through the MCP server: tool selection, the full-replace round-trip, and verification.
 - [Saved-Query Tools](https://docs.totalcms.co/mcp/saved-query-tools): Define parameterized AI-callable query tools for a collection using JSON — no PHP required.
-- [Documentation Tools](https://docs.totalcms.co/mcp/docs-tools): The bundled totalcms/docs extension exposes docs_search, docs_get, and docs_lookup MCP tools so AI agents can query this install's own documentation, matched to its own version.
+- [Documentation Tools](https://docs.totalcms.co/mcp/docs-tools): The bundled docs extension gives AI agents docs_search, docs_get, and docs_lookup MCP tools to query this install's version-matched docs.
 - [Prompts](https://docs.totalcms.co/mcp/prompts): Define Twig-rendered AI prompt templates in the admin and expose them via the MCP server's prompts/list and prompts/get endpoints.
 - [Extending MCP](https://docs.totalcms.co/mcp/extensions): Publish custom MCP tools and resources from a T3 extension — vendor-prefixed names, capability toggles, strict collision policy.
-- [Troubleshooting](https://docs.totalcms.co/mcp/troubleshooting): Diagnose the connection failures operators can't see from the T3 side — CDN/WAF blocking AI clients, stripped Authorization headers, and subfolder-install discovery mismatches — plus a reading guide to the Test connection panel.
+- [Troubleshooting](https://docs.totalcms.co/mcp/troubleshooting): Fix MCP connection failures: CDN or WAF rules blocking AI clients, stripped Authorization headers, subfolder installs, and the Test connection panel.
 
 ### Extensions & CLI
 - [Extensions Overview](https://docs.totalcms.co/extensions/overview): Learn how to extend Total CMS with custom functionality using the extension system. Add Twig functions, CLI commands, admin pages, custom schemas, and more.
@@ -203,36 +203,36 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 
 #### Bundled Extensions
 - [Bundled Overview](https://docs.totalcms.co/extensions/bundled): Bundled extensions ship with Total CMS — installed by default, managed through the same UI as user-installed extensions, but cannot be removed.
-- [A/B Split](https://docs.totalcms.co/extensions/ab-split): Render an alternate page template at the same URL for a percentage of visitors. Useful for testing layout, copy, or CTA variations without changing the page URL.
-- [Algolia Search](https://docs.totalcms.co/extensions/algolia-search): Pluggable search provider backed by Algolia. Routes MCP search tools (and future site-wide search consumers) through Algolia's hosted keyword + neural search instead of T3's built-in text search.
-- [Geo Redirect](https://docs.totalcms.co/extensions/geo-redirect): Redirect visitors based on their country. Reads the country from CDN-injected headers and 302s to a configured URL — useful for compliance redirects, regional landing pages, and sending visitors to localized URLs.
-- [Maintenance](https://docs.totalcms.co/extensions/maintenance): Per-page 503 maintenance mode. Take individual pages offline with a custom message while the rest of the site stays up. Logged-in admins bypass the gate automatically.
-- [Podcast](https://docs.totalcms.co/extensions/podcast): Host a podcast from two collections: the podcast and podcast-episode schemas, a feed the directories accept at its own address, and a podcast_feed() Twig function.
-- [Protect](https://docs.totalcms.co/extensions/protect): Gate a page behind a numeric passcode. Visitors enter a code to unlock the page — the session sticks via cookie. Useful for client previews, soft launches, and draft staging URLs.
+- [A/B Split](https://docs.totalcms.co/extensions/ab-split): Render an alternate page template at the same URL for a percentage of visitors to test layout, copy, or CTA variations.
+- [Algolia Search](https://docs.totalcms.co/extensions/algolia-search): Algolia search provider for Total CMS. Routes MCP search tools through Algolia's hosted keyword and neural search instead of built-in search.
+- [Geo Redirect](https://docs.totalcms.co/extensions/geo-redirect): Redirect visitors by country using CDN-injected headers. Useful for compliance redirects, regional landing pages, and localized URLs.
+- [Maintenance](https://docs.totalcms.co/extensions/maintenance): Per-page 503 maintenance mode: take single pages offline with a custom message while the rest of the site stays up. Admins bypass it.
+- [Podcast](https://docs.totalcms.co/extensions/podcast): Host a podcast from two collections with the podcast and podcast-episode schemas, a directory-ready feed, and the podcast_feed() Twig function.
+- [Protect](https://docs.totalcms.co/extensions/protect): Gate a page behind a numeric passcode that unlocks it for the session. Useful for client previews, soft launches, and draft staging URLs.
 - [Pushover](https://docs.totalcms.co/extensions/pushover): Send push notifications via Pushover when forms are submitted. Supports Twig templates, image attachments, priority levels, and delivery groups.
-- [Scheduled](https://docs.totalcms.co/extensions/scheduled): Time-window gating for builder pages. Only renders a page between configured start and end timestamps — useful for holiday campaigns, embargoed announcements, and time-limited sales.
-- [WebMCP](https://docs.totalcms.co/extensions/webmcp): Make your forms callable by a browser AI agent, and hand it the MCP server's read tools inside the visitor's own session, through the WebMCP origin trial in Chrome 149+. Experimental.
+- [Scheduled](https://docs.totalcms.co/extensions/scheduled): Only render a builder page between set start and end times. Useful for holiday campaigns, embargoed announcements, and time-limited sales.
+- [WebMCP](https://docs.totalcms.co/extensions/webmcp): Experimental: let a browser AI agent call your forms and the MCP server's read tools through the WebMCP origin trial in Chrome 149+.
 
 ### Operations
-- [Activity Log](https://docs.totalcms.co/operations/activity): See who changed, downloaded or called what, and when: content edits, logins, file downloads by signed-in users, refused requests and MCP tool calls, filterable by user, AI client, collection and date.
-- [Apache](https://docs.totalcms.co/operations/apache): Apache and LiteSpeed rewrite rules for Total CMS — what ships in the box, where each .htaccess file lives, and common customizations like HTTPS redirects, caching, and compression.
+- [Activity Log](https://docs.totalcms.co/operations/activity): See who changed, downloaded, or called what, and when: content edits, logins, downloads, refused requests, and MCP tool calls, filterable by user.
+- [Apache](https://docs.totalcms.co/operations/apache): Apache and LiteSpeed rewrite rules for Total CMS: the shipped .htaccess files and common changes like HTTPS redirects, caching, and compression.
 - [Backups](https://docs.totalcms.co/operations/backups): Total CMS keeps a snapshot history for every object: its state before each save and its final state on delete. List and restore them from the CLI.
 - [Configuration](https://docs.totalcms.co/operations/configuration): Configure Total CMS with the config/tcms.php bootstrap file, the deep-merge override model, real settings keys, the logger path, and reading config in Twig.
 - [Cron URLs](https://docs.totalcms.co/operations/cron-urls): Run the job queue and scheduled automations over HTTP when your host cannot run scheduled shell commands.
 - [Deployment](https://docs.totalcms.co/operations/deployment): Deploy Total CMS to production with Git configuration, cache clearing scripts, CI/CD integration for GitHub Actions and GitLab, and troubleshooting.
 - [Filesystem](https://docs.totalcms.co/operations/filesystem): Explore the Total CMS filesystem structure including tcms-data directory, collection JSON files, object assets, indexes, and custom schema storage.
-- [Git-First Templates](https://docs.totalcms.co/operations/git-first-templates): Source-control your Site Builder templates and deploy them with git. Create a builder/ folder at the project root and templates become version-controlled, the admin editor goes read-only, and the repo is the single source of truth.
-- [Impersonation](https://docs.totalcms.co/operations/impersonation): Super-admins can temporarily browse and edit the site as another user to debug permission and access issues. All actions taken while impersonating are recorded in the access log.
+- [Git-First Templates](https://docs.totalcms.co/operations/git-first-templates): Keep Site Builder templates in git: add a builder/ folder to your project, and the repo becomes the source of truth that you deploy with git.
+- [Impersonation](https://docs.totalcms.co/operations/impersonation): Super-admins can browse and edit the site as another user to debug permission and access issues. Every action is recorded in the access log.
 - [JumpStart](https://docs.totalcms.co/operations/jumpstart): Bootstrap new Total CMS projects with JumpStart data import and export for collections, schemas, objects, and Faker-based factory test data.
-- [Licenses](https://docs.totalcms.co/operations/licenses): How Total CMS licensing works: Standard and Pro editions, per-domain licenses, free development domains, the 45-day trial, update periods, license validation, and offline licenses.
-- [Migrating from v1](https://docs.totalcms.co/operations/migration-total-cms-one): Everything you need to move a Total CMS v1 site to Total CMS 3: the built-in v1 importer, what it brings over, rethinking repurposed blogs as custom schemas, and a full mapping of every v1 page macro to its Twig equivalent.
+- [Licenses](https://docs.totalcms.co/operations/licenses): How Total CMS licensing works: Standard and Pro editions, per-domain licenses, free dev domains, the 45-day trial, updates, and offline licenses.
+- [Migrating from v1](https://docs.totalcms.co/operations/migration-total-cms-one): Move a Total CMS v1 site to Total CMS 3 with the built-in importer, rethink repurposed blogs as custom schemas, and map v1 macros to Twig.
 - [Nginx](https://docs.totalcms.co/operations/nginx): Configure Nginx to work with Total CMS — front-controller routing, blocking the tcms-data directory, PHP-FPM, and snippets for the recommended docroot layout.
 - [Search Backends](https://docs.totalcms.co/operations/search): Search Total CMS collections with case-insensitive queries, AND/OR logic, quoted phrases, property-specific targeting, and result prioritization.
 - [Security](https://docs.totalcms.co/operations/security): Secure your Total CMS installation with tcms-data folder protection, HTTPS setup, HTML and SVG sanitization, upload restrictions, and security headers.
 - [Server Sizing](https://docs.totalcms.co/operations/server-sizing): Choose the right CPU, RAM, and storage for Total CMS with guidance on APCu cache tuning, PHP-FPM workers, Redis setup, and multi-site hosting.
 - [Shared Data](https://docs.totalcms.co/operations/shared-data): Run several Total CMS installs against one tcms-data folder: what they share, what stays per-install, caching, and per-site settings overlays.
-- [Sharing Sessions](https://docs.totalcms.co/operations/sharing-sessions): Pass data between Total CMS pages and other PHP applications on the same site through $_SESSION: where Total CMS stores sessions, the one rule every app must follow, and how to diagnose a split session.
-- [Supported Locales](https://docs.totalcms.co/operations/supported-locales): Reference table of every locale code Total CMS recognizes — code, native-language name, English name, and writing direction. Used by the system locale setting and by content-localization (localizedtext / localizedstyledtext) field types.
+- [Sharing Sessions](https://docs.totalcms.co/operations/sharing-sessions): Share $_SESSION data between Total CMS and other PHP apps on the same site: where sessions live, the one rule to follow, and fixing split sessions.
+- [Supported Locales](https://docs.totalcms.co/operations/supported-locales): Every locale code Total CMS recognizes, with native name, English name, and writing direction, for the system locale and localized text fields.
 - [Sync](https://docs.totalcms.co/operations/sync): Push and pull schemas and templates between local development and production Total CMS instances using the CLI or admin dashboard.
 - [Updates](https://docs.totalcms.co/operations/updates): Keep Total CMS up to date with one-click dashboard updates, CLI commands, or manual upgrades. Includes rollback and maintenance mode details.
 

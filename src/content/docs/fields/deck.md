@@ -2,7 +2,6 @@
 title: "Deck"
 description: "The deck field holds repeatable groups of fields. Covers its on-disk shape, schema definition, item labels, min/max item counts, and modal size."
 ---
-
 ## How a Deck Is Stored
 
 Read this first if you are writing deck data by hand — in a JumpStart file, through
