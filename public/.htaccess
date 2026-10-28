@@ -11,6 +11,10 @@ RewriteEngine On
 RewriteCond %{REQUEST_URI} !^/$
 RewriteRule ^(.+)/$ /$1 [R=301,L]
 
+# /index.html -> / (only for direct requests, not the DirectoryIndex lookup for /)
+RewriteCond %{THE_REQUEST} \s/index\.html[\s?]
+RewriteRule ^index\.html$ / [R=301,L]
+
 # /twig/filters.html -> /twig/filters (only for direct requests, not internal rewrites)
 RewriteCond %{THE_REQUEST} \s/([^?\s]+)\.html[\s?]
 RewriteCond %1 !^(index|404)$
