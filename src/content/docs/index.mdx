@@ -1,6 +1,6 @@
 ---
 title: Total CMS Documentation
-description: Comprehensive documentation for Total CMS - a modern, flat-file content management system.
+description: Documentation for Total CMS, the flat-file PHP CMS. Install it, model content with schemas, build pages with Twig, and extend it with APIs and MCP.
 template: splash
 hero:
   tagline: A modern, flat-file content management system built with PHP. No database required.
@@ -18,19 +18,57 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Quick Links
+Total CMS is a flat-file PHP content management system for people who build websites: site builders, developers, agencies, and freelancers. Content lives as JSON on disk, templates use Twig, and every operation in the admin is also a REST endpoint. It runs on any PHP host without a database.
 
-<CardGrid stagger>
+These docs cover the whole system, from installing your first site to writing extensions. New here? Start with the [welcome guide](/get-started/welcome). Looking for a specific filter, field, or setting? Use the search box at the top of the page.
+
+## Build your site
+
+<CardGrid>
   <Card title="Getting Started" icon="rocket">
-    New to Total CMS? Start with the [welcome guide](/get-started/welcome), check [requirements](/get-started/requirements), then follow the [installation instructions](/get-started/installation).
+    Check the [requirements](/get-started/requirements), follow the [installation guide](/get-started/installation), and build [your first site](/get-started/your-first-site).
   </Card>
+  <Card title="Collections & Schemas" icon="list-format">
+    Model your content with [collections](/collections/settings) and [schemas](/schemas/reference), then [import data](/collections/import) or pre-compute it with [data views](/collections/data-views).
+  </Card>
+  <Card title="Fields" icon="pencil">
+    Not sure which field fits? Read [Choosing a Field](/fields/choosing-a-field), then browse [all field settings](/fields/all-fields) and the [option sources](/fields/property-options) for selects and lists.
+  </Card>
+  <Card title="Site Builder" icon="laptop">
+    Publish pages straight from the admin. Start with the [Site Builder overview](/site-builder/overview), pick a [starter template](/site-builder/starters), and set up [SEO](/site-builder/seo).
+  </Card>
+</CardGrid>
+
+## Templates and content
+
+<CardGrid>
   <Card title="Twig Templates" icon="document">
-    Master the templating system with [Twig overview](/twig/overview), [filters](/twig/filters), and [functions](/twig/functions).
+    Render content with the [Twig overview](/twig/overview), [filters](/twig/filters), and [functions](/twig/functions). Copy patterns from [Twig recipes](/twig/recipes) or try them in the [Playground](/twig/playground).
   </Card>
-  <Card title="REST API" icon="setting">
-    Integrate with the [REST API](/apis/rest-api), manage [API keys](/apis/api-keys), and use the [PHP API](/apis/php-api).
+  <Card title="Forms" icon="open-book">
+    Collect content and submissions with the [form builder](/forms/builder), [field settings](/forms/fields), and [validation patterns](/forms/patterns).
   </Card>
-  <Card title="Collections" icon="list-format">
-    Learn about [collection settings](/collections/settings), [data views](/collections/data-views), and [filtering](/twig/collection-filtering).
+  <Card title="Auth & Access" icon="approve-check">
+    Add [member logins](/auth/auth), control who can edit what with [access groups](/auth/access-groups), and handle [password resets](/auth/password-reset).
+  </Card>
+  <Card title="Automations" icon="random">
+    Run PHP on a [schedule, webhook, or content event](/automations/triggers). See the [overview](/automations/overview) and how to [write handlers](/automations/handlers).
+  </Card>
+</CardGrid>
+
+## Integrate and extend
+
+<CardGrid>
+  <Card title="APIs" icon="setting">
+    Connect any frontend with the [REST API](/apis/rest-api), use the [PHP API](/apis/php-api) in-process, and manage [API keys](/apis/api-keys) and [OAuth](/apis/oauth).
+  </Card>
+  <Card title="MCP & AI" icon="star">
+    Let AI agents read and edit your content through the [MCP server](/mcp/server). [Connect a client](/mcp/connect) and learn about [editing with agents](/mcp/agent-editing).
+  </Card>
+  <Card title="Extensions & CLI" icon="puzzle">
+    Add features with [extensions](/extensions/overview), use the [bundled extensions](/extensions/bundled), and script tasks with the [CLI](/extensions/cli).
+  </Card>
+  <Card title="Operations" icon="information">
+    Run Total CMS in production: [deployment](/operations/deployment), [security](/operations/security), [backups](/operations/backups), [updates](/operations/updates), and [licenses](/operations/licenses).
   </Card>
 </CardGrid>
