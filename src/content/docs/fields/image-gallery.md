@@ -2,6 +2,74 @@
 title: "Image & Gallery"
 description: "Configure image and gallery upload fields in Total CMS with validation rules, location stripping, and image or text watermark settings."
 ---
+## Photo Credit
+
+Every image, and every image in a gallery, can carry a credit: who made it and where it came from. Open the image's edit dialog and fill in the **Credit** section. All of it is optional.
+
+| Key | What it holds |
+|---|---|
+| `author` | The photographer or artist |
+| `authorUrl` | A link to them (http or https) |
+| `source` | Where the image came from, such as Pixabay |
+| `sourceUrl` | The image's page at the source |
+| `license` | The license it is used under |
+
+It is stored on the image as a `credit` object, only when at least one key has a value. Links that are not http or https are dropped. Nothing prints it by default; a template shows it where the design wants one:
+
+```twig
+{% set credit = item.image.credit ?? {} %}
+{% if credit.author is defined %}
+  <small>
+    Photo:
+    {% if credit.authorUrl is defined %}<a href="{{ credit.authorUrl }}">{{ credit.author }}</a>{% else %}{{ credit.author }}{% endif %}
+    {% if credit.source is defined %} on {{ credit.source }}{% endif %}
+  </small>
+{% endif %}
+```
+
+Agents set it over MCP with `attach_file_from_url` or `patch_object`, and `tcms starter:export` lists every credited image in the starter's `CREDITS.md`.
+
+## Adding photos from another source
+
+Image and gallery fields accept photos from other parts of the admin page, not only files from your computer. The [Stock Photos](/extensions/stock-photos) extension uses this, and an extension of your own can too: a panel for a client's photo library, say.
+
+A photo source hands the field a list of photos:
+
+```json
+{
+  "photos": [
+    {
+      "url": "/admin/ext/acme/library/file?id=42",
+      "filename": "terrace-at-dusk",
+      "alt": "The terrace at dusk",
+      "credit": { "author": "Ana Ruiz", "source": "Acme Library" },
+      "tags": ["terrace", "evening"],
+      "focalpoint": { "x": 40, "y": 60 }
+    }
+  ]
+}
+```
+
+Only `url` is required. It must be one the admin page can fetch: on the same site, or on a server that allows cross-origin requests (CORS). The field downloads each photo, then uploads it like a dropped file, so the field's upload rules apply. `alt`, `credit`, `tags`, `link` and `focalpoint` are saved on the stored image; anything else in a photo is ignored.
+
+There are two ways to hand over the list:
+
+- **Drag:** on `dragstart`, put the JSON in the drag data as `application/x-totalcms-photo`.
+
+  ```js
+  img.addEventListener("dragstart", event => {
+    event.dataTransfer.setData("application/x-totalcms-photo", JSON.stringify(payload));
+  });
+  ```
+
+- **Insert:** call the field's `insertPhotos()`. Each image and gallery field's container (`.form-field.image-field`, `.form-field.gallery-field`) has its field object on `totalfield`.
+
+  ```js
+  document.querySelector(".gallery-field").totalfield.insertPhotos(payload);
+  ```
+
+An image field takes the first photo; a gallery takes them all, in order. `insertPhotos()` returns a promise of how many photos were added. A photo that fails to download is skipped.
+
 ## Upload Validation
 
 The following JSON is sample settings that you can use for image and file validation rules
@@ -121,6 +189,8 @@ Watermark settings are enforced during image processing:
 - **markpos** - Position: `top-left`, `top`, `top-right`, `left`, `center`, `right`, `bottom-left`, `bottom`, `bottom-right`
 - **markalpha** - Transparency (0-100, where 100 is fully opaque)
 
+Replacing the watermark image with a new file under the same name re-renders every image on its next request.
+
 ### Text Watermarks
 ```json
 {
@@ -140,13 +210,31 @@ Watermark settings are enforced during image processing:
 
 - **marktext** - Text to display as watermark
 - **marktextfont** - Font name (TTF/OTF fonts from watermark-fonts depot, or "RobotoRegular" default)
-- **marktextsize** - Font size in pixels
+- **marktextsize** - Font size in pixels. Set it without `marktextw` for a fixed size
 - **marktextcolor** - Text color in hex (without #)
 - **marktextangle** - Rotation angle in degrees
-- **marktextw** - Text width (pixels or percentage)
+- **marktextw** - Text width (pixels or percentage). With neither this nor `marktextsize`, the text spans 40% of the image width
 - **marktextpad** - Padding from edge in pixels
-- **marktextpos** - Position (same options as image watermark)
-- **marktextalpha** - Text transparency (0-100)
+- **marktextpos** - Position (same options as image watermark), or `tile` to repeat the text over the whole image
+- **marktextalpha** - Text transparency (0-100). Tiled marks default to 30
+- **marktextstroke** / **marktextstrokecolor** - Outline width as a percentage of the font size (0-25), and its color (default `000000`)
+- **marktextshadow** / **marktextshadowcolor** - Drop shadow offset as a percentage of the font size (0-25), and its color (default `000000`)
+- **marktextrepeat** - With `tile`, how many marks run across the image (1-12, default 4)
+
+#### Tiled Text Watermark
+
+```json
+{
+	"watermark": {
+		"marktext": "© Studio",
+		"marktextpos": "tile",
+		"marktextstroke": 2,
+		"limit": 800
+	}
+}
+```
+
+The text repeats in offset rows across the whole image at 30°, so no corner is left clean to crop out. See [ImageWorks → Text Watermarks](/twig/imageworks#text-watermarks) for every option.
 
 ### Combined Watermarks
 You can use both image and text watermarks together:
@@ -186,6 +274,8 @@ Watermarks are applied when:
 - **Requested width > limit** - Apply watermark
 - **Requested height > limit** - Apply watermark
 - **Both width AND height ≤ limit** - No watermark
+
+The width and height include `dpr`: `?w=600&dpr=3` is an 1800px image, so it is marked.
 
 #### Example Behavior (with limit: 800)
 

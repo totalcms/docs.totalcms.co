@@ -120,6 +120,8 @@ Views rebuild automatically through the **Job Queue** when dependent collections
 
 ## Using Data Views in Templates
 
+To show one page of a view's objects, filtered and sorted, use [`cms.view.query()`](/twig/views#query). It caches the page, so a listing does not reload the whole view on every request.
+
 ### Fetching View Data
 
 ```twig

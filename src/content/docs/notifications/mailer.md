@@ -9,6 +9,7 @@ related:
   - operations/cron-urls
   - auth/access-groups
   - operations/licenses
+  - operations/activity
 ---
 The Mailer is Total CMS's email system. You write an email once as a **template** — recipient, subject, and body, all in Twig — and then send it from wherever you need it:
 
@@ -322,6 +323,8 @@ The **Mailer** page and the Bulk Send endpoints require the `mailer` permission 
 Templates are also ordinary objects in the `mailer` collection, so the collection permissions of an access group apply to reading and editing them through the REST API.
 
 ## Troubleshooting
+
+**Did an email go out?** The [Activity Log](/operations/activity) has a `mailer.sent` row for every email outside a bulk send: who sent it, the template, the subject, the recipient, and the reason when it was not sent. Filter on the `mailer` collection to see one template's emails.
 
 **Nothing arrives, and there's no error.** Check `email.log` first. Then check spam folders, and that the **From** address is one your SMTP provider allows you to send as — many providers reject or silently drop mail from unverified senders.
 

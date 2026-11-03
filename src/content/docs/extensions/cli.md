@@ -67,11 +67,13 @@ tcms check --config    # also print the merged configuration, secrets redacted
 tcms check --json
 ```
 
-The command exits **1** when the install cannot run — the bundle is corrupted, `tcms-data`, `cache`, `logs` or `tmp` is not writable, or a required extension is missing — and **0** otherwise, so a deploy script can gate on it:
+The command exits **1** when the install cannot run — the bundle is corrupted, `tcms-data`, `cache`, `logs` or `tmp` is not writable, or a required extension is missing — **or** when the Security section has a critical finding that is not ignored. It exits **0** otherwise, so a deploy script can gate on it:
 
 ```bash
 composer update && vendor/bin/tcms check || exit 1
 ```
+
+The **Security** section looks for common problems: a public data folder, exposed logs and project files, risky registration groups, debug mode, missing headers and more. Each finding links to its fix in the [security guide](/operations/security#checking-your-install). Pass `--no-security` to skip the section and get the old exit behavior. With `--json`, a `security` key holds `checked`, `findings` and `url`; `url` is `null` when the command line does not know the site's address. That address is the one the site last recorded (see the `cache/.siteurl` rule below), so checks that make web requests are listed as not checked until someone visits the admin or `domain` is set. Ignore a finding on purpose with `$settings['security']['ignore'] = ['check-id']` in `config/tcms.php`. The data folder and sensitive file checks write a small, world-readable test file and fetch it; a redirected request is listed as not checked, never as blocked. In the human output each finding prints its detail and then its fix, indented under the title. The report is saved to `tcms-data/.system/security-report.json`, which the dashboard alert reads for 24 hours.
 
 The checks run in the command line's PHP, which is not the one serving pages: the extensions, limits, cache state and session settings it reports can differ from the web server's, and rows only a web request knows (the web server software) are left out. For the values a page request sees, use the Server Checker in the admin. The domain and license follow the same `cache/.siteurl` rule as `info`.
 
@@ -826,6 +828,35 @@ Present means no request has replayed it yet. Gone means it was applied.
 
 > Note the `/api` prefix — `/emergency/cache/clear` without it returns a 404.
 
+### `imageworks:warm`
+
+Pre-build the ImageWorks cache for a collection, so the first visitor to a page does not wait for images to be made. It writes only to the ImageWorks cache and skips files that already exist.
+
+```bash
+tcms imageworks:warm blog image --widths=480,768,1024 --formats=avif,webp,native
+tcms imageworks:warm blog --picture --dry-run
+tcms imageworks:warm blog --params="w=800&h=600&fit=crop" --preset=medium
+tcms imageworks:warm blog --url="https://example.com/imageworks/blog/a/image.webp?w=800"
+tcms imageworks:warm blog --picture --id=a,b,c
+tcms imageworks:warm products mydeck/photo --picture
+```
+
+| Argument / Option | Description |
+|-------------------|-------------|
+| `collection` | Collection ID (required) |
+| `property` | One image, gallery or video property, or `parent/child` for an image in a card or deck: `mycard/photo`, or `mydeck/photo` for every deck item. A video gives its poster. Default: every image and gallery property; videos, cards and decks must be named |
+| `--widths` | Comma list of widths. Makes every width in every format |
+| `--formats` | Comma list of formats for the grid: `avif`, `webp`, `native`, and so on. Defaults to `native` with `--widths`. Needs `--widths` or `--picture` |
+| `--picture` | The grid `cms.render.picture()` uses by default (the `imageworks.picture` setting) plus `native` |
+| `--params` | ImageWorks params as a query string. One exact variant, or extra params for the grid. Repeatable |
+| `--preset` | A preset name. Repeatable |
+| `--url` | Copy a variant from a real ImageWorks URL. A gallery URL ending in `/first`, `/last` or `/featured` gives its params only. Repeatable |
+| `--id` | Comma list of object IDs (default: the whole collection) |
+| `--dry-run` | Count what would be made and make nothing |
+| `--memory, -m` | Memory limit (default: 512M) |
+
+You must give at least one of `--widths`, `--picture`, `--params`, `--preset` or `--url`. The summary lists objects, images, variants made (or would make), already cached, original and failed, then the first five failures. With `--json` it prints the same counts and the full failure list. The command exits **1** when anything failed. Run the command as the web server user; it warns when you are not the owner of the data folder. See [Warming the cache](/twig/imageworks#warming-the-cache) for choosing variants.
+
 ### `jobs:process`
 
 Process the pending job queue. This is typically run via cron.
@@ -941,6 +972,7 @@ Rebuild a collection's `.index.json` and `totalObjects` count from the objects o
 ```bash
 tcms repair:index blog
 tcms repair:index --all
+tcms repair:index blog --check
 ```
 
 | Argument | Required | Description |
@@ -950,6 +982,54 @@ tcms repair:index --all
 | Option | Description |
 |--------|-------------|
 | `--all` | Rebuild the index for every collection |
+| `--check` | Only report how the index and the object files disagree; change nothing |
+
+#### Checking before you rebuild
+
+A rebuild makes the index match the files, so it also hides what was wrong. `--check` reports instead, and changes nothing:
+
+- object files that cannot be read (invalid JSON, broken front matter)
+- ids in the index with no object file
+- object files the index does not list
+- an index file that is missing or unreadable
+- a collection object count that does not match the files
+
+It reads every object, so it takes about as long as a rebuild. It exits with `1` when it finds a problem and `0` when the collection is consistent, so a script can gate on it. Combine with `--all` to check every collection and with `--json` for machine-readable output:
+
+```bash
+tcms repair:index blog --check
+```
+
+```
+'blog': 2 problem(s) — 41 object file(s), 42 in the index:
+  In the index but no file: old-post
+  The collection's object count says 42; there are 41 on disk
+Nothing was changed. Run without --check to rebuild the index from the files.
+```
+
+**JSON output** (`--check --json`):
+```json
+{
+    "status": "problems",
+    "collections": {
+        "blog": {
+            "objects": 41,
+            "indexed": 42,
+            "indexReadable": true,
+            "recordedCount": 42,
+            "unreadable": [],
+            "missingFiles": ["old-post"],
+            "notIndexed": [],
+            "problems": [
+                "In the index but no file: old-post",
+                "The collection's object count says 42; there are 41 on disk"
+            ]
+        }
+    }
+}
+```
+
+`indexed` is `null` when there is no readable index file; `recordedCount` is `null` when the count was never calculated.
 
 ---
 

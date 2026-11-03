@@ -160,7 +160,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Extension Automations](https://docs.totalcms.co/automations/extensions): Ship automations from a Total CMS extension with addAutomation(), so a recurring job or event reaction installs without manual setup.
 
 ### Admin
-- [Dashboard](https://docs.totalcms.co/admin/dashboard): Navigate the Total CMS admin dashboard to manage collections, edit content, configure settings, and use the built-in form builder.
+- [Dashboard](https://docs.totalcms.co/admin/dashboard): Find your way around the Total CMS admin: the sidebar, the dashboard home and its alerts, Quick Actions and Recent Activity, editing in collection tables, and the Dashboard settings.
 - [White Label](https://docs.totalcms.co/admin/whitelabel): Customize the Total CMS admin with white label branding including custom logos, login pages, CSS variables, and localized form labels.
 - [Admin Twig](https://docs.totalcms.co/admin/twig): Reference for the cms.admin namespace providing dashboard stats, job queue management, URL helpers, and system diagnostics.
 
@@ -211,6 +211,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Protect](https://docs.totalcms.co/extensions/protect): Gate a page behind a numeric passcode that unlocks it for the session. Useful for client previews, soft launches, and draft staging URLs.
 - [Pushover](https://docs.totalcms.co/extensions/pushover): Send push notifications via Pushover when forms are submitted. Supports Twig templates, image attachments, priority levels, and delivery groups.
 - [Scheduled](https://docs.totalcms.co/extensions/scheduled): Only render a builder page between set start and end times. Useful for holiday campaigns, embargoed announcements, and time-limited sales.
+- [Stock Photos](https://docs.totalcms.co/extensions/stock-photos): Search free Pixabay photos, or your own library galleries, in the object editor and drag them onto image and gallery fields. Each photo is copied into the object with its alt text and credit.
 - [WebMCP](https://docs.totalcms.co/extensions/webmcp): Experimental: let a browser AI agent call your forms and the MCP server's read tools through the WebMCP origin trial in Chrome 149+.
 
 ### Operations

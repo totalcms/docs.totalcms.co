@@ -653,6 +653,10 @@
                         "slug": "extensions/scheduled"
                     },
                     {
+                        "label": "Stock Photos",
+                        "slug": "extensions/stock-photos"
+                    },
+                    {
                         "label": "WebMCP",
                         "slug": "extensions/webmcp"
                     }

@@ -4,6 +4,7 @@ description: "Cache a rendered block of Twig with the {% cache %} tag, using a T
 related:
   - twig/cmsgrid-tag
   - twig/collections
+  - operations/server-sizing
 ---
 The `{% cache %}` tag stores the **rendered HTML** of a block so its body is skipped on subsequent requests. It is output (fragment) caching — different from Twig's template *compilation* cache, which only avoids re-parsing your `.twig` files but still re-runs them every request.
 
@@ -47,6 +48,18 @@ Cached for 15 minutes, then re-rendered on the next request.
 ```
 
 This fragment is served from cache until any `blog` object changes, at which point it is rebuilt on the next request. The `ttl` still applies as a backstop.
+
+### Collections that are edited often
+
+A tag clears the fragment on every save in that collection. While editors are working, visitors keep finding the fragment gone and rebuilding it. On a large collection, every rebuild loads the whole index. For a collection that changes often, a short `ttl` without `tags` is usually faster: visitors keep getting the cached copy, and it is never more than a minute old.
+
+```twig
+{% cache 'latest-posts' ttl=60 %}
+    {# listing #}
+{% endcache %}
+```
+
+See [Large Collections](/operations/server-sizing#large-collections) for the measurements.
 
 ### Per-page fragments
 

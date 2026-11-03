@@ -609,7 +609,7 @@ Paste this into the code box:
 
 {% block content %}
     <h1>Posts</h1>
-    {% for post in cms.collection.objects('blog') %}
+    {% for post in cms.collection.query('blog', {sort: 'date:desc', limit: 20}).objects %}
         <article>
             <h2>{{ post.title }}</h2>
             <p><small>{{ post.date | date('F j, Y') }}</small></p>
@@ -662,7 +662,7 @@ In about 10 minutes you used every core piece of Total CMS:
 | Filled in fields | Set the object's **properties** |
 | Saw the JSON file on disk | Saw flat-file storage in action |
 | Created a `/posts` page in Builder | Routed a URL to a template via the **builder-pages** collection |
-| Wrote a Twig template | Used `cms.collection.objects()` to fetch records and render them |
+| Wrote a Twig template | Used `cms.collection.query()` to fetch records and render them |
 
 Everything else in Total CMS — custom fields, forms, auth, extensions, APIs — builds on these foundations.
 
@@ -2363,6 +2363,8 @@ Views rebuild automatically through the [Job Queue](/admin/utils/jobqueue) when 
 **Important**: The Job Queue must be running for automatic rebuilds to work. If your views are not updating after collection changes, check that the job queue is processing.
 
 ## Using Data Views in Templates
+
+To show one page of a view's objects, filtered and sorted, use [`cms.view.query()`](docs/twig/views#query). It caches the page, so a listing does not reload the whole view on every request.
 
 ### Fetching View Data
 
@@ -6326,6 +6328,74 @@ Generates: `26-25-000001`, `26-25-000002`, etc.
 
 ## Image & Gallery
 
+## Photo Credit
+
+Every image, and every image in a gallery, can carry a credit: who made it and where it came from. Open the image's edit dialog and fill in the **Credit** section. All of it is optional.
+
+| Key | What it holds |
+|---|---|
+| `author` | The photographer or artist |
+| `authorUrl` | A link to them (http or https) |
+| `source` | Where the image came from, such as Pixabay |
+| `sourceUrl` | The image's page at the source |
+| `license` | The license it is used under |
+
+It is stored on the image as a `credit` object, only when at least one key has a value. Links that are not http or https are dropped. Nothing prints it by default; a template shows it where the design wants one:
+
+```twig
+{% set credit = item.image.credit ?? {} %}
+{% if credit.author is defined %}
+  <small>
+    Photo:
+    {% if credit.authorUrl is defined %}<a href="{{ credit.authorUrl }}">{{ credit.author }}</a>{% else %}{{ credit.author }}{% endif %}
+    {% if credit.source is defined %} on {{ credit.source }}{% endif %}
+  </small>
+{% endif %}
+```
+
+Agents set it over MCP with `attach_file_from_url` or `patch_object`, and `tcms starter:export` lists every credited image in the starter's `CREDITS.md`.
+
+## Adding photos from another source
+
+Image and gallery fields accept photos from other parts of the admin page, not only files from your computer. The [Stock Photos](docs/extensions/stock-photos) extension uses this, and an extension of your own can too: a panel for a client's photo library, say.
+
+A photo source hands the field a list of photos:
+
+```json
+{
+  "photos": [
+    {
+      "url": "/admin/ext/acme/library/file?id=42",
+      "filename": "terrace-at-dusk",
+      "alt": "The terrace at dusk",
+      "credit": { "author": "Ana Ruiz", "source": "Acme Library" },
+      "tags": ["terrace", "evening"],
+      "focalpoint": { "x": 40, "y": 60 }
+    }
+  ]
+}
+```
+
+Only `url` is required. It must be one the admin page can fetch: on the same site, or on a server that allows cross-origin requests (CORS). The field downloads each photo, then uploads it like a dropped file, so the field's upload rules apply. `alt`, `credit`, `tags`, `link` and `focalpoint` are saved on the stored image; anything else in a photo is ignored.
+
+There are two ways to hand over the list:
+
+- **Drag:** on `dragstart`, put the JSON in the drag data as `application/x-totalcms-photo`.
+
+  ```js
+  img.addEventListener("dragstart", event => {
+    event.dataTransfer.setData("application/x-totalcms-photo", JSON.stringify(payload));
+  });
+  ```
+
+- **Insert:** call the field's `insertPhotos()`. Each image and gallery field's container (`.form-field.image-field`, `.form-field.gallery-field`) has its field object on `totalfield`.
+
+  ```js
+  document.querySelector(".gallery-field").totalfield.insertPhotos(payload);
+  ```
+
+An image field takes the first photo; a gallery takes them all, in order. `insertPhotos()` returns a promise of how many photos were added. A photo that fails to download is skipped.
+
 ## Upload Validation
 
 The following JSON is sample settings that you can use for image and file validation rules
@@ -6445,6 +6515,8 @@ Watermark settings are enforced during image processing:
 - **markpos** - Position: `top-left`, `top`, `top-right`, `left`, `center`, `right`, `bottom-left`, `bottom`, `bottom-right`
 - **markalpha** - Transparency (0-100, where 100 is fully opaque)
 
+Replacing the watermark image with a new file under the same name re-renders every image on its next request.
+
 ### Text Watermarks
 ```json
 {
@@ -6464,13 +6536,31 @@ Watermark settings are enforced during image processing:
 
 - **marktext** - Text to display as watermark
 - **marktextfont** - Font name (TTF/OTF fonts from watermark-fonts depot, or "RobotoRegular" default)
-- **marktextsize** - Font size in pixels
+- **marktextsize** - Font size in pixels. Set it without `marktextw` for a fixed size
 - **marktextcolor** - Text color in hex (without #)
 - **marktextangle** - Rotation angle in degrees
-- **marktextw** - Text width (pixels or percentage)
+- **marktextw** - Text width (pixels or percentage). With neither this nor `marktextsize`, the text spans 40% of the image width
 - **marktextpad** - Padding from edge in pixels
-- **marktextpos** - Position (same options as image watermark)
-- **marktextalpha** - Text transparency (0-100)
+- **marktextpos** - Position (same options as image watermark), or `tile` to repeat the text over the whole image
+- **marktextalpha** - Text transparency (0-100). Tiled marks default to 30
+- **marktextstroke** / **marktextstrokecolor** - Outline width as a percentage of the font size (0-25), and its color (default `000000`)
+- **marktextshadow** / **marktextshadowcolor** - Drop shadow offset as a percentage of the font size (0-25), and its color (default `000000`)
+- **marktextrepeat** - With `tile`, how many marks run across the image (1-12, default 4)
+
+#### Tiled Text Watermark
+
+```json
+{
+	"watermark": {
+		"marktext": "© Studio",
+		"marktextpos": "tile",
+		"marktextstroke": 2,
+		"limit": 800
+	}
+}
+```
+
+The text repeats in offset rows across the whole image at 30°, so no corner is left clean to crop out. See [ImageWorks → Text Watermarks](docs/twig/imageworks#text-watermarks) for every option.
 
 ### Combined Watermarks
 You can use both image and text watermarks together:
@@ -6510,6 +6600,8 @@ Watermarks are applied when:
 - **Requested width > limit** - Apply watermark
 - **Requested height > limit** - Apply watermark
 - **Both width AND height ≤ limit** - No watermark
+
+The width and height include `dpr`: `?w=600&dpr=3` is an 1800px image, so it is marked.
 
 #### Example Behavior (with limit: 800)
 
@@ -8980,7 +9072,7 @@ The `/blog` builder page handles the listing. Visiting `/blog/my-post` goes thro
 
 ```twig
 {# pages/blog-index.twig — list page (uses `page`) #}
-{% set posts = cms.collection.objects('blog') | sortCollectionByString('date:desc') %}
+{% set posts = cms.collection.query('blog', {sort: 'date:desc', limit: 20, page: getData.page|default(1)}).objects %}
 {% for post in posts %}
     <article>
         <h2><a href="{{ cms.collection.objectUrl('blog', post) }}">{{ post.title }}</a></h2>
@@ -9302,7 +9394,7 @@ Resolution tries the path as-is, then with `.html`, then `/index.html`. Path tra
 
 ## Builder CLI Commands
 
-The Site Builder provides four CLI commands: scaffolding from starters, installing a frontend asset pipeline, inspecting registered routes, and managing template version history.
+The Site Builder provides five CLI commands: scaffolding from starters, installing a frontend asset pipeline, inspecting registered routes, managing template version history, and exporting a finished site as a starter.
 
 | Command | Purpose |
 |---------|---------|
@@ -9310,6 +9402,7 @@ The Site Builder provides four CLI commands: scaffolding from starters, installi
 | [`builder:frontend`](#builder-frontend) | Install a Vite-based frontend asset pipeline |
 | [`builder:routes`](#builder-routes) | List every route the page router would serve, with conflicts flagged |
 | [`builder:history`](#builder-history) | List, view, or restore template snapshot versions |
+| [`starter:export`](#starter-export) | Write a clean copy of the site as a Composer starter project |
 
 All commands accept `--json` for machine-readable output.
 
@@ -9560,6 +9653,51 @@ tcms builder:history pages/about --restore=<that-newest-timestamp>
 Snapshots live at `tcms-data/builder/.history/{path}/{timestamp}.twig`. The 50 newest snapshots per template are retained; older ones are pruned automatically on each save. You don't need to manage them manually.
 
 See [Template History](docs/site-builder/admin#template-history) for the same workflow from the admin UI perspective.
+
+## `starter:export`
+
+Write a clean copy of the current site as a Composer starter project: a complete site that others install with `composer create-project`.
+
+```bash
+tcms starter:export ~/Developer/starter-restaurant --name=totalcms/starter-restaurant
+tcms starter:export ../starter --structure-only
+```
+
+The command only reads the running site. It writes the copy to a folder outside the project, which must be empty unless you pass `--force`.
+
+### Arguments and Options
+
+| Argument / option | Description |
+|---|---|
+| `dir` | Folder to write the starter to. Must be outside this project. |
+| `--name` | Composer package name. Defaults to `totalcms/starter-<folder name>`. |
+| `--description` | Composer package description. |
+| `--structure-only` | Leave out every object except the Site Builder pages. Schemas, collections, pages and templates are kept. |
+| `--yes`, `-y` | Include the content without asking. |
+| `--force`, `-f` | Write into a folder that is not empty. |
+
+Without `--yes` or `--structure-only`, the command lists the collections that hold content and asks whether to include them. A site built for one client is the usual source, and its content belongs to that client.
+
+### What Is Copied
+
+- The project, minus `vendor/`, `cache/`, `tmp/`, `logs/`, `composer.lock`, `.git/`, `node_modules/` and `.cache/` image folders.
+- `tcms-data/` at the project root, with every collection, schema, page and object.
+- From `tcms-data/.system/`, only the settings, extension state and settings, access groups and the migration record. Everything else there is runtime state or a credential: the site key, API keys, OAuth keys and clients, sessions, logs, backups, the job queue and the setup state.
+
+### What Is Changed
+
+- **Users are left out.** Collections using the `auth` schema are copied empty, so the setup wizard runs for whoever installs the starter and creates their admin account.
+- **Secrets are blanked.** Every settings value whose field type is `password` or `secret` (SMTP password, sync key, extension keys) is emptied, and so is any value holding this project's path.
+- **`config/tcms.php` is replaced** with a blank one, because it can hold credentials and machine-specific paths. The command lists the keys your file set, so you can move what the starter needs into the admin's Settings.
+- **`composer.json`** gets the new name and description, the `totalcms-starter` keyword, `totalcms/cms` pinned to the running minor version (`^3.6`), and a post-install script that prints next steps.
+- **`.gitignore`** tracks `tcms-data/` (the plain skeleton ignores it) but leaves out runtime files.
+- **`README.md`** is written from a template unless you already wrote your own. `CREDITS.md` lists every image that has a [credit](docs/fields/image-gallery), grouped by source, and the report names the images that don't. A `CREDITS.md` you wrote yourself is kept.
+
+### Final Check
+
+The command then searches every output file for each secret the running site holds: the site key, API keys, OAuth client secrets, the cron token and sensitive settings values. If one turns up, the command lists the files and exits with an error. Don't publish the output until it passes.
+
+It also prints the largest files. Images are not resized for you: resize them in the site before exporting.
 
 ## See Also
 
@@ -10118,6 +10256,16 @@ After running `builder:init`, you own all the template files. Common next steps:
 5. **Create partials** — extract repeated patterns into `partials/` templates
 
 No build or generate step is needed — the page router serves your routes from the live collection.
+
+## Sharing a Whole Site as a Starter
+
+The starters above scaffold templates and demo pages into a site you already installed. To share a finished site instead (templates, schemas, content and settings) as a project others install in one step, export it with [`tcms starter:export`](docs/site-builder/cli#starter-export):
+
+```bash
+tcms starter:export ~/Developer/starter-restaurant --name=yourname/starter-restaurant
+```
+
+Commit the output to its own repository and publish it on Packagist. Anyone can then install it with `composer create-project yourname/starter-restaurant mysite`, and the setup wizard creates their admin account on first visit.
 
 ## Creating Custom Starters
 
@@ -11648,7 +11796,10 @@ Control structures use curly braces with percent signs:
 The most important Twig variable in Total CMS is `cms`, which fetches content from the CMS:
 
 ```twig
-{# Get all items from a collection #}
+{# Get one page of a collection, newest first #}
+{% set result = cms.collection.query('blog', {sort: 'date:desc', limit: 10}) %}
+
+{# Get every item in a collection #}
 {% set posts = cms.collection.objects('blog') %}
 
 {# Get a specific item by ID #}
@@ -11769,7 +11920,7 @@ Extend the base layout:
 ### Displaying Blog Posts
 
 ```twig
-{% set posts = cms.collection.objects('blog') %}
+{% set posts = cms.collection.query('blog', {sort: 'date:desc', limit: 10}).objects %}
 
 <div class="blog-posts">
     {% for post in posts %}
@@ -12312,16 +12463,18 @@ By default, gallery images display in their stored order. Use the `sort` option 
 
 ### Search with pagination
 ```twig
-{% set results = cms.collection.search('blog', query, ['title', 'content', 'tags']) %}
-{% set page = app.request.get('page', 1) %}
-{% set perPage = 10 %}
-{% set paged = results|paginate(perPage, page) %}
+{% set result = cms.collection.query('blog', {
+    search: getData.q,
+    searchPriority: ['title', 'content', 'tags'],
+    limit: 10,
+    page: getData.page|default(1)
+}) %}
 
-{% for item in paged %}
+{% for item in result.objects %}
     <article>{{ item.title }}</article>
 {% endfor %}
 
-{{ cms.render.paginationFull(results|length, page, perPage) }}
+{{ cms.render.paginationFull(result.total, result.page, result.limit, 'page') }}
 ```
 
 ### Text watermark examples
@@ -14163,10 +14316,10 @@ Always check existence before accessing files or images:
 ### Smart Defaults
 
 ```twig
-{# Provide sensible defaults #}
-{% set perPage = request.query.limit|default(10) %}
-{% set sortBy = request.query.sort|default('date') %}
-{% set order = request.query.order|default('desc') %}
+{# Provide sensible defaults for query-string values (?limit=20&sort=title) #}
+{% set perPage = getData.limit|default(10) %}
+{% set sortBy = getData.sort|default('date') %}
+{% set order = getData.order|default('desc') %}
 
 {# Validate and constrain values #}
 {% if perPage > 100 %}
@@ -15121,6 +15274,8 @@ Get the number of objects in a collection using cached metadata. This is much mo
 
 Get all objects from a collection. Takes the collection id and nothing else — to narrow the result, pipe it through the [`filterCollection`](docs/twig/collection-filtering) and sorting filters.
 
+> **Note:** For a listing, prefer [`query()`](#query). It takes the same filter and sort rules as options, returns only the page you show along with the numbers pagination needs, and caches that page until the collection is next saved. `objects()` loads the whole index on every request, which is fine for a small collection but slows down every page as the collection grows. Keep `objects()` for when you really need every object, such as building a menu or grouping a small collection.
+
 ```twig
 {% for post in cms.collection.objects('blog') %}
     <article>
@@ -15138,6 +15293,64 @@ Get all objects from a collection. Takes the collection id and nothing else — 
     {{ post.body|raw }}
 {% endfor %}
 ```
+
+### query()
+
+Get one page of a collection, filtered and sorted. Use it instead of `objects()` piped through filters when a collection is large: the result is cached until the collection is next saved, so a repeat of the same query does not load the whole index again.
+
+```twig
+{% set result = cms.collection.query('blog', {
+    filter: [
+        {property: 'draft', operator: 'isfalse'},
+        {property: 'category', value: 'news'}
+    ],
+    sort: 'date:desc',
+    limit: 10,
+    page: getData.page|default(1)
+}) %}
+
+{% for post in result.objects %}
+    <h2><a href="{{ cms.collection.objectUrl('blog', post) }}">{{ post.title }}</a></h2>
+{% endfor %}
+
+{% if result.hasMore %}
+    <a href="?page={{ result.page + 1 }}">Older posts</a>
+{% endif %}
+```
+
+| Option | What it does |
+|---|---|
+| `search` | Text to search for, matched as [`search()`](#search) matches it: every word, `or` for any word, `field:value` for one field. Empty means no search, so a search page with no query lists everything. |
+| `searchPriority` | A field name or a list of them. A match in an earlier field comes first. Used only when there is no `sort`. |
+| `filter` | A list of rules, written exactly as for [`filterCollection`](docs/twig/collection-filtering). |
+| `sort` | A sort string such as `'date:desc,title:asc'`, or a list of rules as for `sortCollection`. |
+| `limit` | Objects per page. Leave it out to get every match. |
+| `page` | The page to return, starting at 1. Needs a `limit`. |
+| `offset` | The number of objects to skip, as an alternative to `page`. |
+
+The result has `objects` (index data, like `objects()`), `total` (matches before paging), `limit`, `offset`, `page`, `pages` and `hasMore`.
+
+A filter that depends on today's date, such as `past`, `today`, `thisMonth` or `before: 'now'`, is cached for one minute at most, so a scheduled post appears within a minute of its date.
+
+The search runs first, then the filter, the sort and the page. So a search page can show only published posts, newest first, ten at a time:
+
+```twig
+{% set result = cms.collection.query('blog', {
+    search: getData.q,
+    searchPriority: ['title', 'summary'],
+    filter: [{property: 'draft', operator: 'isfalse'}],
+    limit: 10,
+    page: getData.page|default(1)
+}) %}
+
+<p>{{ result.total }} results</p>
+{% for post in result.objects %}
+    <h2><a href="{{ cms.collection.objectUrl('blog', post) }}">{{ post.title }}</a></h2>
+{% endfor %}
+{{ cms.render.paginationFull(result.total, result.page, result.limit, 'page') }}
+```
+
+The search text comes from visitors, so only the page is cached, and the text is made lowercase with single spaces and cut to 200 characters first. "Pasta " and "pasta" share one cache entry.
 
 ### object()
 Get a single object by collection and ID. Returns the **full record** — every property, indexed or not — or an empty array if not found. `password` properties are never included: stored hashes do not reach templates.
@@ -15171,7 +15384,7 @@ Get all unique values for a specific property across a collection. Useful for bu
 
 ### search()
 
-Search a collection by query string against one or more properties. Properties are searched in priority order.
+Search every field of a collection for a query string and return all the matches. Every word must match, as a whole word; put `or` between words to match any of them, or write `field:value` to search one field. The properties you pass only order the results: a match in the first property comes first. For a search page, prefer [`query()`](#query) with its `search` option, which pages the results and caches them.
 
 ```twig
 {# Search a single property #}
@@ -15192,7 +15405,7 @@ Search a collection by query string against one or more properties. Properties a
 |-----------|------|-------------|
 | `collection` | string | Collection to search |
 | `query` | string | Search query string |
-| `propertyPriorities` | string\|array | Property name or ordered array of properties to search |
+| `propertyPriorities` | string\|array | Property name or ordered array of properties. Matches in earlier properties come first. Every field is searched either way. |
 
 ### searchScored()
 
@@ -16562,6 +16775,29 @@ Get the pre-computed data from a data view by its ID.
 
 **Returns:** `array` — the view's computed result data
 
+### query()
+
+Get one page of a data view, filtered and sorted. The view's output must be a list of objects. It takes the same options as [`cms.collection.query()`](docs/twig/collections#query) and returns the same result: `objects`, `total`, `limit`, `offset`, `page`, `pages` and `hasMore`.
+
+```twig
+{% set result = cms.view.query('top-posts', {
+    filter: [{property: 'score', operator: 'gt', value: 4}],
+    sort: 'score:desc',
+    limit: 10,
+    page: getData.page|default(1)
+}) %}
+{% for post in result.objects %}
+    <h2>{{ post.title }}</h2>
+{% endfor %}
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `viewId` | string | Data view identifier |
+| `options` | object | `filter`, `sort`, `limit`, `page` or `offset`, as for `cms.collection.query()` |
+
+The page is cached until the view is rebuilt or any collection is saved. Like `get()`, it reads the view's saved output: a view that has not been built yet returns an empty result until its first build. A view whose output is not a list of objects, such as a single stats object, also returns an empty result; use `get()` for those.
+
 ### list()
 
 List all available data views.
@@ -16912,6 +17148,18 @@ Cached for 15 minutes, then re-rendered on the next request.
 ```
 
 This fragment is served from cache until any `blog` object changes, at which point it is rebuilt on the next request. The `ttl` still applies as a backstop.
+
+### Collections that are edited often
+
+A tag clears the fragment on every save in that collection. While editors are working, visitors keep finding the fragment gone and rebuilding it. On a large collection, every rebuild loads the whole index. For a collection that changes often, a short `ttl` without `tags` is usually faster: visitors keep getting the cached copy, and it is never more than a minute old.
+
+```twig
+{% cache 'latest-posts' ttl=60 %}
+    {# listing #}
+{% endcache %}
+```
+
+See [Large Collections](docs/operations/server-sizing#large-collections) for the measurements.
 
 ### Per-page fragments
 
@@ -23007,6 +23255,8 @@ You can configure watermarks at the schema, collection, or per-object level usin
 
 Watermark settings follow the three-level override hierarchy: **schema → collection → per-object**. Override at the collection level in collection meta, or per-object using custom properties.
 
+**Replacing the logo.** Watermarked renders are cached by the logo file's modified time, so uploading a new `logo.png` under the same name re-renders every image on its next request. The old renders stay on disk until you clear the cache.
+
 ### Protecting Original Images
 
 Schema-level watermarks are not just a convenience — they are how you stop the
@@ -23063,6 +23313,9 @@ The last row is the important one. A request with no width or height is asking
 for the original, which is exactly the case worth protecting, so it is treated
 as over the limit rather than under it.
 
+`dpr` counts. `w=600&dpr=3` renders an 1800px image, so with `limit: 800` it is
+marked.
+
 `limit` is a watermark-only setting and is removed before the remaining values
 are passed to the image processor.
 
@@ -23074,14 +23327,74 @@ Render text directly on images without needing a separate watermark image.
 |-----------|------|-------------|
 | `marktext` | string | Text to render |
 | `marktextfont` | string | Font family name (TTF/OTF from the watermark-fonts depot) |
-| `marktextsize` | integer | Text size in pixels (default: 500) |
+| `marktextsize` | integer | Font size the text is drawn at, in pixels (default: 500). Set it without `marktextw` for a fixed size; see [Text size](#text-size) |
 | `marktextcolor` | string | Text color as hex without `#` (e.g., `ffffff`) |
 | `marktextbg` | string | Background color as hex (optional, transparent if not set) |
 | `marktextpad` | integer | Padding around text in pixels (default: 10) |
 | `marktextangle` | integer | Rotation angle in degrees (-360 to 360, default: 0) |
-| `marktextpos` | string | Position (same options as image watermarks) |
-| `marktextw` | mixed | Max text width in pixels or relative (e.g., `50w` for 50% of image width) |
-| `marktextalpha` | integer | Transparency (0-100, where 100 is fully opaque) |
+| `marktextpos` | string | Position (same options as image watermarks), or `tile` to repeat the text over the whole image |
+| `marktextw` | mixed | Text width in pixels or relative to the image (e.g., `50w` for 50% of image width). Default: `40w` when `marktextsize` is not set |
+| `marktextalpha` | integer | Opacity (0-100, where 100 is fully opaque). Default: 100, or 30 when tiled |
+| `marktextstroke` | integer | Outline width as a percentage of the font size (0-25, default: 0) |
+| `marktextstrokecolor` | string | Outline color as hex (default: `000000`) |
+| `marktextshadow` | integer | Drop shadow offset as a percentage of the font size (0-25, default: 0) |
+| `marktextshadowcolor` | string | Shadow color as hex (default: `000000`) |
+| `marktextrepeat` | integer | Tiled mode only: marks across the image (1-12, default: 4) |
+
+### Text Size
+
+With no size set, the text spans 40% of the image's width, so the mark has
+the same weight on a 400px thumbnail as on the 2,400px original.
+
+- **`marktextw`** sets that width yourself: `25w` for a quarter of the image,
+  or a pixel width.
+- **`marktextsize` alone** draws the text at that fixed pixel size, whatever
+  the image size. If the text would be wider than the image, it is shrunk to
+  90% of the image width.
+
+### Tiled Watermarks
+
+`marktextpos: 'tile'` repeats the text over the whole image in offset rows,
+so there is no clean corner to crop out. The text runs at 30° unless you set
+`marktextangle`, and is faint (`marktextalpha` 30) unless you set the opacity.
+`marktextrepeat` sets how many marks run across the image. `marktextx`,
+`marktexty` and `marktextw` don't apply to a tiled mark.
+
+```twig
+{# Proof sheet: PROOF repeated across the image #}
+{{ cms.media.imagePath('photo', {
+    w: 1600,
+    marktext: 'PROOF',
+    marktextpos: 'tile',
+    marktextrepeat: 5
+}) }}
+```
+
+### Outline and Shadow
+
+White text disappears on a pale sky and black text on a dark one. An outline
+or a shadow keeps the mark readable on any image. Both are a percentage of the
+font size, so they keep their look at any image size.
+
+```twig
+{# White text with a thin black outline #}
+{{ cms.media.imagePath('photo', {
+    w: 1200,
+    marktext: '© Studio',
+    marktextstroke: 3
+}) }}
+
+{# Soft drop shadow #}
+{{ cms.media.imagePath('photo', {
+    w: 1200,
+    marktext: '© Studio',
+    marktextshadow: 5,
+    marktextshadowcolor: '333333'
+}) }}
+```
+
+Outline and shadow need a TTF or OTF font. On a server without FreeType, the
+text falls back to GD's built-in bitmap font and is drawn without them.
 
 ### Custom Fonts
 
@@ -23199,11 +23512,108 @@ Use presets by passing the `p` parameter:
 
 Presets that use `crop-focalpoint` in their `fit` value will automatically use each image's saved focal point.
 
+## Warming the cache
+
+The first visitor to a page pays for every image on it. Each size and format is made on that first request. AVIF can take a second or more per file. A gallery page right after an import, a deploy or a launch is slow for whoever sees it first. A crawler that hits it first may give up.
+
+`tcms imageworks:warm` makes those files ahead of time, so every visit is fast. It writes only to the ImageWorks cache. It makes the same files the `/imageworks` route would serve, and it skips files that already exist, so it is safe to run again.
+
+```bash
+tcms imageworks:warm blog image --widths=480,768,1024 --formats=avif,webp,native
+```
+
+You must say which variants to make. A plain run never starts thousands of AVIF encodes by surprise. Give at least one of `--widths`, `--picture`, `--params`, `--preset` or `--url`. They combine and repeat.
+
+### Choosing images
+
+Without a property, the command warms every `image` and `gallery` property in the collection. Name one property to warm only that one.
+
+A video's poster is warmed only when you name the video: `tcms imageworks:warm blog myvideo --params="w=1200"`. Templates usually ask for one poster size, so give the params your template uses rather than a whole grid.
+
+An image inside a card or deck is named `parent/child`. Give both parts:
+
+```bash
+tcms imageworks:warm products mycard/photo --picture
+tcms imageworks:warm products mydeck/photo --picture
+```
+
+`mycard/photo` is the photo in that card. `mydeck/photo` is the photo in every item of the deck. If the child is a video field, its poster is warmed. A plain run does not reach into cards and decks, so name each one you want.
+
+An image inside a card or deck uses the watermark set on the card or deck, the same as on your pages.
+
+### Choosing variants
+
+Match what your templates ask for. A file the page never requests is wasted work.
+
+- **A responsive image grid.** `--widths` and `--formats` make every width in every format. It makes only the widths you give. A width wider than the image makes a file at the image's own width, because that is what ImageWorks serves for it. When [size rounding](#request-limits) is on, a width rounds up the same way the site does. For example, with a step of 50, `--widths=333` makes the 350px file that a visitor gets. `native` means the image's own format (jpg, png), which is what the `<img>` fallback uses. `--widths` alone uses `native`. `--formats` needs `--widths` or `--picture`.
+- **`cms.render.picture()` with its defaults.** Use `--picture`. It takes the widths and formats from the `imageworks.picture` setting (480, 768, 1024, 1440, 1920 and avif, webp) and adds `native`. Like `picture()`, it also adds the image's own width as the largest size. It only matches templates that call `picture()` without their own `widths` or `formats`. A GIF gets only `gif`, because `picture()` keeps GIFs as they are.
+- **`picture()` with its own options.** Give the same options as a grid. `picture(img, {h: 600, fit: 'crop'})` is matched by `--picture --params="h=600&fit=crop"`. A `w` in `--params` caps the widths. `fm` is not allowed, because the grid sets the format.
+- **`image()` calls.** Use `--params` for one exact variant, such as `--params="w=800&h=600&fit=crop"`. Repeat it for more variants. `--preset=medium` makes a preset. A preset `p` in `--params` with a grid makes one file per width, because the preset sets the format.
+- **A URL from your page.** Copy an ImageWorks URL from your page's HTML and pass it to `--url`. The command takes the params and the format from it and ignores its collection and ID. A gallery URL that ends in `/first`, `/last` or `/featured` has no format, so only its params are used, as the route does.
+
+### Two examples
+
+With `--widths=480,768,1024,1440,1920 --formats=avif,webp,native`:
+
+- A 1600px `photo.jpg` gets widths 480, 768, 1024, 1440 and 1600 in avif, webp and jpg. 1920 is wider than the photo, so it becomes 1600. That is 15 files.
+- A 1000px `logo.png` gets widths 480, 768 and 1000 in avif, webp and png. 1024, 1440 and 1920 all become 1000. That is 9 files.
+
+### Big galleries
+
+Run with `--dry-run` first. It counts the files it would make and makes none, so you see "12,400 files" before you start an AVIF run.
+
+```bash
+tcms imageworks:warm photos --picture --dry-run
+tcms imageworks:warm photos --picture
+```
+
+Narrow a run with a property name (`tcms imageworks:warm blog image ...`) or `--id=a,b,c`. Use `--memory` to raise the memory limit (default 512M).
+
+### Deploys and cron
+
+Because re-runs skip cached files, the command fits in a deploy script or a cron job. Run it as the web server user. A run as another user (such as root) can make cache folders the web server can't read, and those images then fail on the site. The command warns you when you are not the owner of the data folder.
+
+For example:
+
+```bash
+tcms imageworks:warm blog --picture || echo "some images failed"
+```
+
+The command exits **1** when any image failed, and **0** otherwise. `--json` prints the counts and the list of failures.
+
+### Limits
+
+A card or deck image must be named as `parent/child`. Naming only the card or deck is an error, and the error lists the images inside it.
+
 ## Caching
 
 Transformed images are cached automatically on disk. The cache directory is `.cache` within the image storage directory. When the source image changes, cached versions are regenerated on the next request.
 
-To clear the ImageWorks cache, use the emergency cache clear endpoint or clear the `.cache` directories from storage.
+To make the cache ahead of time, see [Warming the cache](#warming-the-cache). To clear the ImageWorks cache, use the emergency cache clear endpoint or clear the `.cache` directories from storage.
+
+## Request limits
+
+Every new size or setting in an ImageWorks URL makes ImageWorks render a new file. To stop a visitor (or a bot) from making thousands of them, the `/imageworks/` URLs have limits. Two are always on, and size rounding is a setting. These limits apply to image URLs, including the ones `cms.render` writes into your pages. An image that Total CMS renders on the server while it builds a page, such as `cms.media.imageDataUri()`, does not have them.
+
+**Bad values get a 400 error.** Each parameter must have a value that ImageWorks can use. For example, `w` must be a whole number from 0 to 10000, `q` must be 0 to 100, and `fm` must be an image format. A request with a bad value gets a `400 Bad Request` and no image work is done. A parameter that ImageWorks does not use, such as `utm_source`, is ignored.
+
+**Sizes can round up (off by default).** Without rounding, a bot can ask for every width from 1 to 2000 pixels and make the server render 2000 files for one image. To stop this, set **Round Image Sizes** on the ImageWorks settings page (or `sizeStep` in `tcms.php`) to a number of pixels, such as 50. A width or height then rounds up to the next multiple of that number. The widths in `imageworks.picture` and the sizes in your presets are not changed. For example, with 50, `w=333` serves a 350px image and `w=768` serves a 768px image. When you give both a width and a height, the height changes by the same amount, so the shape of the image stays the same. A size is never rounded past the size of the original image.
+
+**Renders wait in line.** Only a few new images render at the same time: two for each CPU core. Other requests wait for up to 30 seconds, which is enough for the first view of a large gallery. A waiting request uses no CPU. If a request still can't start after the wait, it gets a `503 Service Unavailable` with a `Retry-After` header. Images that are already in the cache never wait.
+
+You can change these limits in `tcms.php`:
+
+```php
+return [
+    'imageworks' => [
+        'sizeStep'    => 50,   // round sizes up to a multiple of this; 0 = exact sizes (default)
+        'renderSlots' => 0,    // renders at the same time; 0 = two per CPU core
+        'renderWait'  => 30,   // seconds a request waits for a free slot
+    ],
+];
+```
+
+A larger step means fewer files and less work for the server, but the images can be up to that many pixels bigger than you asked for. 50 is a good value for most sites. Leave it at 0 only if your pages use hand-written ImageWorks URLs that need an exact size.
 
 ## API Endpoint
 
@@ -24466,11 +24876,11 @@ Use `addOnly: true` for forms on the public side of your website to prevent user
 2. Grant the members' access group `create`, `read`, `update` (and `delete` if they may withdraw) on the collection.
 3. Mark the moderation fields [`protected`](docs/schemas/validation#protected): `"draft": {"protected": {"value": true}}` sends every member edit back to review.
 
-The server then stamps `owner` on create and refuses any API read or write of someone else's object. The template, though, renders on the server with its own access to the collection: `cms.object.get()` loads any object you name, whoever is signed in. So check the owner before building the edit form:
+The server then stamps `owner` on create and refuses any API read or write of someone else's object. The template, though, renders on the server with its own access to the collection: `cms.collection.object()` loads any object you name, whoever is signed in. So check the owner before building the edit form:
 
 ```twig
 {% set user = cms.auth.userData() %}
-{% set site = cms.object.get('showcase', app.request.query.get('id')) %}
+{% set site = cms.collection.object('showcase', getData.id|default('')) %}
 {% if user and site and site.owner == user.id %}
     {% set form = cms.form.builder('showcase', {
         id: site.id,
@@ -24523,6 +24933,8 @@ Switch on **Allow Public Registration** in the **Public Registration** section o
 **Registrant groups:**
 
 A registrant receives the global `publicRegistrationGroup` (auth settings) plus the collection's **Registration Groups**, with duplicates removed. `admin` is never granted from Registration Groups. A `groups` value submitted in the form is always ignored.
+
+A registrant who ends up in no group can sign in and see pages gated to signed-in users, but can't read or change any collection through the API. Give them a group here if your front-end forms need that. See [Users without a group](docs/auth/access-groups#users-without-a-group).
 
 ### Email Verification
 
@@ -25279,8 +25691,14 @@ Manage them under **Automations** in the admin (or `tcms` on the CLI). The edito
 Webhook and event automations fire the moment their trigger happens. **Schedules** need a heartbeat — a single command run by cron:
 
 ```bash
-* * * * * cd /path/to/site && php bin/tcms automations:process
+# Composer install
+* * * * * php /path/to/site/vendor/bin/tcms automations:process
+
+# Zip install
+* * * * * php /path/to/site/resources/bin/tcms automations:process
 ```
+
+Run `jobs:process` from cron the same way, for the job queue. If your host has no cron for command-line PHP, see [Cron URLs](docs/operations/cron-urls).
 
 Each tick `automations:process`:
 
@@ -25451,6 +25869,7 @@ The handler is stored in its own `.php` file next to the automation object (an *
 | Property | What it is |
 |----------|------------|
 | `$ctx->mailer` | Send a [Mailer](docs/notifications/mailer) email — `sendEmail($mailerId, $data)` |
+| `$ctx->http` | Call a service whose URL you wrote (an API, a webhook) — `request($method, $url, $options)` returns `statusCode` and `body`. See below |
 | `$ctx->publicHttp` | GET a URL someone else typed — `get($url, $options)` returns `statusCode` and `body`. Public addresses only (see below) |
 | `$ctx->config` | Core configuration |
 | `$ctx->logger` | PSR-3 logger writing to `jobs.log` (channel `automations`) |
@@ -25460,6 +25879,57 @@ The handler is stored in its own `.php` file next to the automation object (an *
 | `$ctx->request` | The PSR-7 request — webhook triggers only |
 
 `$ctx->request` and `$ctx->event` are `null` for schedule runs.
+
+## Calling a service
+
+Use `$ctx->http` for a URL you wrote yourself in the handler or in config: a mailing-list API, a payment provider, a Slack webhook, a service on your own network. Use `$ctx->publicHttp` (below) for a URL that came from content. Don't create your own Guzzle or curl client: `$ctx->http` is the one core uses, and tests replace it so a handler under test never reaches the network.
+
+```php
+return function ($ctx) {
+    $sendy = $ctx->config->automations['secrets']['sendy'] ?? [];
+    $user  = $ctx->objectFetcher->fetchObject($ctx->event['collection'], $ctx->event['id']);
+
+    try {
+        $response = $ctx->http->request('POST', $sendy['url'] . '/subscribe', [
+            'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
+            'body'    => http_build_query([
+                'api_key' => $sendy['apiKey'],
+                'list'    => $sendy['list'],
+                'email'   => $user['email'],
+                'boolean' => 'true',
+            ]),
+            'timeout' => 15,
+        ]);
+    } catch (\RuntimeException $e) {
+        throw new \RuntimeException('Sendy is unreachable: ' . $e->getMessage());
+    }
+
+    return ['status' => $response->statusCode, 'body' => $response->body];
+};
+```
+
+Options: `headers` (name => value), `body` (a string: encode JSON with `json_encode()`, a form with `http_build_query()`), `timeout` and `connect_timeout` (seconds), `follow_redirects` (`false` by default, `true` or a number), `verify_ssl` (default `true`), `user_agent`, `max_bytes`. A 4xx or 5xx answer is returned, not thrown: check `$response->isSuccess()`. A connection failure throws `RuntimeException`. `$response->json()` decodes a JSON body.
+
+## Keeping API keys out of the handler
+
+Don't write a key into the handler. Handlers live in `tcms-data`, which travels with sync and JumpStart and is often editable in the admin. Put keys in `config/tcms.php`, under `automations.secrets`, and read them from `$ctx->config`:
+
+```php
+// config/tcms.php
+return [
+    'automations' => [
+        'secrets' => [
+            'sendy' => [
+                'url'    => 'https://newsletter.example.com',
+                'list'   => 'aBc123',
+                'apiKey' => getenv('SENDY_API_KEY') ?: '',
+            ],
+        ],
+    ],
+];
+```
+
+`config/tcms.php` is PHP, so the value can come from the server's environment (`getenv()`) or from a file you keep out of git (`require __DIR__ . '/secrets.php'`). Core does not read `.env` files. Core never uses the `secrets` block itself, and the admin's server check hides every value in it.
 
 ## Fetching a URL from content
 
@@ -25650,64 +26120,85 @@ See [Extension Points → Automations](docs/extensions/extension-points#automati
 
 ## Admin Dashboard Overview
 
-The Total CMS Admin Dashboard is your central hub for managing all content, users, and system settings. This guide will help you navigate and utilize the dashboard effectively.
+The admin is where you manage content, structure and the site's settings. This page covers the parts every page shares, the dashboard home, and the settings that shape both.
 
-(This primarily serves as an outline for future docs...)
+## The Sidebar
 
-## Dashboard Layout
+The sidebar down the left side links to each part of the admin: Collections, Schemas, Data Views, Site Builder, Mailer, Automations, Twig Playground, anything extensions add, then Utils, Extensions, Settings and Docs. Each person only sees the pages their [access group](docs/auth/access-groups) and edition allow.
 
-The admin interface is organized into several main sections:
+Press **⌘⇧O** (**Ctrl+Shift+O** on Windows and Linux) for **Quick Navigation**, a search box that jumps to any admin page, collection, Site Builder page or setting. It also creates things: type **New User**, **New Post** or **New Schema** to open that add form. Each collection you may add to has its own entry, shown with the collection's name, and the entries use your admin language.
 
-### 1. Navigation Menu
-Located on the left side, the navigation menu provides quick access to:
-
-- **Dashboard** - Overview and quick stats
-- **Collections** - Manage your content types
-- **Schemas** - Define and edit data structures
-- **Documentation** - This help system
-- **Tools** - Utilities like import/export, job queue
-- **Settings** - System configuration
-
-#### The More menu
+### The More menu
 
 The sidebar has room for a dozen icons before it gets crowded, and extensions can add more. Under **Settings → Dashboard → More Menu**, check any sidebar items you rarely use. They leave the sidebar and move into a **More** (⋮) menu at its bottom, where they stay one click away rather than disappearing. Items added by extensions are listed there too. Nothing is locked: if you never use Automations or Site Builder, tuck them away; they are still reachable from More and from Quick Navigation.
 
-### 2. Main Content Area
-The central area displays the current page content, forms, and data tables.
+## The Dashboard Home
 
-### 3. Top Bar
-Contains:
-- Search functionality
-- User profile menu
-- Quick actions
-- System notifications
+A new site, with three collections or fewer, opens on a welcome page that links to project setup and the starters. After that, the home shows the sections below.
 
-## Key Features
+### Alerts and Needs Attention
 
-### Collection Management
+Admins see alerts on the home whenever something needs them. Each one links to where you fix it. When nothing needs attention, neither the banners nor the card appear.
 
-Collections are the heart of Total CMS. From the dashboard, you can:
+**Banners across the top** are for things that are broken, or that will lock you out:
 
-1. **View All Collections** - See all available content types at a glance
-2. **Quick Actions** - Add new content, view collection, or edit schema
+| Alert | What to do |
+|---|---|
+| The license is invalid or expired | Open the License Manager |
+| **Email is not set up** | No **From** address is set under [Settings → SMTP](docs/notifications/mailer#setting-up-smtp), so no email can be sent — including the password reset email, which would leave a forgotten admin password with no way back in. |
+| The job queue is stalled | Schedule `tcms jobs:process`, or the [`/cron/jobs` URL](docs/operations/cron-urls) |
+| An extension failed to load | Open Extensions |
+| PHP's upload limits are below one upload chunk | Raise `post_max_size` and `upload_max_filesize` to at least 6 MB |
+| You are simulating another edition | Turn simulation off under Settings → License |
 
-Example collections include:
-- Blog posts
-- Image galleries
-- File repositories
-- Custom business objects
+**The Needs Attention card**, at the top of the right-hand column, lists things worth a look where nothing is down:
 
-### Data Tables
+| Item | What to do |
+|---|---|
+| A Total CMS update is available | Open the update page |
+| A trial has 30 days or less left | Open the License Manager |
+| A trial is not registered | Register it to get reminders before it expires |
+| An automation failed on its last run | Open Automations |
+| Emails could not be sent since yesterday | Opens the matching `mailer.sent` rows in the [Activity Log](docs/operations/activity), each with its reason |
 
-Most collection views use interactive data tables that support:
+### Statistics
 
-- **Sorting** - Click column headers to sort
-- **Filtering** - Search within collections
-- **Pagination** - Navigate large datasets
-- **Bulk Actions** - Select multiple items for operations
-- **Quick Edit** - Inline editing for simple changes (see below)
+Counts of collections, objects, schemas, Site Builder templates and queued jobs.
 
-### Editing in the Table
+### Quick Actions
+
+A row of shortcuts under the statistics. Choose them under **Settings → Dashboard → Quick Actions**: add, remove and drag actions from a fixed list, and they show in that order. Remove them all to hide the row.
+
+| Action | Opens |
+|---|---|
+| New Collection, New Schema | The new collection or schema form |
+| New Page, New Template | Site Builder's new page or new template form |
+| New Data View, New Email, New Automation | The new view, email template or automation |
+| Twig Playground, Documentation, Settings | Those pages |
+| Activity Log, Log Analyzer, Job Queue Manager, Cache Manager | Those utilities |
+| New {item}, one per collection (Users, blog posts, galleries, your own collections…) | That collection's add form — labeled with the collection's singular label, such as **New Post**, and listed with its ID so two collections with the same label can be told apart |
+
+Until the setting is saved, the row shows New Collection, New Schema, New Template, Log Analyzer, Job Queue Manager and Cache Manager. Each person only sees the actions their access group and edition allow: the utilities, Settings and New Automation are for admins, and a collection's New action only shows to people who may create objects in it. If a collection is deleted, its action quietly drops off the row.
+
+### Collections and Recent Activity
+
+At the top of the main column, admins see **Recent Activity**: a short table of the 25 newest rows of the [Activity Log](docs/operations/activity) — when, what happened, to what, and who — that scrolls within a fixed height. Hover a row for its summary. An object that still exists links to its edit page; **View all activity** opens the full log with its filters. Only admins see it, because the log names users, API keys and email recipients.
+
+Below it are the most recently changed collections. Then, side by side, **Empty Collections** — each with an **Add** link for its first object — and, for admins, **Newly Created**: objects that visitors and signed-in members created in the last 30 days, such as form submissions and registrations, each linked to its edit page. Each card only shows when it has something in it, and takes the full width when the other is hidden.
+
+### The sidebar column
+
+For admins, the right-hand column shows the [Needs Attention](#alerts-and-needs-attention) card when it has anything in it, then:
+
+- **Development Mode** — a switch that turns off caching while you build.
+- **Automations** — each enabled automation, its trigger, and how its last run went.
+- **System Information** — the Total CMS version, PHP version, environment, memory limit and cache backends.
+
+Extensions can add their own widgets to the main column or this one; see [dashboard widgets](docs/extensions/extension-points#dashboard-widgets).
+
+A [white-label](docs/admin/whitelabel) install can replace the welcome message at the top of the home with its own.
+
+## Editing in the Table
 
 Simple values can be changed without opening the object. Hover a cell and a
 pencil appears at its right edge; click it and the cell becomes that one
@@ -25736,118 +26227,21 @@ group decides who may use it, and the user must still have `update` rights on
 that collection. Groups saved before the permission existed keep inline
 editing, so nothing changes until you turn something off.
 
-### Form Builder
+## Dashboard Settings
 
-The form system automatically generates input forms based on your schemas:
+**Settings → Dashboard** holds the rest of the admin's preferences. They apply to everyone on the site.
 
-- **Smart Field Types** - Appropriate inputs for each data type
-- **Validation** - Real-time and server-side validation
-- **File Uploads** - Drag-and-drop media uploads
-- **Rich Text Editing** - WYSIWYG editor for content
-- **Relationships** - Link content between collections
-
-### Activity Feed
-
-The dashboard homepage shows recent activity:
-
-- Recently modified objects
-- User login activity
-- System events
-- Job queue status
-
-## Common Tasks
-
-### Creating Content
-
-1. Navigate to the desired collection
-2. Click "Add New" button
-3. Fill in the form fields
-4. Save or Save & Continue
-
-### Editing Content
-
-1. Find the content in the collection view
-2. Click the edit icon or row
-3. Modify the fields
-4. Save changes
-
-### Bulk Operations
-
-1. Select items using checkboxes
-2. Choose action from dropdown
-3. Confirm the operation
-
-### Media Management
-
-1. Go to Media section
-2. Upload files via drag-and-drop
-3. Organize into folders
-4. Use in content via media picker
-
-## Dashboard Widgets
-
-The main dashboard page can display various widgets:
-
-### Statistics Widget
-- Total objects across collections
-- Storage usage
-- User count
-- Recent activity metrics
-
-### Quick Links Widget
-- Frequently used collections
-- Recent drafts
-- Pending approvals
-
-### System Status Widget
-- License status
-- Job queue health
-- Cache status
-- System updates
-
-## Customization
-
-### User Preferences
-
-Access your preferences from the user menu:
-
-- Dashboard layout
-- Default collection view
-- Items per page
-- Date/time format
-- Language settings
-
-### Collection Views
-
-Customize how collections display:
-
-- Choose visible columns
-- Set default sorting
-- Configure filters
-- Save view presets
-
-## Performance Tips
-
-1. **Use Filters** - Filter large collections before sorting
-2. **Pagination** - Adjust items per page for performance
-3. **Bulk Actions** - Process multiple items at once
-4. **Keyboard Shortcuts** - Learn shortcuts for common actions
-
-## Getting Help
-
-- **Tooltips** - Hover over icons for explanations
-- **Field Help** - Click (?) icons for field descriptions
-- **Documentation** - Access full docs from the menu
-- **Support** - Contact support from the help menu
-
-## Security Notes
-
-- Sessions expire after inactivity
-- All actions are logged
-- Sensitive operations require confirmation
-- Regular backups are recommended
-
-Remember: The dashboard is designed to be intuitive. Don't hesitate to explore and experiment - most actions can be undone or have confirmation prompts for safety.
+| Setting | Default | What it does |
+|---|---|---|
+| Admin Dashboard Browser Title | Total CMS Admin | The browser tab title; left at the default, it becomes "{Site Name} Admin" once a site name is set |
+| Dashboard Table Pagination | 50 | Rows per page in collection tables; `0` shows every row on one page |
+| Confirmation Countdown | 2 | Seconds the confirm button in a delete or reset dialog stays disabled, so the message gets read; `0` turns it off |
+| Dashboard Accent Color | orange | The admin's accent color |
+| Keep ID on Duplicate Object | off | Keep the original ID when duplicating an object, instead of clearing it so the ID rule fills it in |
+| Full Width Object Forms | off | Let object forms fill the page instead of stopping at 800px |
+| Inline Editing | on | The master switch for [editing in the table](#editing-in-the-table) |
+| Quick Actions | six actions | The dashboard home's [Quick Actions](#quick-actions), in order |
+| More Menu | none | Sidebar items moved into the [More menu](#the-more-menu) |
 
 ---
 
@@ -26932,6 +27326,8 @@ Templates are also ordinary objects in the `mailer` collection, so the collectio
 
 ## Troubleshooting
 
+**Did an email go out?** The [Activity Log](docs/operations/activity) has a `mailer.sent` row for every email outside a bulk send: who sent it, the template, the subject, the recipient, and the reason when it was not sent. Filter on the `mailer` collection to see one template's emails.
+
 **Nothing arrives, and there's no error.** Check `email.log` first. Then check spam folders, and that the **From** address is one your SMTP provider allows you to send as — many providers reject or silently drop mail from unverified senders.
 
 **The SMTP test works but a template doesn't send.** Check that the template is **Active**, that your edition is Standard or higher, and that the rendered **To** is a valid address that passes the whitelist, if you set one. A `429` means the rate limit was hit. The JSON response's `error` field and `email.log` have the details.
@@ -27013,6 +27409,14 @@ Access groups work at two levels:
 2. **UI Controls**: Template helper functions hide/show UI elements based on permissions
 
 Super admin users (members of the `admin` group in the default `auth` collection) bypass all access checks automatically.
+
+### Users without a group
+
+A user of the default `auth` collection who belongs to no group gets the built-in `default` group, which reads every collection and schema and changes nothing.
+
+A member of any other auth collection, such as one that takes [public registrations](docs/forms/options#public-registration-forms), gets no permissions without a group. They can sign in, open pages gated to signed-in users, download files whose File Access Groups include `default`, and edit their own profile. They can't read or change collections through the admin, the REST API or MCP. To give members that, add a group to the collection's **Registration Groups** or assign one yourself.
+
+Before 3.6.5, these members also got the `default` group, so anyone who signed up could read every collection through the REST API, including drafts and the admin users' names and email addresses.
 
 ## Access Group Structure
 
@@ -27179,6 +27583,8 @@ Controls which extensions' **nav items, dashboard widgets, and admin pages** thi
 
 - **`all`** - If `true`, access all utility pages
 - **`allowed`** - Array of specific utility page names
+
+Some utilities also gate the API routes behind their page: `cache` for clearing caches and dev mode, `import` for the site importers, and `jobqueue` or `import` for clearing the job queue.
 
 ### Boolean Permissions
 
@@ -31931,6 +32337,8 @@ All tool descriptions are also visible to the AI client at runtime via `tools/li
 | `update_object` | admin‡ | Update a content object by id. Idempotent. Merges like `patch_object`: omitted fields keep their values. See *Binary fields* below. |
 | `patch_object` | admin‡ | Merge a subset of fields into an existing object — omitted fields keep their current values, so no get/round-trip is needed. Containers (card/deck/list) replace whole. The safer default for targeted agent edits. See *Binary fields* below. |
 | `delete_object` | admin‡ | **Destructive.** Delete one object by id, as the admin's delete button does. Needs the `delete` grant (an API key: the DELETE method). The record stays in the [backup history](docs/operations/backups) when backups are on, but its uploaded files are deleted permanently; the result lists the fields that held files and whether a backup was kept. Marked destructive, so clients ask before calling it. |
+| `attach_file_from_url` | admin‡ | Download a file from a public URL onto an existing object's image, file, gallery or depot field, as an upload in the admin does. See *Files* below. |
+| `remove_file` | admin‡ | **Destructive.** Delete one uploaded file from an image, file, gallery or depot field, as the admin's delete button does. See *Files* below. |
 | `list_extensions` | admin | Every installed extension with id, name, enabled flag, capabilities. |
 | `list_templates` | admin‡ | List the Site Builder Twig templates (builder templates only — reserved admin templates are never listed). Read-only. See *Site Builder templates* below. |
 | `get_template` | admin‡ | Fetch one template's raw Twig source plus the read layer it resolved from. Read-only. See *Site Builder templates* below. |
@@ -31940,22 +32348,43 @@ All tool descriptions are also visible to the AI client at runtime via `tools/li
 
 #### Binary fields on the object write tools
 
-Files can't be uploaded through MCP — that needs an upload pipeline (multipart bodies, storage handles) that a JSON tool call doesn't carry. What an agent *can* do is describe a file that is already uploaded: alt text, tags, a focal point, a download label.
+The object write tools never put a file in a field; files come and go through `attach_file_from_url` and `remove_file` (see *Files* below). What the write tools *can* do is describe a file that is already there: alt text, a credit, tags, a focal point, a download label.
 
 - A collection that merely *contains* a binary field is fully writable — just **omit** those fields from your payload. On `create_object` they're left unset; on `update_object` and `patch_object` they keep their current value (a write never wipes an image you didn't touch).
-- `create_object` refuses a value in an image, file, gallery or depot field: there is no uploaded file to describe yet.
+- `create_object` refuses a value in an image, file, gallery or depot field: there is no uploaded file to describe yet. Create the object, then attach files.
 - `update_object` and `patch_object` take a **metadata edit** there, merged over the stored value:
 
 | Field | Send | Editable keys |
 |---|---|---|
-| image | `{"alt": "Team photo", "focalpoint": {"x": 40, "y": 30}}` | `alt`, `link`, `tags`, `featured`, `focalpoint`, `exif` |
+| image | `{"alt": "Team photo", "focalpoint": {"x": 40, "y": 30}}` | `alt`, `link`, `tags`, `featured`, `focalpoint`, `exif`, `credit` |
 | gallery | `[{"name": "stage.jpg", "alt": "Main stage"}]` — matched by `name` | as image |
 | file | `{"download": "Brochure (PDF)", "comments": "…"}` | `download`, `comments`, `tags` |
 | depot | `[{"path": "docs/guide.pdf", "comments": "…"}]` — matched by `path` | as file |
 
-`exif` and `focalpoint` merge one level deep; other keys replace. Gallery images and depot files cannot be added or removed, and naming one that is not stored is refused with the list that is. A gallery list that names every stored image exactly once also sets their order — the first is the gallery's lead image — while a partial list leaves the order alone. Depot files cannot be reordered. Keys that identify the file — `name`, `size`, `mime`, `width`, `height`, `hash`, `palette`, `uploadDate`, `count` — and a file's `password` / `protected` setting cannot change; echoing their stored values back is fine. `describe_collection` lists the editable keys on each media property. Video posters are uploads and stay refused.
+`exif`, `focalpoint` and `credit` merge one level deep; other keys replace. Gallery images and depot files cannot be added or removed this way (use the file tools), and naming one that is not stored is refused with the list that is. A gallery list that names every stored image exactly once also sets their order — the first is the gallery's lead image — while a partial list leaves the order alone. Depot files cannot be reordered. Keys that identify the file — `name`, `size`, `mime`, `width`, `height`, `hash`, `palette`, `uploadDate`, `count` — and a file's `password` / `protected` setting cannot change; echoing their stored values back is fine. `describe_collection` lists the editable keys on each media property. Video posters are uploads and stay refused.
 
 > Reading objects with `get_object` / `query_collection` returns binary fields too. Writing a fetched object back works as long as the media values are unchanged or only their editable keys changed. Sending only the fields you changed is simpler.
+
+#### Files
+
+`attach_file_from_url` and `remove_file` do what the admin's upload and delete buttons do, through the same code, so the same events fire and the same caches clear.
+
+```json
+attach_file_from_url {
+  "collection": "menu", "id": "burrata", "property": "image",
+  "url": "https://images.pexels.com/photos/25650514/pexels-photo-25650514.jpeg",
+  "meta": {"alt": "Burrata on grilled sourdough", "credit": {"author": "Nadin Sh", "source": "Pexels", "license": "Pexels License"}}
+}
+```
+
+- **The object must exist** (`create_object` first) and the property must be a top-level image, file, gallery or depot field. Fields inside a card or deck are not reachable.
+- **What happens to the field:** an image or file is replaced; a gallery gains the image at the end; a depot gains the file in `path` (a folder), and a file of the same name there is refused unless `replace: true`.
+- **`meta`** sets the editable keys from the table above on the new file in the same call. It is checked before anything is downloaded.
+- **The URL must be public.** It is fetched with the public-only client: http(s), no private, loopback, link-local or reserved address, every redirect checked again, and the site's maximum download size applies. Scripts and executables are refused by name before the download.
+- **Rate limit:** 60 attaches an hour per caller.
+- **`remove_file`** takes `name` for a gallery image (its stored name, from `get_object`) and `path` for a depot file (`folder/name.pdf`). An image or file field needs neither. Folders cannot be removed. The file is deleted permanently, so clients ask before calling it.
+
+Both need the same access as `patch_object`: the `update` grant on the collection, a collection exposed to MCP, and, on an owned collection, an object the caller owns.
 
 #### Site Builder templates
 
@@ -35074,6 +35503,26 @@ Within each helper, output ordering is:
 3. Preload hints (`<link rel="preload">` / `<link rel="modulepreload">`) — always emitted in the head regardless of the asset's own `position`.
 4. Script tags last.
 
+### Insert Image dialog tabs
+
+Styled text and markdown fields share an **Insert Image** dialog with **Upload** and **Images** tabs. An admin script can add its own tab, as the bundled Stock Photos extension does. Push a tab onto `window.TotalCMS.imageDialogTabs`. Create the array if it is not there yet; the dialog reads it each time it opens, so the order your script loads in does not matter.
+
+```js
+window.TotalCMS ??= {};
+window.TotalCMS.imageDialogTabs ??= [];
+window.TotalCMS.imageDialogTabs.push({
+	id    : "my-photos",
+	label : "My Photos",
+	render(panel, ctx) {
+		// Runs once, the first time the tab is shown. Fill `panel`.
+		// ctx.select(photo) picks a photo, ctx.select(null) clears it,
+		// ctx.insert() inserts the selection (use it for double-click).
+	},
+});
+```
+
+A photo has the same shape as a [photo drop](docs/fields/image-gallery#adding-photos-from-another-source): `{url, filename, alt, credit, …}`. The `url` must be same-origin or send CORS headers. Selecting a photo fills the alt text box, unless the editor typed their own. On **Insert**, core downloads the photo, checks the field's upload rules, uploads it to the field and inserts it with the alt text, and with the credit (*Photo by Jane on Pixabay*) as its title. A tab that throws while rendering shows an error in its panel and leaves the rest of the dialog working.
+
 ## Which admin surface?
 
 An extension has three ways to put something in front of an operator, and a
@@ -35112,6 +35561,15 @@ public function boot(ExtensionContext $context): void
 Settings access is not a separate capability — `$context->setting()` and `$context->settings()` are always available regardless of permission state.
 
 Define a `settings_schema` in your manifest to enable a settings form in the admin UI. Settings are managed by admins through the extension settings page in the dashboard.
+
+The form shows one field per row, in the order of `properties`. To group fields, give the schema a `formgrid`, written as in a [collection schema](docs/schemas/formgrid): columns, `---` dividers, `--- Title` section headers and `[[ ]]` fieldsets (accordions are not supported here). The extension's permission toggles keep the top row.
+
+```json
+{
+  "formgrid": "[[ Library\ngalleries\n]]\n[[ Pixabay\npixabayKey\nsafeSearch\n]]",
+  "properties": { "...": {} }
+}
+```
 
 ## File Storage
 
@@ -35952,11 +36410,13 @@ tcms check --config    # also print the merged configuration, secrets redacted
 tcms check --json
 ```
 
-The command exits **1** when the install cannot run — the bundle is corrupted, `tcms-data`, `cache`, `logs` or `tmp` is not writable, or a required extension is missing — and **0** otherwise, so a deploy script can gate on it:
+The command exits **1** when the install cannot run — the bundle is corrupted, `tcms-data`, `cache`, `logs` or `tmp` is not writable, or a required extension is missing — **or** when the Security section has a critical finding that is not ignored. It exits **0** otherwise, so a deploy script can gate on it:
 
 ```bash
 composer update && vendor/bin/tcms check || exit 1
 ```
+
+The **Security** section looks for common problems: a public data folder, exposed logs and project files, risky registration groups, debug mode, missing headers and more. Each finding links to its fix in the [security guide](docs/operations/security#checking-your-install). Pass `--no-security` to skip the section and get the old exit behavior. With `--json`, a `security` key holds `checked`, `findings` and `url`; `url` is `null` when the command line does not know the site's address. That address is the one the site last recorded (see the `cache/.siteurl` rule below), so checks that make web requests are listed as not checked until someone visits the admin or `domain` is set. Ignore a finding on purpose with `$settings['security']['ignore'] = ['check-id']` in `config/tcms.php`. The data folder and sensitive file checks write a small, world-readable test file and fetch it; a redirected request is listed as not checked, never as blocked. In the human output each finding prints its detail and then its fix, indented under the title. The report is saved to `tcms-data/.system/security-report.json`, which the dashboard alert reads for 24 hours.
 
 The checks run in the command line's PHP, which is not the one serving pages: the extensions, limits, cache state and session settings it reports can differ from the web server's, and rows only a web request knows (the web server software) are left out. For the values a page request sees, use the Server Checker in the admin. The domain and license follow the same `cache/.siteurl` rule as `info`.
 
@@ -36711,6 +37171,35 @@ Present means no request has replayed it yet. Gone means it was applied.
 
 > Note the `/api` prefix — `/emergency/cache/clear` without it returns a 404.
 
+### `imageworks:warm`
+
+Pre-build the ImageWorks cache for a collection, so the first visitor to a page does not wait for images to be made. It writes only to the ImageWorks cache and skips files that already exist.
+
+```bash
+tcms imageworks:warm blog image --widths=480,768,1024 --formats=avif,webp,native
+tcms imageworks:warm blog --picture --dry-run
+tcms imageworks:warm blog --params="w=800&h=600&fit=crop" --preset=medium
+tcms imageworks:warm blog --url="https://example.com/imageworks/blog/a/image.webp?w=800"
+tcms imageworks:warm blog --picture --id=a,b,c
+tcms imageworks:warm products mydeck/photo --picture
+```
+
+| Argument / Option | Description |
+|-------------------|-------------|
+| `collection` | Collection ID (required) |
+| `property` | One image, gallery or video property, or `parent/child` for an image in a card or deck: `mycard/photo`, or `mydeck/photo` for every deck item. A video gives its poster. Default: every image and gallery property; videos, cards and decks must be named |
+| `--widths` | Comma list of widths. Makes every width in every format |
+| `--formats` | Comma list of formats for the grid: `avif`, `webp`, `native`, and so on. Defaults to `native` with `--widths`. Needs `--widths` or `--picture` |
+| `--picture` | The grid `cms.render.picture()` uses by default (the `imageworks.picture` setting) plus `native` |
+| `--params` | ImageWorks params as a query string. One exact variant, or extra params for the grid. Repeatable |
+| `--preset` | A preset name. Repeatable |
+| `--url` | Copy a variant from a real ImageWorks URL. A gallery URL ending in `/first`, `/last` or `/featured` gives its params only. Repeatable |
+| `--id` | Comma list of object IDs (default: the whole collection) |
+| `--dry-run` | Count what would be made and make nothing |
+| `--memory, -m` | Memory limit (default: 512M) |
+
+You must give at least one of `--widths`, `--picture`, `--params`, `--preset` or `--url`. The summary lists objects, images, variants made (or would make), already cached, original and failed, then the first five failures. With `--json` it prints the same counts and the full failure list. The command exits **1** when anything failed. Run the command as the web server user; it warns when you are not the owner of the data folder. See [Warming the cache](docs/twig/imageworks#warming-the-cache) for choosing variants.
+
 ### `jobs:process`
 
 Process the pending job queue. This is typically run via cron.
@@ -36826,6 +37315,7 @@ Rebuild a collection's `.index.json` and `totalObjects` count from the objects o
 ```bash
 tcms repair:index blog
 tcms repair:index --all
+tcms repair:index blog --check
 ```
 
 | Argument | Required | Description |
@@ -36835,6 +37325,54 @@ tcms repair:index --all
 | Option | Description |
 |--------|-------------|
 | `--all` | Rebuild the index for every collection |
+| `--check` | Only report how the index and the object files disagree; change nothing |
+
+#### Checking before you rebuild
+
+A rebuild makes the index match the files, so it also hides what was wrong. `--check` reports instead, and changes nothing:
+
+- object files that cannot be read (invalid JSON, broken front matter)
+- ids in the index with no object file
+- object files the index does not list
+- an index file that is missing or unreadable
+- a collection object count that does not match the files
+
+It reads every object, so it takes about as long as a rebuild. It exits with `1` when it finds a problem and `0` when the collection is consistent, so a script can gate on it. Combine with `--all` to check every collection and with `--json` for machine-readable output:
+
+```bash
+tcms repair:index blog --check
+```
+
+```
+'blog': 2 problem(s) — 41 object file(s), 42 in the index:
+  In the index but no file: old-post
+  The collection's object count says 42; there are 41 on disk
+Nothing was changed. Run without --check to rebuild the index from the files.
+```
+
+**JSON output** (`--check --json`):
+```json
+{
+    "status": "problems",
+    "collections": {
+        "blog": {
+            "objects": 41,
+            "indexed": 42,
+            "indexReadable": true,
+            "recordedCount": 42,
+            "unreadable": [],
+            "missingFiles": ["old-post"],
+            "notIndexed": [],
+            "problems": [
+                "In the index but no file: old-post",
+                "The collection's object count says 42; there are 41 on disk"
+            ]
+        }
+    }
+}
+```
+
+`indexed` is `null` when there is no readable index file; `recordedCount` is `null` when the count was never calculated.
 
 ---
 
@@ -37257,6 +37795,7 @@ This keeps core lean for sites that don't need a particular feature, while still
 | `totalcms/protect` | Gate a page behind a numeric passcode. Visitors enter a code to unlock — cookie remembers them for 7 days. For client previews and soft launches. | [Protect →](docs/extensions/protect) |
 | `totalcms/pushover` | Send push notifications via Pushover when forms are submitted. Supports Twig templates, image attachments, and delivery groups. Pro edition. | [Pushover →](docs/extensions/pushover) |
 | `totalcms/scheduled` | Time-window gating. Only renders a page between configured start/end timestamps. For holiday campaigns, embargoed announcements, and time-limited sales. | [Scheduled →](docs/extensions/scheduled) |
+| `totalcms/stock-photos` | Search free Pixabay photos, or your own library galleries, in the object editor and drag them onto image and gallery fields, with alt text and credit filled in. Off until it has a Pixabay API key or a library gallery. | [Stock Photos →](docs/extensions/stock-photos) |
 | `totalcms/webmcp` | Make your forms and public collections callable by a browser AI agent inside the visitor's own session (Chrome 149+ origin trial). `webmcp_form()` annotates a form; the browser registers the MCP server's own read tools (`query_collection`, `get_object`, saved queries…), following each collection's MCP access. Experimental, off by default. | [WebMCP →](docs/extensions/webmcp) |
 
 ## How to enable / disable
@@ -38392,6 +38931,89 @@ Source: `resources/extensions/totalcms/scheduled/`
 
 ---
 
+## Stock Photos (Bundled Extension)
+
+Search [Pixabay](https://pixabay.com), or your site's own photo library, from the object editor and put a photo on an image or gallery field without leaving the admin. The photo is copied into the object like any upload, with its alt text and credit filled in.
+
+The extension ships with Total CMS and is free in every edition. It is off until you enable it and give it something to search: a Pixabay API key, one or more library galleries, or both.
+
+## Setup
+
+In **Admin → Extensions**, enable **Stock Photos** and open its settings.
+
+| Setting | What it does |
+|---|---|
+| Pixabay API Key | Your key. It stays on the server; the browser never sees it. Leave it empty to use only your library galleries. |
+| Library Galleries | Galleries editors can pick photos from. Each is a tab in the panel, in the order listed. |
+| Safe Search | Only show Pixabay photos suitable for all ages. On by default. |
+| Default Orientation | The shape filter the search starts with: any, landscape or portrait. |
+
+To search Pixabay, make a free account at [pixabay.com](https://pixabay.com/accounts/register/) and copy your API key from [pixabay.com/api/docs](https://pixabay.com/api/docs/) (it is shown there once you are logged in).
+
+### A photo library of your own
+
+Any gallery in the reserved `gallery` collection can be a library: the client's own photos, a set of brand images, the photos from a shoot. Create the gallery, upload the photos, and fill in their alt text, tags and credits once. Then pick it under **Library Galleries**. Pick several to give each its own tab, such as *Team*, *Dishes* and *Events*.
+
+A photo taken from a library is **copied** into the field, with its alt text, credit, tags, link and focal point. After that the copy is independent: editing it changes nothing in the library, and deleting a photo from the library doesn't touch the pages that use it. The same photo used on three pages is stored three times.
+
+Editors only see a library tab if their access groups let them read the `gallery` collection.
+
+## Use it
+
+Each image and gallery field gets a small stock-photo button at the right of its label, and the object page's ⋯ actions menu gets a **Stock Photos** item. Either opens the panel:
+
+1. When there is more than one source, pick a tab. Your library galleries come first, in the order they are listed in the settings, then **Pixabay**. A library lists all of its photos straight away; Pixabay waits for a search.
+2. Search for a word, such as `pasta` or `restaurant interior`. In a library, the search matches the photos' alt text, tags, file names and photographers. Switching tabs runs the same search in the new source.
+3. Press **+** under a photo to put it in the field shown in **Add to**, or **drag** a photo onto any image or gallery field on the page.
+
+Opening the panel from a field's button selects that field in **Add to**; opening it from the menu selects the first one. The **+** turns into a check once the photo is in the field. Change it there to fill another field without closing the panel. Fields inside cards and deck items are listed under their parent, such as *Menu › Photo (2)*.
+
+Image fields inside cards and deck items work the same way. Press **Esc** or **×** to close the panel, or click the field's button again.
+
+An image field takes one photo and replaces the one it has. A gallery adds the photo to the end. On a new object, the photo waits in the field and uploads when you save, like a file you dropped from your computer.
+
+### In styled text and markdown
+
+Styled text and markdown fields put images in the text, not in an image field, so they don't get the button. Open the editor's **Insert Image** dialog instead and choose the **Stock Photos** tab. It has the same sources, search and library tabs as the panel.
+
+Click a photo to select it, then press **Insert**, or double-click it. The photo is uploaded to the field, like a file from the **Upload** tab, and inserted at the cursor. The alt text box fills with the photo's alt text; type your own first and it is kept. A styled text image can't store a credit, so the credit goes in the image's title, such as *Photo by Jane on Pixabay*. Edit or remove it in the HTML if your page shows credits another way.
+
+The object must be saved before a photo can be added, as for any upload in the dialog.
+
+Every library photo arrives with the alt text, credit, tags, link and focal point it has in the gallery. Whether it is featured in the gallery doesn't carry over.
+
+Every Pixabay photo arrives with:
+
+- **Alt text** made from the photo's Pixabay tags ("Pasta, food, italian"). Rewrite it to describe the photo on your page; tags are not good alt text.
+- **A credit** with the photographer, a link to their Pixabay profile, the photo's Pixabay page and the license. See [Photo Credit](docs/fields/image-gallery#photo-credit).
+
+Photos are downloaded at Pixabay's large size, 1280 pixels on the longest side, which is the biggest an ordinary API key may download. That's plenty for content images and cards, but soft for a full-width hero on a high-resolution screen. Pixabay grants [full API access](https://pixabay.com/api/docs/#api_search_images) on request; with an approved key the extension downloads the original file instead, with nothing to configure. The site's maximum download size still applies. ImageWorks resizes from whatever was downloaded.
+
+## Your responsibilities
+
+Pixabay photos are free to use under the [Pixabay Content License](https://pixabay.com/service/license-summary/). You, not Total CMS, agree to it when you get your key, and you are responsible for following it. In short:
+
+- **Don't sell unaltered copies** of a photo, on its own or as a print, poster or download.
+- **Don't offer the files for download.** Don't put Pixabay photos in a Depot field or anywhere visitors can download the original file. Use them in your pages.
+- **Check trademarks and people.** Pixabay doesn't promise model or property releases. Don't use a photo with a recognizable logo, brand or person in a way that suggests they endorse you.
+- **Remove a photo if asked.** If a rights claim is made, remove the image from your site and tell Pixabay at info@pixabay.com. The credit's `sourceUrl` tells you exactly which photo it is.
+
+Pixabay also asks for its name to appear where search results are shown; the panel does this, with a **License** link to the Pixabay Content License beside it. A photo credit on your public pages is welcome but not required.
+
+## How it works
+
+- The panel asks the extension's admin routes which sources the editor may use, and shows a tab for each.
+- A library photo is copied from the gallery's original file, not through ImageWorks, so it is never re-encoded or watermarked on the way. Only galleries chosen in the settings, and only photos they list, can be read this way.
+- Pixabay searches go through the extension's admin route, which adds your key and calls the Pixabay API. Results are cached for 24 hours, as Pixabay requires, so repeated searches don't count against your limit of 100 requests a minute.
+- When you drop a photo, the field downloads it through the extension's download route, which only fetches from Pixabay's own servers. The field then uploads it like any file, so the field's upload rules (size, dimensions, count) still apply.
+- Preview images in the panel come from Pixabay and expire after a day. Only the photo you add is stored.
+
+Any editor who can open the object editor can use the panel. To hide it from a group, remove the extension from that group's **Extension Access** in Access Groups.
+
+The photo drop the panel uses is a core feature, open to any photo source: see [Adding photos from another source](docs/fields/image-gallery#adding-photos-from-another-source).
+
+---
+
 ## WebMCP (Bundled Extension)
 
 `totalcms/webmcp` — bundled with Total CMS, off by default, **experimental**. Renders forms an AI agent in the visitor's browser can fill and submit, and hands that agent the **MCP server's read tools**, called inside the session the visitor already has. One Twig call for forms; nothing to configure for reads beyond what the MCP server already knows. Read tools need the Standard edition or above, because they are the MCP server's — Data Views tools (`list_views`/`query_view`) stay Pro and simply come back empty below it.
@@ -38507,10 +39129,12 @@ It answers questions like:
 | `file.downloaded` | A **signed-in** user downloads a file from a `/download/...` link. Downloads by visitors who are not signed in are not recorded. |
 | `access.denied` | A request is refused by access groups, ownership or a protected field. |
 | `mcp.tool.called` | An AI client calls an MCP tool: the tool, its target (collection, ID, query) and how long it took. The content an agent writes is never stored. |
+| `mailer.sent` | An email is sent or refused: from a form, a password reset or verification, an automation, PHP, or the SMTP test. The row names the mailer template, the subject and the recipient; the body is never stored. |
+| `mailer.bulk.queued` | A [bulk send](docs/notifications/mailer#bulk-send) is queued: one row with the template, the collection and how many emails, not one per recipient. Each recipient is in the template's Send History. |
 | `import.completed`, `bulk.deleted` | An import finishes (one row with the counts, not one per object), or objects are deleted in bulk. |
 | `extension.*`, `devmode.*`, `cache.cleared` | An extension is enabled or disabled, dev mode is toggled, or the cache is cleared. |
 
-Deletes, bulk deletes, refusals and failed MCP calls are marked as **warning**, so they stand out and can be filtered on their own.
+Deletes, bulk deletes, refusals, failed MCP calls and emails that were not sent are marked as **warning**, so they stand out and can be filtered on their own.
 
 ## Who Did It
 
@@ -38748,7 +39372,7 @@ RewriteRule ^(.*)$ https://example.com/$1 [L,R=301]
 
 ### Security Headers
 
-Defense-in-depth headers on every response:
+The `public/.htaccess` that ships with Total CMS already sends `X-Frame-Options`, `X-Content-Type-Options` and `Referrer-Policy`, with HSTS commented out. It uses `setifempty`, so the admin's own headers aren't doubled. To set them in the server config instead, or to add `Permissions-Policy`:
 
 ```apacheconf
 <IfModule mod_headers.c>
@@ -40957,10 +41581,29 @@ CMS does not currently provide.
 
 ### Account Security
 
-- Limit login attempts to prevent brute force attacks
-- Implement account lockout after failed attempts
-- Log authentication events for monitoring
-- Regularly review user accounts and remove inactive ones
+Total CMS limits the public auth forms on the server, by client IP address. The limits do not depend on the visitor's session, so a script that drops its cookies is limited too.
+
+- **Login.** After `auth.maxAttempts` failed logins (default 10) from one address, that address is locked out for `auth.deniedTimeout` minutes (default 7). It is not checked against any password while it is locked out. Each lockout within a day doubles the next one, up to a day. A good login clears the count.
+- **Accounts are never locked.** Locking an account would let anyone lock out an admin by typing their email. When many addresses guess at one account, each attempt on it is slowed by a second instead.
+- **Protected downloads.** After `auth.downloadMaxAttempts` wrong passwords (default 25) from one address, that address is locked out of download passwords, with the same lockout times as login. Only wrong passwords count; downloading many files does not.
+- **Forgot password and resend verification.** `auth.mailRatePerIp` sends per address per 15 minutes (default 5). Past the limit the form shows its usual message and sends nothing, so it cannot flood an inbox.
+- **Public registration.** `auth.registerRatePerIp` accounts per address per hour (default 20). Past the limit the endpoint answers 429. Set either limit to 0 to turn it off.
+
+Each lockout and refused form writes a warning to the login log with the address, so a fail2ban jail or WAF rule can block repeat offenders. The counts live in the cache, so clearing the cache resets them. With only APCu, each PHP worker counts on its own.
+
+```php
+return [
+	'auth' => [
+		'maxAttempts'         => 10,
+		'downloadMaxAttempts' => 25,
+		'deniedTimeout'       => 7,
+		'mailRatePerIp'       => 5,
+		'registerRatePerIp'   => 20,
+	],
+];
+```
+
+Also log authentication events for monitoring, and regularly review user accounts and remove inactive ones.
 
 ## Content Security
 
@@ -41191,7 +41834,9 @@ Total CMS sets security headers on every admin, login, and setup page automatica
 | `X-Content-Type-Options` | `nosniff` |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` |
 
-Your **public pages** are a different story: whether they may be framed, what referrer they send, and any Content Security Policy are decisions for your site, not the CMS. Set those at the server level if you want them:
+On **Apache**, the `.htaccess` that ships in `public/` sends the first three of those on your public pages too, including Site Builder pages, forms and assets: `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff` and `Referrer-Policy: strict-origin-when-cross-origin`. That stops another site framing your contact or sign-up form. If another site needs to embed your pages, delete the `X-Frame-Options` line. HSTS is in the same file, commented out. Turn it on only once HTTPS works everywhere on the domain, because browsers remember it for a year.
+
+A Content Security Policy for your public pages is your decision, not the CMS's, and so is anything on Nginx or Caddy, which don't read `.htaccess`. Set those at the server level:
 
 ### Apache
 ```apache
@@ -41223,6 +41868,243 @@ header {
     Permissions-Policy "geolocation=(), microphone=(), camera=()"
 }
 ```
+
+## Checking Your Install
+
+Total CMS can check your install for common security problems. It looks at your settings, your accounts, your templates and, for a few checks, how your web server answers real requests. It never changes anything. Each finding says what it saw and how to fix it, and links to the matching section below.
+
+Findings have three severities:
+
+| Severity | Meaning |
+|---|---|
+| Critical | Something private is likely open to anyone. Fix it now. |
+| Warning | A real weakness. Fix it soon. |
+| Info | Worth knowing. No action needed if it is on purpose. |
+
+A check that could not run is shown as **not checked** with the reason. It is never shown as passing.
+
+### Where to run it
+
+- **Server Checker page.** Admin → Utilities → Server Checker has a Security section. It runs the checks live, using the real host name and HTTPS state of your request. Behind a proxy or CDN that ends HTTPS and forwards plain HTTP (Cloudflare Flexible, a load balancer, nginx in front of Apache), the HTTPS state comes from the `X-Forwarded-Proto` header, so the checks see the HTTPS site your visitors see.
+- **`tcms check`.** The command line prints the same Security section. See [`tcms check`](docs/extensions/cli#check).
+- **Dashboard.** Admins see a red alert on the dashboard when the last report had a critical finding. The last report is the one saved by the Server Checker page or `tcms check` in the past 24 hours, in `tcms-data/.system/security-report.json`, so the page and the command line share it. Your current ignore list is applied when the dashboard reads it. With no report from the past 24 hours, the dashboard runs only the checks that read settings and files.
+
+The command line does not have a host name, so it uses the address the site last recorded when someone loaded a page. On a fresh install, or after a cache clear, checks that need that address are listed as not checked until someone visits the admin or you set `domain` in `config/tcms.php`. Checks that only read your settings and files still run.
+
+### What changed for `tcms check`
+
+- `tcms check` now exits non-zero on any critical security finding that is not ignored. Before, it only failed when the install could not run.
+- `--no-security` skips the Security section and restores the old exit behavior.
+- `--json` has a `security` key with `checked`, `findings` and `url`. `url` is `null` when the command line does not know the site's address.
+
+```bash
+tcms check                 # includes the Security section
+tcms check --no-security   # the old behavior
+tcms check --json
+```
+
+### Ignoring a finding
+
+Some findings are on purpose. List their check ids in `config/tcms.php`:
+
+```php
+<?php
+return [
+	'security' => [
+		'ignore' => ['xmlrpc-on', 'dev-mode-on'],
+	],
+];
+```
+
+An ignored finding still shows, marked ignored. It does not count toward the exit code of `tcms check` and does not raise the dashboard alert.
+
+### How the web checks work
+
+The data folder and sensitive file checks write a small test file with a random name and random content, fetch it over HTTP, and delete it. If the web server returns that exact content, the folder is public. A server that answers every address with a page never causes a false alarm.
+
+The test file is made readable to everyone (mode 0644) before it is fetched, so a strict umask, or a command line that runs as a different user than the web server, can't make a public folder look blocked.
+
+A redirect is not an answer. If the site redirects a test request, for example from `http://` to `https://` or to a login page, the check is listed as not checked and names where the redirect pointed. It is never counted as blocked.
+
+If the site can't reach itself (a timeout or a refused connection), the first failed request ends the web checks for that run. The rest are listed as not checked straight away instead of each waiting for its own timeout.
+
+A folder counts as inside the public web folder when its configured path is inside it, or when the real path it resolves to (with symlinks followed) is inside it. So a data folder configured through a symlink that points into the web folder is checked, and so is a web folder that is itself a symlink. One layout is not caught: a data folder configured by its real path outside the web folder, with a separate symlink inside the web folder pointing to it. Total CMS doesn't search the web folder for symlinks, so that folder is reported as outside. Remove such a symlink, or set `datadir` to the symlink path so the check tests it.
+
+The checks only make requests to your own site. Titles and fixes are in English in every admin language.
+
+### Admin accounts
+
+**Check id:** `admin-accounts`
+
+Counts the accounts in the `admin` group and how many have a passkey. More than five administrators is a warning. Otherwise it is info.
+
+Every administrator can change anything, including schemas, API keys and extensions. Each extra account is another password that can be stolen.
+
+**Fix:** Give day-to-day users an access group with only the permissions they need. Keep `admin` for a few people. Turn on passkeys for administrators.
+
+### API keys broad
+
+**Check id:** `api-keys-broad`
+
+Looks for API keys that allow write methods (`POST`, `PUT`, `PATCH`, `DELETE`) on every path, and keys that were never used and created more than 30 days ago, or not used for 180 days. Info.
+
+A leaked key with write access to everything can change or delete all your content.
+
+**Fix:** Limit each key to the methods and paths its job needs. Delete keys you no longer use.
+
+### Data folder public
+
+**Check id:** `data-folder-public`
+
+Writes a test file into the data folder (`tcms-data`) when it is inside the public web folder, and tries to download it.
+
+- **Critical:** the test file could be downloaded. Anyone can read your content, users and settings.
+- **Info on Apache and LiteSpeed:** the folder is inside the web folder but blocked. This is normal for zip and Stacks installs, which are protected by the `.htaccess` file that ships in the folder.
+- **Warning on other servers:** the folder is inside the web folder and blocked, but only by a server rule. If that rule stops working, the folder becomes public.
+
+**Fix:** Move the data folder above the public web folder and update `datadir` in `config/tcms.php`. If it must stay, block it:
+
+On Apache, keep the `.htaccess` file in the folder and make sure `AllowOverride` is enabled for your site.
+
+On Nginx, `.htaccess` is ignored. Add this and reload:
+
+```nginx
+location ^~ /tcms-data/ {
+	deny all;
+	return 404;
+}
+```
+
+### Debug on
+
+**Check id:** `debug-on`
+
+Warns when the `debug` setting is on for a live site. Error pages can show file paths and code to visitors. A local site (`localhost`, a bare IP address, or a host ending in `.localhost` or `.test`) is fine. When the command line doesn't know the site's address yet, this is listed as not checked.
+
+**Fix:** Set `debug` to `false` in `config/tcms.php`.
+
+### Dev mode on
+
+**Check id:** `dev-mode-on`
+
+Reports when dev mode is active on a live site. Dev mode turns caching off and expires on its own. Info. Local sites and an unknown address are treated as in [Debug on](#debug-on).
+
+**Fix:** Turn dev mode off in the admin when you finish testing.
+
+### Directory listing
+
+**Check id:** `directory-listing`
+
+Requests your assets folder and looks for a file list ("Index of"). A listing shows visitors every file in the folder. Warning. A redirected request is listed as not checked.
+
+**Fix:** On Apache, add `Options -Indexes` to your `.htaccess` file. On Nginx, set `autoindex off;` in your server block and reload.
+
+### MCP anonymous
+
+**Check id:** `mcp-anonymous`
+
+When `mcp.publicAccess` is on, lists the collections that anonymous AI agents can read.
+
+- **Warning:** a public collection has an email or password field that MCP returns.
+- **Info:** collections are public over MCP and have no such fields.
+
+**Fix:** Set the collection's MCP access to something other than public, or mark the sensitive properties as not exposed to MCP. To close anonymous access, set `mcp.publicAccess` to `false`.
+
+### No HTTPS
+
+**Check id:** `no-https`
+
+Warns when a live site is served over plain HTTP. Logins and form data travel unencrypted. A site behind a proxy that sends `X-Forwarded-Proto: https` counts as HTTPS.
+
+**Fix:** Install a certificate (most hosts offer a free one) and redirect HTTP to HTTPS. See [HTTPS and Transport Security](#https-and-transport-security).
+
+### Raw request data
+
+**Check id:** `raw-request-data`
+
+Scans your Site Builder templates (not the built-in ones) for `getData`, `postData` or `sessionData` on the same line as `|raw`. Visitors control that data, so printing it unescaped lets them inject scripts into your page. Warning. Each finding names the file and line.
+
+This is a line-by-line pattern match, not a full analysis. It misses an expression split across lines and request data assigned to a variable first.
+
+**Fix:** Remove `|raw` so Twig escapes the value, or sanitize it first.
+
+### Registration group
+
+**Check id:** `registration-group`
+
+Looks at collections that allow public registration and the access groups new members join.
+
+- **Critical:** new members join `admin`, or a group that can do any of these: open any admin utility (access groups, API keys and the rest are utilities), create or change schemas, edit Site Builder templates, or create, change or delete collection settings (which would let a member open registration elsewhere or change its groups). The finding names what the group can do.
+- **Warning:** new members join a group that can create, update or delete collection content.
+- **Info:** registration gives new members no group.
+
+New members are logged in right away, so anyone, including bots, can sign up.
+
+**Fix:** Give the registration group read access only. Protect the form with a CAPTCHA, a rate limit or email verification. See [Access Groups](docs/auth/access-groups#users-without-a-group) for the no-group case.
+
+### Security headers
+
+**Check id:** `security-headers`
+
+Requests the home page and looks for `X-Frame-Options`, `X-Content-Type-Options` and `Referrer-Policy`. On HTTPS it also looks for `Strict-Transport-Security` (HSTS), reported separately as `security-headers-hsts`. Info.
+
+**Fix:** The `.htaccess` that ships in `public/` sets the first three on Apache. On Nginx add them to your server block and reload:
+
+```nginx
+add_header X-Frame-Options "SAMEORIGIN" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+```
+
+HSTS makes browsers refuse plain HTTP for the full `max-age`. Make sure every page and subdomain works over HTTPS first, and start short:
+
+```apache
+Header always set Strict-Transport-Security "max-age=300"
+```
+
+```nginx
+add_header Strict-Transport-Security "max-age=300" always;
+```
+
+### Sensitive files public
+
+**Check id:** `sensitive-files-public`
+
+Tests the logs, cache and tmp folders with a test file, and requests project files, but only those that sit inside the public web folder:
+
+- **Critical:** a logs, cache or tmp folder is downloadable, or `.git/config` or `.env` is readable.
+- **Warning:** `composer.lock` or `vendor/composer/installed.json` is readable. They list every package and version you run.
+
+These files can hold passwords, tokens and source code.
+
+**Fix:** Move the folder or file above the public web folder, or block it. On Apache, add a `.htaccess` file containing `Require all denied` to the logs, cache or tmp folder (no `.htaccess` ships in these), add a `<Files>` deny rule for a file, and make sure `AllowOverride` is enabled. On Nginx, add a rule for each path and reload:
+
+```nginx
+location ^~ /logs/ {
+	deny all;
+	return 404;
+}
+location = /.env {
+	deny all;
+	return 404;
+}
+```
+
+### Version behind
+
+**Check id:** `version-behind`
+
+Asks the update checker whether a newer Total CMS version exists. Warning. Updates carry security fixes.
+
+**Fix:** Update from the admin, or run `tcms update:apply`. Composer installs update with `composer update`.
+
+### XMLRPC on
+
+**Check id:** `xmlrpc-on`
+
+Reports when the WordPress-compatible XML-RPC endpoint is on (`xmlrpc.enable`). It accepts API key logins from the internet. Info.
+
+**Fix:** If you do not publish from MarsEdit, Byword or Ulysses, set `xmlrpc.enable` to `false` in `config/tcms.php`.
 
 ## Error Monitoring
 
@@ -41455,6 +42337,57 @@ Every unique combination of image + processing parameters (size, crop, format, w
 - **100+ GB** — media-heavy sites, large depot file repositories, or multiple sites
 
 **SSD vs HDD:** SSD is strongly recommended. Total CMS reads and writes many small JSON files, and the image cache benefits greatly from fast random read speeds. The difference is especially noticeable in the admin interface and on pages that load many images.
+
+---
+
+## Large Collections
+
+Most collections never need any of this. Read on if a collection holds tens of thousands of objects.
+
+### What gets slower
+
+A page or API call that lists, filters, sorts or searches a collection loads the collection's whole index into memory. [`cms.collection.query()`](docs/twig/collections#query) and the REST API cache their result until the collection is next saved, so only the first request after a save pays for it; `cms.collection.objects()` loads the index every time. The index holds one entry per object, with the fields listed in the schema's `index`. Its size grows with the number of objects and with how much text each entry carries.
+
+Measured on a 1 CPU / 1 GB server with default PHP settings:
+
+| Objects | Index file | Memory for one listing request | Pages, one visitor at a time |
+|---|---|---|---|
+| 10,000 | about 10 MB | about 30–50 MB | 0.2–0.3 s |
+| 50,000 | about 49 MB | about 170 MB | 0.1–0.7 s |
+
+At 50,000 objects, a single visitor is still fast. The problem is several visitors at once: five listing requests together need more memory than a 1 GB server has, so it starts swapping and every page slows down.
+
+### What to do about it
+
+These are listed with the most effective first.
+
+1. **Keep the index lean.** List only the fields that listings filter, sort or display in the schema's [`index`](docs/schemas/reference#index). Leave out long fields such as a post's body or an HTML summary: they are usually most of the index's size, and a detail page reads the object itself, not the index.
+
+   ```json
+   "index": ["id", "title", "date", "category", "image"]
+   ```
+
+2. **Ask for only the page you show.** Replace `cms.collection.objects()` piped through `filterCollection`, `sortCollection` and `paginate` with [`cms.collection.query()`](docs/twig/collections#query). It takes the same filter and sort rules and returns one page, cached until the collection is saved.
+
+   ```twig
+   {% set result = cms.collection.query('posts', {sort: 'date:desc', limit: 20, page: 1}) %}
+   ```
+
+3. **Give one listing its own smaller index.** A [Data View](docs/collections/data-views) (Pro edition and above) saves a filtered set of objects with only the fields you choose, and it is rebuilt on a schedule. A listing that reads a Data View never loads the full collection index.
+
+4. **Cache the rendered listing.** Wrap the listing in [`{% cache %}`](docs/twig/cache-tag). For a collection that is edited often, use a short `ttl` and no `tags`. A tag clears the cached copy on every save, so while editors are working, visitors keep rebuilding it. With a short `ttl`, visitors keep getting the cached copy and it refreshes on its own.
+
+   ```twig
+   {% cache 'latest-posts' ttl=60 %}
+       {# listing #}
+   {% endcache %}
+   ```
+
+   On the test server at 50,000 objects, while editors were saving, a tagged cache gave visitors a 95th-percentile page time of 37 seconds. `ttl=60` without tags gave 0.5 seconds.
+
+5. **Turn on Queue Rebuild on Save.** Saving then appends the object to the index right away and rebuilds the full index in the background. See [Collection Settings](docs/collections/settings#queuerebuildonsave).
+
+6. **Size the server by memory, not cores.** Count about 170 MB per busy worker for a 50,000-object collection, and lower PHP-FPM's `pm.max_children` so those workers fit in RAM without swapping.
 
 ---
 

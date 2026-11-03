@@ -155,6 +155,8 @@ You can configure watermarks at the schema, collection, or per-object level usin
 
 Watermark settings follow the three-level override hierarchy: **schema → collection → per-object**. Override at the collection level in collection meta, or per-object using custom properties.
 
+**Replacing the logo.** Watermarked renders are cached by the logo file's modified time, so uploading a new `logo.png` under the same name re-renders every image on its next request. The old renders stay on disk until you clear the cache.
+
 ### Protecting Original Images
 
 Schema-level watermarks are not just a convenience — they are how you stop the
@@ -211,6 +213,9 @@ The last row is the important one. A request with no width or height is asking
 for the original, which is exactly the case worth protecting, so it is treated
 as over the limit rather than under it.
 
+`dpr` counts. `w=600&dpr=3` renders an 1800px image, so with `limit: 800` it is
+marked.
+
 `limit` is a watermark-only setting and is removed before the remaining values
 are passed to the image processor.
 
@@ -222,14 +227,74 @@ Render text directly on images without needing a separate watermark image.
 |-----------|------|-------------|
 | `marktext` | string | Text to render |
 | `marktextfont` | string | Font family name (TTF/OTF from the watermark-fonts depot) |
-| `marktextsize` | integer | Text size in pixels (default: 500) |
+| `marktextsize` | integer | Font size the text is drawn at, in pixels (default: 500). Set it without `marktextw` for a fixed size; see [Text size](#text-size) |
 | `marktextcolor` | string | Text color as hex without `#` (e.g., `ffffff`) |
 | `marktextbg` | string | Background color as hex (optional, transparent if not set) |
 | `marktextpad` | integer | Padding around text in pixels (default: 10) |
 | `marktextangle` | integer | Rotation angle in degrees (-360 to 360, default: 0) |
-| `marktextpos` | string | Position (same options as image watermarks) |
-| `marktextw` | mixed | Max text width in pixels or relative (e.g., `50w` for 50% of image width) |
-| `marktextalpha` | integer | Transparency (0-100, where 100 is fully opaque) |
+| `marktextpos` | string | Position (same options as image watermarks), or `tile` to repeat the text over the whole image |
+| `marktextw` | mixed | Text width in pixels or relative to the image (e.g., `50w` for 50% of image width). Default: `40w` when `marktextsize` is not set |
+| `marktextalpha` | integer | Opacity (0-100, where 100 is fully opaque). Default: 100, or 30 when tiled |
+| `marktextstroke` | integer | Outline width as a percentage of the font size (0-25, default: 0) |
+| `marktextstrokecolor` | string | Outline color as hex (default: `000000`) |
+| `marktextshadow` | integer | Drop shadow offset as a percentage of the font size (0-25, default: 0) |
+| `marktextshadowcolor` | string | Shadow color as hex (default: `000000`) |
+| `marktextrepeat` | integer | Tiled mode only: marks across the image (1-12, default: 4) |
+
+### Text Size
+
+With no size set, the text spans 40% of the image's width, so the mark has
+the same weight on a 400px thumbnail as on the 2,400px original.
+
+- **`marktextw`** sets that width yourself: `25w` for a quarter of the image,
+  or a pixel width.
+- **`marktextsize` alone** draws the text at that fixed pixel size, whatever
+  the image size. If the text would be wider than the image, it is shrunk to
+  90% of the image width.
+
+### Tiled Watermarks
+
+`marktextpos: 'tile'` repeats the text over the whole image in offset rows,
+so there is no clean corner to crop out. The text runs at 30° unless you set
+`marktextangle`, and is faint (`marktextalpha` 30) unless you set the opacity.
+`marktextrepeat` sets how many marks run across the image. `marktextx`,
+`marktexty` and `marktextw` don't apply to a tiled mark.
+
+```twig
+{# Proof sheet: PROOF repeated across the image #}
+{{ cms.media.imagePath('photo', {
+    w: 1600,
+    marktext: 'PROOF',
+    marktextpos: 'tile',
+    marktextrepeat: 5
+}) }}
+```
+
+### Outline and Shadow
+
+White text disappears on a pale sky and black text on a dark one. An outline
+or a shadow keeps the mark readable on any image. Both are a percentage of the
+font size, so they keep their look at any image size.
+
+```twig
+{# White text with a thin black outline #}
+{{ cms.media.imagePath('photo', {
+    w: 1200,
+    marktext: '© Studio',
+    marktextstroke: 3
+}) }}
+
+{# Soft drop shadow #}
+{{ cms.media.imagePath('photo', {
+    w: 1200,
+    marktext: '© Studio',
+    marktextshadow: 5,
+    marktextshadowcolor: '333333'
+}) }}
+```
+
+Outline and shadow need a TTF or OTF font. On a server without FreeType, the
+text falls back to GD's built-in bitmap font and is drawn without them.
 
 ### Custom Fonts
 
@@ -347,11 +412,108 @@ Use presets by passing the `p` parameter:
 
 Presets that use `crop-focalpoint` in their `fit` value will automatically use each image's saved focal point.
 
+## Warming the cache
+
+The first visitor to a page pays for every image on it. Each size and format is made on that first request. AVIF can take a second or more per file. A gallery page right after an import, a deploy or a launch is slow for whoever sees it first. A crawler that hits it first may give up.
+
+`tcms imageworks:warm` makes those files ahead of time, so every visit is fast. It writes only to the ImageWorks cache. It makes the same files the `/imageworks` route would serve, and it skips files that already exist, so it is safe to run again.
+
+```bash
+tcms imageworks:warm blog image --widths=480,768,1024 --formats=avif,webp,native
+```
+
+You must say which variants to make. A plain run never starts thousands of AVIF encodes by surprise. Give at least one of `--widths`, `--picture`, `--params`, `--preset` or `--url`. They combine and repeat.
+
+### Choosing images
+
+Without a property, the command warms every `image` and `gallery` property in the collection. Name one property to warm only that one.
+
+A video's poster is warmed only when you name the video: `tcms imageworks:warm blog myvideo --params="w=1200"`. Templates usually ask for one poster size, so give the params your template uses rather than a whole grid.
+
+An image inside a card or deck is named `parent/child`. Give both parts:
+
+```bash
+tcms imageworks:warm products mycard/photo --picture
+tcms imageworks:warm products mydeck/photo --picture
+```
+
+`mycard/photo` is the photo in that card. `mydeck/photo` is the photo in every item of the deck. If the child is a video field, its poster is warmed. A plain run does not reach into cards and decks, so name each one you want.
+
+An image inside a card or deck uses the watermark set on the card or deck, the same as on your pages.
+
+### Choosing variants
+
+Match what your templates ask for. A file the page never requests is wasted work.
+
+- **A responsive image grid.** `--widths` and `--formats` make every width in every format. It makes only the widths you give. A width wider than the image makes a file at the image's own width, because that is what ImageWorks serves for it. When [size rounding](#request-limits) is on, a width rounds up the same way the site does. For example, with a step of 50, `--widths=333` makes the 350px file that a visitor gets. `native` means the image's own format (jpg, png), which is what the `<img>` fallback uses. `--widths` alone uses `native`. `--formats` needs `--widths` or `--picture`.
+- **`cms.render.picture()` with its defaults.** Use `--picture`. It takes the widths and formats from the `imageworks.picture` setting (480, 768, 1024, 1440, 1920 and avif, webp) and adds `native`. Like `picture()`, it also adds the image's own width as the largest size. It only matches templates that call `picture()` without their own `widths` or `formats`. A GIF gets only `gif`, because `picture()` keeps GIFs as they are.
+- **`picture()` with its own options.** Give the same options as a grid. `picture(img, {h: 600, fit: 'crop'})` is matched by `--picture --params="h=600&fit=crop"`. A `w` in `--params` caps the widths. `fm` is not allowed, because the grid sets the format.
+- **`image()` calls.** Use `--params` for one exact variant, such as `--params="w=800&h=600&fit=crop"`. Repeat it for more variants. `--preset=medium` makes a preset. A preset `p` in `--params` with a grid makes one file per width, because the preset sets the format.
+- **A URL from your page.** Copy an ImageWorks URL from your page's HTML and pass it to `--url`. The command takes the params and the format from it and ignores its collection and ID. A gallery URL that ends in `/first`, `/last` or `/featured` has no format, so only its params are used, as the route does.
+
+### Two examples
+
+With `--widths=480,768,1024,1440,1920 --formats=avif,webp,native`:
+
+- A 1600px `photo.jpg` gets widths 480, 768, 1024, 1440 and 1600 in avif, webp and jpg. 1920 is wider than the photo, so it becomes 1600. That is 15 files.
+- A 1000px `logo.png` gets widths 480, 768 and 1000 in avif, webp and png. 1024, 1440 and 1920 all become 1000. That is 9 files.
+
+### Big galleries
+
+Run with `--dry-run` first. It counts the files it would make and makes none, so you see "12,400 files" before you start an AVIF run.
+
+```bash
+tcms imageworks:warm photos --picture --dry-run
+tcms imageworks:warm photos --picture
+```
+
+Narrow a run with a property name (`tcms imageworks:warm blog image ...`) or `--id=a,b,c`. Use `--memory` to raise the memory limit (default 512M).
+
+### Deploys and cron
+
+Because re-runs skip cached files, the command fits in a deploy script or a cron job. Run it as the web server user. A run as another user (such as root) can make cache folders the web server can't read, and those images then fail on the site. The command warns you when you are not the owner of the data folder.
+
+For example:
+
+```bash
+tcms imageworks:warm blog --picture || echo "some images failed"
+```
+
+The command exits **1** when any image failed, and **0** otherwise. `--json` prints the counts and the list of failures.
+
+### Limits
+
+A card or deck image must be named as `parent/child`. Naming only the card or deck is an error, and the error lists the images inside it.
+
 ## Caching
 
 Transformed images are cached automatically on disk. The cache directory is `.cache` within the image storage directory. When the source image changes, cached versions are regenerated on the next request.
 
-To clear the ImageWorks cache, use the emergency cache clear endpoint or clear the `.cache` directories from storage.
+To make the cache ahead of time, see [Warming the cache](#warming-the-cache). To clear the ImageWorks cache, use the emergency cache clear endpoint or clear the `.cache` directories from storage.
+
+## Request limits
+
+Every new size or setting in an ImageWorks URL makes ImageWorks render a new file. To stop a visitor (or a bot) from making thousands of them, the `/imageworks/` URLs have limits. Two are always on, and size rounding is a setting. These limits apply to image URLs, including the ones `cms.render` writes into your pages. An image that Total CMS renders on the server while it builds a page, such as `cms.media.imageDataUri()`, does not have them.
+
+**Bad values get a 400 error.** Each parameter must have a value that ImageWorks can use. For example, `w` must be a whole number from 0 to 10000, `q` must be 0 to 100, and `fm` must be an image format. A request with a bad value gets a `400 Bad Request` and no image work is done. A parameter that ImageWorks does not use, such as `utm_source`, is ignored.
+
+**Sizes can round up (off by default).** Without rounding, a bot can ask for every width from 1 to 2000 pixels and make the server render 2000 files for one image. To stop this, set **Round Image Sizes** on the ImageWorks settings page (or `sizeStep` in `tcms.php`) to a number of pixels, such as 50. A width or height then rounds up to the next multiple of that number. The widths in `imageworks.picture` and the sizes in your presets are not changed. For example, with 50, `w=333` serves a 350px image and `w=768` serves a 768px image. When you give both a width and a height, the height changes by the same amount, so the shape of the image stays the same. A size is never rounded past the size of the original image.
+
+**Renders wait in line.** Only a few new images render at the same time: two for each CPU core. Other requests wait for up to 30 seconds, which is enough for the first view of a large gallery. A waiting request uses no CPU. If a request still can't start after the wait, it gets a `503 Service Unavailable` with a `Retry-After` header. Images that are already in the cache never wait.
+
+You can change these limits in `tcms.php`:
+
+```php
+return [
+    'imageworks' => [
+        'sizeStep'    => 50,   // round sizes up to a multiple of this; 0 = exact sizes (default)
+        'renderSlots' => 0,    // renders at the same time; 0 = two per CPU core
+        'renderWait'  => 30,   // seconds a request waits for a free slot
+    ],
+];
+```
+
+A larger step means fewer files and less work for the server, but the images can be up to that many pixels bigger than you asked for. 50 is a good value for most sites. Leave it at 0 only if your pages use hand-written ImageWorks URLs that need an exact size.
 
 ## API Endpoint
 
