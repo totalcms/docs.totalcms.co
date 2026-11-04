@@ -64,6 +64,7 @@ Most transactional providers (Postmark, Mailgun, Amazon SES, SendGrid, Fastmail,
 | Rate Limit per IP | `ratePerIp` | `10` | Requests one IP address can make to `POST /api/action/mailer` per window (1–1000) |
 | Rate Limit per Template | `ratePerTemplate` | `50` | Requests for any one template through that endpoint per window (1–10000) |
 | Rate Limit Window (seconds) | `rateWindow` | `300` | The window length (60–3600) |
+| Unsubscribe Property | `unsubscribeProperty` | `unsubscribed` | The toggle property that records a [Bulk Send unsubscribe](#unsubscribe-links). Empty turns unsubscribe links off |
 
 These can also be set in `tcms.php` under `$settings['mailer']`.
 
@@ -264,8 +265,9 @@ Each email job:
 
 1. Checks the hourly and daily limits (**Max Emails Per Hour** and **Max Emails Per Day** in SMTP settings). If a limit is reached, the job goes back in the queue for a later run — it isn't failed, and it doesn't use up an attempt. The rest of that run stops too, so other queued jobs, including non-email ones, wait with it.
 2. Checks the once-per-object rule below.
-3. Waits **Send Delay** milliseconds, if set, to spread emails out.
-4. Sends the email. A failed send gets three attempts in all. Failed jobs are retried only by `tcms jobs:process`; the `/cron/jobs` URL doesn't retry them.
+3. Skips the object if it has [unsubscribed](#unsubscribe-links) since the send was queued.
+4. Waits **Send Delay** milliseconds, if set, to spread emails out.
+5. Sends the email. A failed send gets three attempts in all. Failed jobs are retried only by `tcms jobs:process`; the `/cron/jobs` URL doesn't retry them.
 
 The limits count every bulk email sent, test sends included. Check your email provider's sending limits and set yours below them. Most providers throttle or suspend accounts that exceed their limits.
 
@@ -276,6 +278,33 @@ The limits count every bulk email sent, test sends included. Check your email pr
 This makes a bulk send safe to repeat. If a send stopped partway, or new subscribers joined since, queuing it again reaches only the objects that were missed.
 
 It also means **a recurring email needs a new template each time.** For a monthly newsletter, **Duplicate** last month's template (from the template's actions menu), edit it, and send the copy. The copy gets a new ID, so everyone receives it (unless **Keep ID on Duplicate Object?** is turned on in Settings → Dashboard — then change the ID yourself).
+
+### Unsubscribe links
+
+Give the recipient collection's schema a toggle named `unsubscribed` (or the name set in **Unsubscribe Property**) and every bulk email to it carries a one-click unsubscribe link:
+
+```json
+"unsubscribed": {
+	"type": "boolean",
+	"field": "toggle",
+	"help": "Opted out of bulk email"
+}
+```
+
+- Each email gets `List-Unsubscribe` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click` headers ([RFC 8058](https://www.rfc-editor.org/rfc/rfc8058)). Gmail and Yahoo require these from bulk senders, and mail apps show them as an **Unsubscribe** button.
+- Templates also get an `{{ unsubscribeUrl }}` variable to put a visible link in the body, which most email laws require:
+
+```twig
+<p><a href="{{ unsubscribeUrl }}">Unsubscribe</a> from these emails.</p>
+```
+
+- The link opens a page at `/admin/unsubscribe/{token}` that asks the recipient to confirm. Mail scanners open links to check them, so opening the link changes nothing. Confirming, or using the mail app's button, sets the property to `true`.
+- Objects with the property set are left out when you queue a send, and the result tells you how many: *"Queued 12 emails for sending (3 unsubscribed)"*. If someone unsubscribes after the send was queued, their email is skipped when its turn comes.
+- To subscribe someone again, turn the toggle off in the admin.
+- The links are signed with the site key and never expire. They keep working after updates and after `tcms push`/`pull`, which copy the key.
+- Test sends to an **Override To** address carry no headers, and their link opens a page that changes nothing, so proofing cannot unsubscribe your recipients. Test sends still go out to recipients who have unsubscribed, because the email goes to you.
+- A collection without the property sends as before, with no headers and no `unsubscribeUrl`.
+- The page allows 30 requests per IP address per hour (`$settings['rateLimits']['unsubscribe']`; see [Rate Limits](/operations/security#rate-limits)).
 
 ### Proofing with Override To
 
@@ -293,11 +322,13 @@ The override replaces **To** only. If the template has **CC** or **BCC** address
 |---|---|
 | Queued | When the batch was queued |
 | Audience | The collection; a **Test** badge and address for override sends; how many objects were left out as already sent |
-| Status | *Scheduled*, *In progress*, *Complete*, *Failures*, or *Nothing sent* |
+| Status | *Scheduled*, *In progress*, *Complete*, *Failures*, *Nothing sent*, or *Cancelled* |
 | Sent / Failed / Skipped | Emails processed so far, counting each object once |
-| Pending | Queued emails not yet sent, failed, or skipped |
+| Pending | Queued emails not yet sent, failed, skipped, or cancelled |
 
-The panel shows the 10 most recent batches and refreshes after each queue; click **Refresh** to update it while a batch is sending. *Skipped* counts objects that received the email from another batch after this one was queued — two overlapping sends of the same template, for example. A failed email is one that couldn't be sent, or whose object was deleted after the send was queued; `email.log` in your logs folder has the reason.
+The panel shows the 10 most recent batches and refreshes after each queue; click **Refresh** to update it while a batch is sending.
+
+A batch with emails still waiting (*Scheduled* or *In progress*) has a **Cancel** button under its status. It asks first, then removes the emails not sent yet from the queue. Emails already sent stay sent, and the batch shows as *Cancelled* with how many were called off. To send to the same audience later, queue the send again: objects that never got the email are still eligible. *Skipped* counts objects that received the email from another batch after this one was queued — two overlapping sends of the same template, for example. A failed email is one that couldn't be sent, or whose object was deleted after the send was queued; `email.log` in your logs folder has the reason.
 
 The history is stored in `tcms-data/.system/bulkmailer`, a SQLite database. Deleting that file erases the send history and resets the hourly and daily counts — and **every object becomes eligible to receive every template again**.
 
@@ -313,8 +344,46 @@ The admin page uses these endpoints. They need the Pro edition and either a sign
 | `POST /api/action/mailer/bulk/preview` | Render one object's email: `mailerId`, `bulkPreviewObjectId`, `bulkCollection` |
 | `GET /api/action/mailer/bulk/objects` | List a collection's objects for the picker: `bulkCollection`, `bulkInclude`, `bulkExclude` |
 | `GET /api/action/mailer/bulk/history` | Recent batches for `mailerId` |
+| `POST /api/action/mailer/bulk/cancel` | Cancel the emails of batch `batchId` not sent yet. `mailerId` must be the template the batch was queued from |
 
 These return HTML fragments for the admin UI (except `objects`, which returns JSON), not a stable API. Errors from the endpoint itself also come back as HTML with status 200; only a refused sign-in or permission returns a 401 or 403.
+
+### Bulk sends from an extension
+
+An extension that writes its own email, such as a campaign tool, can send it through Bulk Send without a template. It gets the same queue, schedule, send limits, retries and Send History. `BulkMailerService::queueRenderedSend()` takes the Twig source, the collection the recipients live in, and their object ids:
+
+```php
+use TotalCMS\Domain\Mailer\Data\RenderedBulkMessage;
+
+$message = new RenderedBulkMessage(
+    sourceId: 'acme/campaigns:spring-2027',
+    toTemplate: '{{ contact.email }}',
+    toNameTemplate: '{{ contact.name }}',
+    subjectTemplate: 'Spring news for {{ contact.name }}',
+    bodyHtmlTemplate: $html,
+    bodyTextTemplate: $text,
+    from: 'news@example.com',             // optional, as are fromName and replyTo
+    recipientFilter: SubscribedOnly::class, // optional
+    variables: CampaignVariables::class,  // optional
+);
+
+// $this->bulkMailer is a BulkMailerService taken in your class's constructor
+$result = $this->bulkMailer->queueRenderedSend($message, 'contacts', $contactIds, scheduledAt: '2027-03-01 09:00');
+// $result->data: batchId, count, excluded, unsubscribed
+```
+
+- **The message is stored once for the batch and rendered for each recipient when its email goes out.** The recipient object is `contact`. A Twig error fails that email; it never sends the raw source.
+- `scheduledAt` is in the site's timezone, like the admin's schedule field.
+- **`sourceId` takes the place of the template id.** Each object receives a given source once, and Send History for it is `fetchMailerBatches($sourceId)`. It needs a prefix (`vendor/name:…`) so it can never match a template id.
+- **`recipientFilter`** names a class implementing `BulkRecipientFilter`. Its `accepts(array $object): bool` runs when each email goes out, so someone who opts out after the send was queued is skipped and logged as *skipped*.
+- **`variables`** names a class implementing `BulkVariableProvider`. Its `variables(array $object)` returns `['vars' => [...], 'headers' => [...]]` for that recipient. The variables are added to the template's, and can replace `contact` and `unsubscribeUrl`. The headers replace Bulk Send's [unsubscribe headers](#unsubscribe-links) of the same name, compared without regard to case.
+- Both classes are built by the container, so their constructors can take services the same way.
+- Pass `overrideTo` to send every email to one address as a test. Test sends skip the dedupe and the recipient filter.
+- The Pro edition is required, as for Bulk Send.
+
+`cancelBatch($batchId)` cancels the emails of a batch that have not gone out yet: a scheduled send called off, or the rest of one in progress. It works for template batches too. Emails already sent stay sent, and Send History shows the batch as *Cancelled*.
+
+To add headers to a single email, pass `headers` (name ⇒ value) to `EmailSender::send()`, or as the last argument of `sendEmail()`. Headers the mailer writes itself (From, To, Subject and the like), invalid names, and values containing line breaks are dropped and logged.
 
 ## Permissions
 
