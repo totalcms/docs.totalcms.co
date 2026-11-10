@@ -431,6 +431,10 @@
                 "slug": "forms/patterns"
             },
             {
+                "label": "Public Uploads",
+                "slug": "forms/public-uploads"
+            },
+            {
                 "label": "Report Form",
                 "slug": "forms/report"
             },
@@ -627,6 +631,10 @@
                     {
                         "label": "Algolia Search",
                         "slug": "extensions/algolia-search"
+                    },
+                    {
+                        "label": "Client Help",
+                        "slug": "extensions/client-help"
                     },
                     {
                         "label": "Geo Redirect",

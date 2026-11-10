@@ -316,9 +316,13 @@ Choose where Total CMS stores your content. This directory is **separate from th
 
 | Option | Path | When to choose |
 |---|---|---|
-| Document Root | `<docroot>/tcms-data` | Simplest. Works on every host |
-| Above Document Root | `<parent>/tcms-data` | Recommended for production — keeps content outside the web tree |
+| Above Document Root | `<parent>/tcms-data` | Recommended. Keeps content outside the web tree |
+| Document Root | `<docroot>/tcms-data` | Works on every host, for when the folder above is blocked |
 | Custom Path | Any absolute path | When the defaults don't fit your hosting setup |
+
+The wizard tests whether it can write above the document root. If it can, that option is preselected. If not, it preselects Document Root, so accepting the default always works.
+
+> **Several sites side by side:** when sites sit next to each other, such as `/home/you/one.com` and `/home/you/two.com`, the folder above each document root is the same, `/home/you/tcms-data`. A second site finds the first site's data and uses it, including its users, settings and templates, and it skips this wizard. To keep sites separate, set a different [`datadir`](docs/operations/configuration) in each site's `tcms.php` before opening the second site.
 
 If the data directory ends up inside your docroot, T3 drops an `.htaccess` in it that blocks direct web access.
 
@@ -765,6 +769,7 @@ The schema that objects in this collection conform to. Determines available fiel
 
 **Built-in schemas:**
 - `blog` - Blog posts with title, content, date, author
+- `blogdown` - The `blog` schema with `content`, `summary` and `extra` stored as Markdown. Print them with the `|markdown` filter. Needs the Standard edition, like `blog`
 - `image` - Single images with metadata
 - `gallery` - Image galleries
 - `file` - File uploads
@@ -1085,6 +1090,7 @@ Operations that unauthenticated users can perform on this collection via the API
 - `create` without authentication can lead to spam; [`requireBotProtection`](#requirebotprotection) turns naive bots away
 - `update` and `delete` are rarely appropriate for public access
 - Consider rate limiting for public endpoints
+- A public file drop is not a collection operation either: set `publicUpload` on the depot property instead, so visitors can add files and do nothing else. See [Public Uploads](docs/forms/public-uploads)
 - Public counters (likes, "was this helpful") are not a collection operation: set `publicIncrement: true` on the number field instead — see [Number and Range Fields](docs/fields/number-range)
 
 **Common patterns:**
@@ -2788,7 +2794,7 @@ A collection can publish its objects as an RSS feed at:
 
 The feed is **off by default**. A collection publishes one only when **Publish RSS Feed** is turned on in its settings. For every other collection the URL returns 404, the same as for a collection that does not exist.
 
-Collections created from the `blog` and `feed` schemas are the exception: they are created with the feed already on.
+Collections created from the `blog`, `blogdown` and `feed` schemas are the exception: they are created with the feed already on.
 
 ## Configuring a Collection
 
@@ -5801,6 +5807,8 @@ If a field sets both, `onUpdate` wins: the date is re-stamped on every save.
 
 ## How a Deck Is Stored
 
+Every item needs an ID. You don't have to type one: a new item in the admin gets an ID like `item_a1b2c3d`, and so does an item sent to the deck API without an `id`. To choose the format, give the item schema's `id` property an [autogen rule](docs/fields/id). IDs of items you've already saved never change. The generated ID also becomes the item's label, so set a [`deckItemLabel`](#deck-item-label) to show something more useful.
+
 Read this first if you are writing deck data by hand — in a JumpStart file, through
 the API, or from a script. The admin handles all of this for you; these rules only
 surface when you author the JSON yourself.
@@ -6143,6 +6151,10 @@ For depot (multiple file) fields, the setting works the same way:
 }
 ```
 
+### Public Uploads
+
+To let visitors without an account send files to a depot from a public page, add a `publicUpload` setting to the depot property and use `cms.form.depotDrop`. See [Public Uploads](docs/forms/public-uploads).
+
 ### Important Notes
 
 - **Existing Files:** This setting only affects the default for new uploads. Existing files retain their current `protected` value.
@@ -6309,7 +6321,7 @@ Generates: `my-title-01`, `another-title-02`, etc.
 
 The OID counter automatically increments each time a new object is created in the collection, ensuring unique sequential IDs.
 
-> **Note:** `${oid}` is only supported for collection object IDs. It is not available for deck item IDs. Use `${uuid}` or `${uid}` for auto-generated deck item IDs instead.
+> **Note:** `${oid}` is only supported for collection object IDs. It is not available for deck item IDs. Use `${uuid}` or `${uid}` for auto-generated deck item IDs instead. A deck item schema with no autogen rule uses `item_${uid}`.
 
 ## Date-Based ID Examples
 
@@ -7576,6 +7588,12 @@ When a field contains any of these, it opens in source mode with a notice, and n
 HTML inside a code block or inline code is not affected. It is kept as written in both modes. To write about a tag in running text, put it in inline code (`` `<div>` ``); a bare `<div>` typed in the visual editor is saved as raw HTML.
 
 The visual editor also writes HTML entities as plain characters when you edit: `&amp;` becomes `&`, and `&#169;` becomes `©`.
+
+## A blog in Markdown
+
+The reserved `blogdown` schema is the `blog` schema with `content`, `summary` and `extra` as `styledmarkdown` fields. Choose it when you create a collection. It needs the Standard edition, the same as `blog`.
+
+Moving a collection from `blog` to `blogdown` doesn't convert posts that already exist, and templates need the `|markdown` filter on all three fields, `summary` included. RSS feeds convert the Markdown for you.
 
 ## Images and files
 
@@ -9729,6 +9747,17 @@ Without `--yes` or `--structure-only`, the command lists the collections that ho
 
 - The project, minus `vendor/`, `cache/`, `tmp/`, `logs/`, `composer.lock`, `.git/`, `node_modules/` and `.cache/` image folders.
 - `tcms-data/` at the project root, with every collection, schema, page and object.
+
+To leave out more, such as design notes, seed files or backups of the site, list them in a `.starterignore` file at the project root. Each line names a path from the project root, and `*` matches within one folder. Lines starting with `#` are comments:
+
+```text
+# Kept for building the site, not part of the starter
+snapshots/
+seed/
+bin/video-*.sh
+```
+
+The `.starterignore` file itself is never copied.
 - From `tcms-data/.system/`, only the settings, extension state and settings, access groups and the migration record. Everything else there is runtime state or a credential: the site key, API keys, OAuth keys and clients, sessions, logs, backups, the job queue and the setup state.
 
 ### What Is Changed
@@ -10020,7 +10049,7 @@ Asset rebuilds (CSS, JS) do not trigger a reload — Vite already handles that f
 
 ### Why Dev Mode is the gate
 
-Twig caches its rendered output by default. Without Dev Mode, reloading the browser would just show the same stale page — the feature only does useful work when caching is bypassed. Tying it to Dev Mode also means there's a single switch (`Admin > Cache > Dev Mode`) for "I'm actively developing right now" instead of two overlapping toggles.
+A saved template reaches the next request with or without Dev Mode, so reloading the browser by hand always shows your change. Tying live reload to Dev Mode means there's a single switch (`Admin > Cache > Dev Mode`) for "I'm actively developing right now" instead of two overlapping toggles.
 
 With Dev Mode off, the script is not injected, the SSE endpoint returns 403, and the feature is fully dormant.
 
@@ -17347,6 +17376,7 @@ Each tag has an internal version counter. A fragment's storage key embeds the cu
 
 - Fragments are stored in the normal Total CMS cache (APCu → Redis → Memcached → filesystem) and are wiped by any global cache clear (devmode, `/api/emergency/cache/clear`).
 - Caching is skipped automatically in **devmode** so you always see fresh output while editing.
+- Saving a template does not clear its `{% cache %}` blocks. With Development Mode off, a cached block keeps showing its old output until its `ttl` runs out, or until you clear the cache.
 - Set `cache.fragments` to `false` in config to disable the tag globally; `cache.fragmentTtl` sets the default lifetime.
 - If a cache backend errors, the block falls back to a live render — it never breaks the page.
 
@@ -24187,7 +24217,7 @@ All form functionality in Total CMS is accessed through the `cms.form` object:
 {# Access form methods through cms.form #}
 {{ cms.form.blog() }}
 {{ cms.form.text('my-text-id') }}
-{{ cms.form.builder('mycollection').build() }}
+{{ cms.form.builder('mycollection') }}
 ```
 
 **Note:** The old method of importing form macros (`{% import "totalform.twig" as form %}`) is deprecated. Always use `cms.form` for accessing form functionality.
@@ -24283,6 +24313,7 @@ Total CMS provides ready-to-use forms for standard collection types:
 {{ cms.form.url(id, formSettings = {}, fieldSettings = {}) }}
 {{ cms.form.file(id, formSettings = {}, fieldSettings = {}) }}
 {{ cms.form.depot(id, formSettings = {}, fieldSettings = {}) }}
+{{ cms.form.depotDrop(id, formSettings = {}, fieldSettings = {}) }}
 {{ cms.form.gallery(id, formSettings = {}, fieldSettings = {}) }}
 
 {# Feed form #}
@@ -24295,14 +24326,29 @@ Total CMS provides ready-to-use forms for standard collection types:
 
 The form builder provides the most flexibility for creating custom forms.
 
+## One-Line Forms
+
+Print the builder on its own and it builds the whole form from the collection's schema, with a save button:
+
+```twig
+{{ cms.form.builder('contact', {addOnly: true, botProtection: true}) }}
+```
+
+- Every field in the schema appears, in the schema's layout. Add `save: 'Send it'` to change the button label, or `save: false` to remove the button. An `autosave` form has no button.
+- Fields a visitor can't set are left out. A `register: true` form leaves out protected fields such as `groups` and `active`.
+- `.build()` does the same thing, so `{{ cms.form.builder('contact').build() }}` is the same form.
+
+To choose the fields yourself, add them with `addField()`, as shown next.
+
 ## Basic Usage
 
 > A form on a public page needs the admin asset helpers in the layout for its script and styles — see [What a public form needs](docs/forms/overview#what-a-public-form-needs).
 
+When you add fields yourself, or pass your own markup to `build()`, the form shows only what you gave it. It has a save button only if you set `save`:
 
 ```twig
 {# Create a form builder instance #}
-{% set form = cms.form.builder('mycollection') %}
+{% set form = cms.form.builder('mycollection', {save: 'Save'}) %}
 
 {# Add fields to the form #}
 {% do form.addField('title') %}
@@ -24969,7 +25015,7 @@ All Total CMS form methods accept `formSettings` to control form behavior, appea
     class      : 'custom-form',    # CSS classes for form (string, default: '')
     buildError : 'Save failed',    # Error message to display (string, default: '')
     helpStyle  : 'popup',          # Help text style : 'popup', etc. (string, default: '')
-    save       : 'Save Product',   # Save button label (string, default: '')
+    save       : 'Save Product',   # Save button label (string). Default: a Save button on a one-line form, none when you add fields yourself
     delete     : 'Delete Product', # Delete button label (string, default: '')
     formType   : 'object',         # Form type : 'collection', 'schema', 'object' (string, default: '')
     schema     : 'product',        # Schema name to use (string, default: '')
@@ -25588,6 +25634,202 @@ they accept.
 ```
 patterns.passwordMinLength(8)  # Minimum password length
 ```
+
+---
+
+## Public Uploads
+
+A public upload form lets a visitor with no account drop files into a depot on your site. The visitor sends files and sees nothing that is already there: no file list, no way to delete, rename or replace anything. You decide the file types, the sizes, and the folder the files land in.
+
+Use it for a client sending photos, a job application with a resume, or a drop box for a form submission.
+
+## Set it up
+
+You need three things: a depot property with a `publicUpload` setting, an object that already exists, and the form on a page.
+
+### 1. Add the setting to the depot property
+
+Put `publicUpload` under the property's `settings`:
+
+```json
+{
+	"depot": {
+		"$ref"     : "https://www.totalcms.co/schemas/properties/depot.json",
+		"label"    : "Incoming Files",
+		"settings" : {
+			"publicUpload" : {
+				"extensions" : ["pdf", "jpg", "png"],
+				"maxFileMb"  : 25,
+				"maxTotalMb" : 500,
+				"folder"     : "incoming",
+				"comments"   : true
+			}
+		}
+	}
+}
+```
+
+| Key | Default | What it does |
+|-----|---------|--------------|
+| `extensions` | none | **Required.** The file extensions visitors may send, such as `["pdf", "jpg"]`. Without at least one, public uploads stay off |
+| `maxFileMb` | `25` | The largest single file, in MB. Fractions work, such as `0.5` |
+| `maxTotalMb` | `500` | The most the whole depot may hold. Once it is full, uploads are refused |
+| `folder` | the depot root | The folder inside the depot where visitor files are stored. Visitors cannot choose another |
+| `comments` | `false` | Shows a comment box below the drop area and saves the comment on each file |
+
+MB here means MiB (1 MB is 1,048,576 bytes).
+
+The collection's `publicOperations` do not change, and you do not open `update` or `read` to the public. No other property opens up, but every object in the collection does: anyone holding a form token from any page of that collection can upload to any of its objects. Use a dedicated collection for uploads, so that objects you never put a form on stay out of reach.
+
+A collection with an `ownerProperty` takes no public uploads. The setting does nothing there: the depot stays closed to visitors like any other, and their uploads are refused. Use a collection without an owner.
+
+### 2. Create the object first
+
+A visitor can only add files to an object that already exists. Create it in the admin, or with an API call or automation, before the page goes live. A request for an object that does not exist is answered with a 404, so a visitor cannot create objects.
+
+### 3. Add the form to your page
+
+```twig
+{{ cms.form.depotDrop('inbox', {collection: 'dropbox'}) }}
+```
+
+The first argument is the ID of the object, here `inbox`. The `collection` form setting names its collection. The form uses the property named `depot` unless you pass another one with `property`:
+
+```twig
+{{ cms.form.depotDrop('inbox', {collection: 'dropbox', property: 'files'}) }}
+```
+
+The form reads the types, the size limit and the comment setting from your `publicUpload` setting, so the visitor sees the right limits before they send anything.
+
+## What a visitor sees
+
+- A drop area that accepts the file types you listed.
+- With `comments` on, a comment box and a **Send Files** button. The files wait until the visitor presses the button, and one comment is saved on every file in that batch.
+- With a [tag menu](#let-visitors-pick-a-tag), the same **Send Files** button.
+- With neither, files upload as soon as they are dropped.
+- A message when a file is too big or is the wrong type.
+- A remove button on any file that is waiting to be sent or was refused.
+
+Comments are plain text, up to 1000 characters. Anything longer is cut off.
+
+To hide the comment box on one page, add `comments: false` to the options of `cms.form.depotDrop`.
+
+## Let visitors pick a tag
+
+Add a `tags` list to the options. The visitor picks one from a menu, and it is saved on every file in that batch:
+
+```twig
+{{ cms.form.depotDrop('inbox', {collection: 'dropbox', tags: ['Invoice', 'Contract', 'Photo']}) }}
+```
+
+Each option is a string, or a `value` and `label` pair when the menu text should differ from the saved tag. The menu starts blank, and a visitor who leaves it blank sends untagged files.
+
+Use `tagLabel` and `commentLabel` to change the labels. A label you set is shown exactly as written, so a site in several languages passes its own translated text:
+
+```twig
+{{ cms.form.depotDrop('inbox', {
+	collection: 'dropbox',
+	tags: ['Invoice', 'Contract', 'Photo'],
+	tagLabel: 'Document type',
+	commentLabel: 'Notes for our team'
+}) }}
+```
+
+The options live in your template, so the server does not check the choice against them. It accepts one tag of plain text, up to 60 characters.
+
+## Files that are never accepted
+
+Some types are refused even when you list them in `extensions`. This covers every executable and script type, web pages (`html`, `htm`, `xhtml`, `shtml`), `svg` and `xml`, and the PHP variants such as `phar` and `pht`. A file is also refused when its contents turn out to be a web page, an SVG image, or PHP, whatever its name says.
+
+Every dot-separated part of a filename is checked, not only the last one. A file named `acme.com.pdf` is refused because of the `com` part. Ask visitors to rename such files, or tell them in the page copy.
+
+A name longer than 238 bytes is refused with a message that the name is too long. The stored name needs the other 17 bytes for its prefix. A name is measured as it will be stored, and that can be longer than what the visitor sent: `中` is stored as `zhong`.
+
+## Where the files go
+
+Each stored file gets a random prefix on disk, so nobody can guess its URL. The admin depot list shows the name the visitor sent, not the prefixed name.
+
+Files are stored in the `folder` you set, or the depot root when you set none.
+
+## Limits and abuse protection
+
+Visitors need no CAPTCHA. The form carries a hidden check that real browsers pass without any action.
+
+- An upload that reaches the server within 3 seconds of the page being built counts as a failed check, because a person cannot get there that fast. The form waits until then before it sends, so a visitor who drops a file right away still gets it through.
+- When the check fails, the form still answers that the upload worked, but nothing is stored.
+- A form that has been open for a long time shows a message asking the visitor to reload the page.
+- Large files are sent in 5 MiB pieces. A piece larger than 5 MiB in a multi-piece upload is refused.
+
+Each IP address is also limited. The defaults:
+
+| Limit name | Default | What it counts |
+|------------|---------|----------------|
+| `public-upload` | 20 per hour | Finished files |
+| `public-upload-starts` | 40 per hour | Multi-piece uploads that were started |
+| `public-upload-requests` | 300 per hour | Every request, including each piece |
+
+Past a limit, the visitor gets a "too many uploads" message, and the response has a `Retry-After` header giving the seconds left in that limit's window. Change a limit, or switch it off with `'max' => 0`, in `config/tcms.php`:
+
+```php
+return [
+	'rateLimits' => [
+		'public-upload'          => ['max' => 50, 'window' => 3600],
+		'public-upload-starts'   => ['max' => 80, 'window' => 3600],
+		'public-upload-requests' => ['max' => 600, 'window' => 3600],
+	],
+];
+```
+
+See [Rate Limits](docs/operations/security#rate-limits) for how windows work.
+
+## Who is limited
+
+- **Visitors with no account** get the limits on this page.
+- **A signed-in user with `update` rights** keeps the normal upload. The grant does not limit them.
+- **A signed-in member without `update` rights** gets the same limits as a visitor, with these differences: they skip the bot check, and the form treats them as signed in, so it shows no comment box and no file type or size hints. The server still applies every limit.
+
+To show the comment box to signed-in users, add `comments: true` to the options:
+
+```twig
+{{ cms.form.depotDrop('inbox', {collection: 'dropbox', comments: true}) }}
+```
+
+A member without `update` rights only has their comment saved when the `publicUpload` setting has `comments` on. A user with `update` rights always has it saved.
+
+If you turn authentication off for the whole site, the limits still apply to every caller. Uploads that carry no bot-check token are dropped.
+
+## Read this before you go live
+
+- **Uploads are not virus scanned.** Treat every file as untrusted. Do not open files from strangers on a machine you care about, and keep the `extensions` list as short as you can.
+- **Do not put the form inside `{% cache %}`.** The bot check is signed when the page is built and lasts 24 hours. A copy cached for visitors works for those 24 hours. After that, every upload shows an error asking the visitor to reload, and reloading returns the same stale page, so nobody can send files until the cache clears. A copy cached while someone was signed in has no bot check at all: every visitor's upload is dropped, and the form says it worked. This also applies to a page cached for all users by a server or CDN. Cache the rest of the page and leave the form out.
+- **The object must exist first.** See step 2 above.
+- **Saving the object keeps every stored file.** A visitor can send a file while an admin has the object open. On a depot with `publicUpload`, a whole-object save (the admin Save button, or a `PUT` to the API) keeps the depot's stored files and folders, and only applies the edits it makes to the files it lists. To take a file out, delete it: the delete button in the admin, or a `DELETE` request for the file. A `PUT` that lists fewer files, or leaves the depot out, removes nothing.
+- **Forced values are written again on each upload.** Every upload saves the object, so a [`protected: {"value": X}`](docs/schemas/validation#protected) field goes back to `X`, even if an admin changed it. If you use one to mark an object for review, each upload sends it back to review.
+- **Protect the downloads.** Stored files are not listed to visitors, but anyone who knows a file's URL can download it unless the collection requires login. Set the collection's `groups` so only the right people can download. See [File & Depot](docs/fields/file-depot) and [Collection Settings](docs/collections/settings).
+- **Escape what you print.** Twig autoescape is off in Total CMS. A comment is anonymous text from a stranger, and the original file name is too. If a template prints `{{ file.comments }}` or `{{ file.download }}` on a page, write `{{ file.comments|e }}` and `{{ file.download|e }}`. See [Template Output Escaping](docs/operations/security#template-output-escaping-twig).
+
+## Getting notified
+
+Each stored file saves the object, which fires the `object.updated` event once for that file, with its comment and download name already in place. A file sent in pieces fires it once, when the last piece lands. An [event Automation](docs/automations/triggers) can email you when files arrive.
+
+1. Create a [Mailer](docs/notifications/mailer) template with the ID `new-upload`. Send it to your own address, fixed in the template, and use `{{ data.id }}` in the body.
+2. Create an automation with an `event` trigger: event `object.updated`, collection `dropbox`.
+3. Use this handler:
+
+```php
+<?php
+
+return function ($ctx) {
+    $ctx->mailer->sendEmail('new-upload', [
+        'collection' => $ctx->event['collection'],
+        'id'         => $ctx->event['id'],
+    ]);
+
+    return ['notified' => $ctx->event['id']];
+};
+```
+
+Events are processed on the next `automations:process` tick, so the email can arrive a short time after the upload. `object.updated` also fires when you edit the object yourself, so the email goes out for those saves as well.
 
 ---
 
@@ -26299,7 +26541,7 @@ Admins see alerts on the home whenever something needs them. Each one links to w
 | Alert | What to do |
 |---|---|
 | The license is invalid or expired | Open the License Manager |
-| **Email is not set up** | No **From** address is set under [Settings → SMTP](docs/notifications/mailer#setting-up-smtp), so no email can be sent — including the password reset email, which would leave a forgotten admin password with no way back in. |
+| **Email is not set up** | No **Username** is set under [Settings → SMTP](docs/notifications/mailer#setting-up-smtp), so email hasn't been set up and can't be sent — including the password reset email, which would leave a forgotten admin password with no way back in. |
 | The job queue is stalled | Schedule `tcms jobs:process`, or the [`/cron/jobs` URL](docs/operations/cron-urls) |
 | An extension failed to load | Open Extensions |
 | PHP's upload limits are below one upload chunk | Raise `post_max_size` and `upload_max_filesize` to at least 6 MB |
@@ -32626,7 +32868,7 @@ Paths are builder-relative and carry no `.twig` extension, exactly as `list_temp
 Every response reports where templates are actually edited on this install:
 
 - `git_managed: false` — templates live in `tcms-data/builder/` and are edited in the Site Builder admin UI.
-- `git_managed: true` — the project has a `builder/` directory, so templates are source-controlled and read-only to the admin UI *and* MCP alike. The git repository is the only write path. See [Site Builder](docs/site-builder/overview).
+- `git_managed: true` — the project has a `builder/` directory, so templates are source-controlled and read-only to the admin UI *and* MCP alike, except that the admin UI can edit them when `env` is `dev`. MCP never can. See [Site Builder](docs/site-builder/overview).
 
 `get_template` additionally reports the `layer` the file resolved from — `project` (git-managed source of truth), `data` (admin-edited, in `tcms-data`), or `built-in` (shipped default) — so an agent knows which file it just read.
 
@@ -33088,6 +33330,8 @@ With an API key:
     }
 }
 ```
+
+Cursor also reads the Total CMS agent skill from `.claude/skills/`, so a project needs no separate Cursor rules. Composer installs get the skill automatically. On a zip install, run `skill:install` by hand (see [CLI](docs/extensions/cli)).
 
 ## VS Code
 
@@ -35402,6 +35646,8 @@ public function register(ExtensionContext $context): void
 
 **Capability:** `admin:nav`
 
+The `icon` field takes raw SVG markup, or a stock admin icon by its CSS variable, such as `var(--icon-help)`.
+
 The `priority` field controls ordering (lower numbers appear first). The `permission` field controls visibility (`admin` = admin users only).
 
 ## Dashboard Widgets
@@ -36668,6 +36914,18 @@ The checks run in the command line's PHP, which is not the one serving pages: th
 
 ---
 
+### `setup:admin`
+
+Create the first admin account and mark setup finished, so the site opens ready to sign in instead of in the setup wizard. Use it when a script or a tool creates sites, such as Total CMS Studio.
+
+```bash
+printf '%s\n' "$PASSWORD" | tcms setup:admin --email=you@example.com --name="Your Name" --password-stdin
+```
+
+The password is read from the first line of stdin and is never an option, so it stays out of the process list and your shell history. It needs at least 8 characters. `--name` defaults to `Admin`.
+
+The command only makes the *first* admin. When the site already has one, it changes nothing and exits **1** with "This site already has an admin account." It also exits 1 for an invalid email or a short password. With `--json` it prints `{"created": true, "email": "…", "name": "…"}` on success and `{"error": "…"}` otherwise.
+
 ## Schema Commands
 
 ### `schema:list`
@@ -37802,7 +38060,7 @@ Only an extension in `tcms-data/extensions/` can be removed this way. A bundled 
 
 ### `skill:install`
 
-Install or refresh the bundled Total CMS agent skill into `.claude/skills/totalcms/`, so Claude Code and other coding agents pick up the conventions that ship with your version of the CMS.
+Install or refresh the bundled Total CMS agent skill into `.claude/skills/totalcms/`, so Claude Code, Cursor and other coding agents pick up the conventions that ship with your version of the CMS.
 
 ```bash
 tcms skill:install
@@ -37897,7 +38155,7 @@ Add to `~/.claude/mcp.json`:
 
 ### Cursor
 
-Add to your Cursor MCP settings (Settings > MCP Servers):
+Add to `.cursor/mcp.json` in your project, or to `~/.cursor/mcp.json` to use it in all projects:
 
 ```json
 {
@@ -38034,6 +38292,7 @@ This keeps core lean for sites that don't need a particular feature, while still
 |-----------|-------------|------|
 | `totalcms/ab-split` | Render an alternate page template at the same URL for a percentage of visitors (A/B testing). | [A/B Split →](docs/extensions/ab-split) |
 | `totalcms/algolia-search` | Pluggable search provider backed by Algolia. Routes MCP search tools through Algolia's hosted keyword + neural search. Pro edition. | [Algolia Search →](docs/extensions/algolia-search) |
+| `totalcms/client-help` | Write how-tos and notes for your client and show them only inside their admin, in a help area that matches the built-in docs. Standard edition. | [Client Help →](docs/extensions/client-help) |
 | `totalcms/docs` | Exposes this install's own documentation to AI agents as `docs_search`, `docs_get`, and `docs_lookup` MCP tools. Enabled by default (see below); tools stay `authenticated`-only unless you opt in to public exposure. | [Documentation Tools →](docs/mcp/docs-tools) |
 | `totalcms/geo-redirect` | Redirect visitors based on their country. Reads from CDN-injected headers (Cloudflare, Vercel, generic). Useful for compliance redirects and regional landing pages. | [Geo Redirect →](docs/extensions/geo-redirect) |
 | `totalcms/maintenance` | Per-page 503 maintenance mode. Take individual pages offline with a custom message while the rest of the site stays up. Admins bypass automatically. | [Maintenance →](docs/extensions/maintenance) |
@@ -38354,6 +38613,94 @@ Source: `resources/extensions/totalcms/algolia-search/`
 
 ---
 
+## Client Help (Bundled Extension)
+
+Write how-tos and notes for your client, and show them only inside their admin. The client gets a Help item in the admin menu, with featured articles on a home page and a sidebar organized by category. It uses the same layout as the built-in docs.
+
+The extension ships with Total CMS and needs the Standard edition or higher.
+
+## Turn it on
+
+Go to **Extensions** and enable **Client Help**. It creates a collection called **Client Help** (id `client-help`) using the [`blogdown` schema](docs/fields/styled-markdown), so you write in Markdown.
+
+The collection has no RSS feed, no sitemap entry, no URL and no public API access. These are defaults, so changing them in the collection's settings would expose the posts. Turning the extension off leaves your posts in place.
+
+## Write a post
+
+Add posts to the **Client Help** collection like any other collection.
+
+- **Categories** build the sidebar. A post in two categories appears in both. A post with no category appears under **General**.
+- **Featured** puts the post on the help home page as a card, with its image if it has one.
+- **Draft** keeps a post out of the help area until it is ready, for admins as well.
+
+The sidebar sorts categories by name and posts by title.
+
+Every other field is optional, and a field you leave empty doesn't appear:
+
+| Field | Where it shows |
+|---|---|
+| Author and Date | A line under the title |
+| Image | Below that line, and on the home page card |
+| Summary | Above the content, and on the home page card |
+| Content | The article |
+| Media | After the content. Video and audio URLs get a player, and any other URL becomes a link |
+| Gallery | After the media, as thumbnails that open the full image |
+| Extra Content | After the gallery. Its headings join **On this page** |
+| Tags | Labels at the end of the article |
+| Updated Date | **Last updated** at the bottom of the article |
+
+Created Date isn't shown, because Date is the one readers see. The Date field fills in today's date by default.
+
+Prefer styled text? Change the collection's schema to `blog`. The help pages check the field type and display either one. Existing posts are not converted.
+
+## Hide the collection from clients
+
+Help pages read posts on the server, so a client needs access to the extension but not to the collection. Hiding the collection is a step you take once:
+
+1. Go to **Access Groups** and open the group your client is in.
+2. Under collections, turn off access to all collections and allow only the ones your client should manage. Leave out **Client Help**.
+3. Leave the extension allowed. Every shipped group allows all extensions.
+
+Until you do this, the shipped groups can reach the collection directly: `editor` can edit posts, and `viewer` and `default` can read them.
+
+Access groups have no way to exclude one collection, which is why the group needs a list of allowed collections. To hide help from a group, remove the extension from that group.
+
+## Home page note
+
+The **Home Page Note** setting appears at the top of the help home. It is Twig, so you can use anything in `cms`:
+
+```twig
+Stuck on something? Text me any time.
+
+{{ cms.collection.objects('blog')|length }} posts on your site so far.
+```
+
+If the note has an error, the page still loads. Admins see the error in place of the note, and clients see nothing. Only admins can edit extension settings.
+
+## Custom CSS and HTML
+
+**Custom CSS** and **Custom HTML** are added to the help pages only. Custom HTML goes at the end of the page content.
+
+The **Nav Label** setting renames the help area. It defaults to **Help**, and you can change it if that gets confused with the built-in docs.
+
+## Images and privacy
+
+Images and files in help posts are public by URL, like all Total CMS images. Don't put anything sensitive in a screenshot.
+
+If your site uses Algolia search, saved posts are indexed there like other content.
+
+## Reuse your posts on another site
+
+Copy the folder, then rebuild the index:
+
+1. Enable Client Help on the new site.
+2. Copy `tcms-data/client-help/` from the old site to the same place on the new site.
+3. Run `tcms repair:index client-help`.
+
+Images come across with the folder. Settings don't, so copy the note and any custom CSS and HTML by hand. `tcms push` and `tcms pull` don't carry this collection.
+
+---
+
 ## Geo Redirect (Bundled Extension)
 
 `totalcms/geo-redirect` — bundled with Total CMS. Adds a `geo-redirect` [page feature](docs/site-builder/overview#page-features-middleware) that 302s visitors based on their country. The country is read from CDN-injected request headers (Cloudflare, Vercel, generic), so there's no IP database to maintain — your reverse proxy already knows where the visitor is.
@@ -38655,7 +39002,7 @@ Before 3.6 the two schemas were reserved schemas in core and the call was `cms.f
 
 ## Protect (Bundled Extension)
 
-`totalcms/protect` — bundled with Total CMS. Adds a `protect` [page feature](docs/site-builder/overview#page-features-middleware) that gates a page behind a **numeric passcode**. Visitors see a simple code-entry form; once they enter the correct passcode, a cookie remembers them for 7 days. No login required, no accounts — just a shareable code.
+`totalcms/protect` — bundled with Total CMS. Adds a `protect` [page feature](docs/site-builder/overview#page-features-middleware) that gates a page behind a **passcode**, usually a short number. Visitors see a simple code-entry form; once they enter the correct passcode, a cookie remembers them for 7 days. No login required, no accounts — just a shareable code.
 
 ## Use cases
 
@@ -38680,13 +39027,38 @@ Before 3.6 the two schemas were reserved schemas in core and the call was `cms.f
 
 > **Operators-only mode.** If `protect` is attached but no passcode is configured anywhere (no extension default *and* no page override), the page **fails closed**: logged-in operators still see it, but the public gets the prompt with no valid code to enter. Set a passcode to let the public in.
 
+## Stacks and other site builders
+
+A page built in Stacks has no Site Builder record to tick `protect` on, and Apache serves it without going through the T3 routes. Drop the **Protect** stack onto the page instead, or call the Twig function yourself.
+
+> **Not using Stacks?** Nothing here is specific to Stacks. Any PHP page that renders its Twig through the [PHP API](docs/apis/php-api), whether another website builder made it or you wrote it by hand, can call `protect_page()` the same way. Where these notes mention the CMS Core stack, read the `new TotalCMS\TotalCMS()` line at the top of the page and the `processBufferMacros()` call at the end.
+
+```twig
+{{ protect_page() }}
+
+{{ protect_page({passcode: "8675", promptTitle: "Client Preview", protectScope: "client-preview"}) }}
+```
+
+This is the same gate as the page feature. Called with no options it uses the Default Passcode you saved in the extension's settings, and the options are the [Page Data keys](#per-page-configuration) below. Each page is locked on its own, keyed by its URL, unless it shares a `protectScope`. Site-wide mode (`globalScope`) applies here too.
+
+- **Enable the extension first.** Twig can't find `protect_page()` otherwise, so the page shows an error rather than its content.
+- **Enabled Protect before 3.6.8?** New extension permissions start switched off on an update, so `protect_page()` stays unavailable until you turn on **Twig Functions** under **Admin → Extensions → Protect**.
+- **The page must be a `.php` page with the CMS Core stack on it.** A plain `.html` page never reaches T3.
+- **Stacks preview skips the gate**, so you can keep designing. Check the prompt on the published page.
+- **Logged in to the admin? You won't see the prompt.** Operators skip it here too, so check the page in a private window.
+- **Files aren't covered.** Images and downloads on the page stay reachable by their direct URL.
+- **A Twig error on the page shows the error alone.** A page with `protect_page()` on it never falls back to printing its source the way other Stacks pages do, because the gate didn't get to finish. If the gate itself can't run, the page answers 500 instead of rendering.
+- **Keep the page's Twig unflushed.** Sending the page head early (the optional time-to-first-byte lines in the Stacks page template, or [Reducing Time to First Byte](docs/apis/php-api#reducing-time-to-first-byte) on a hand-built page) means the prompt can't replace the page or set its cookie.
+
+The function also works in a Site Builder template, for when the decision to gate depends on the data.
+
 ## Extension settings (defaults)
 
 Set in **Admin → Extensions → Protect**. These apply to every page with `protect` attached, unless the page overrides them in its Page Data.
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `passcode` | string | `1234` | **Required.** The numeric passcode visitors enter. Change it from the shipped default before going live. |
+| `passcode` | string | none | **Required.** The passcode visitors enter, usually digits. Nothing is in effect until you save one, so a page with no passcode of its own stays operators-only until then. |
 | `promptTitle` | string | `"Enter passcode to view"` | Heading shown on the passcode form. |
 | `cookieHours` | number | `168` | How long a visitor stays unlocked after entering the passcode, in hours (168 = 7 days). Set to `0` for a session cookie that clears when the browser closes. |
 | `globalScope` | toggle | `false` | **Site-wide passcode.** Lock the whole site behind one shared passcode and a single unlock cookie instead of per-page locking. When on, every protected page uses the Default Passcode and per-page passcodes/`protectScope` groups are ignored — enter the code once and the whole site unlocks. |
@@ -38697,7 +39069,7 @@ Optionally override the defaults inside the page's **Page Data** JSON field. Bot
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `passcode` | string | extension default | The numeric passcode for this page. Empty/missing → falls back to the extension default; if that's also empty the page is operators-only (fails closed). |
+| `passcode` | string | extension default | The passcode for this page, usually digits. Empty/missing → falls back to the extension default; if that's also empty the page is operators-only (fails closed). |
 | `promptTitle` | string | extension default | Heading shown on the passcode form. Customize per page for context ("Client Preview", "Early Access", etc.). |
 | `protectScope` | string | (page id) | Shared unlock group. Pages with the same `protectScope` **and** the same passcode share one cookie — enter the code on any of them and the whole group unlocks. Leave it unset to gate each page independently. |
 
@@ -38721,7 +39093,7 @@ To gate the **entire site** behind one code without tagging each page, turn on t
 4. **GET with valid cookie** → middleware returns null, page renders normally.
 5. **POST with wrong passcode** → re-renders the form with an "Incorrect passcode" error.
 
-The form uses `inputmode="numeric"` so mobile devices show a number pad.
+For an all-digit passcode the form uses `inputmode="numeric"`, so phones show a number pad. A passcode with letters or symbols works too; the form then takes any text.
 
 ## Cookie details
 
@@ -38781,6 +39153,8 @@ When disabled, `protect` disappears from the page-features picker. Pages that al
 ## Implementation notes
 
 The middleware lives at `resources/extensions/totalcms/protect/ProtectMiddleware.php`. It reads page data and request cookies/body and renders a self-contained HTML form. Its one runtime dependency is an injected `isAdmin` closure (wired in `Extension.php` to `AccessManager::userLoggedIn`) so logged-in operators bypass the gate.
+
+`protect_page()` calls the same class through `gate()`, and answers by throwing a `PageResponseException` that carries the prompt. `PageRouterMiddleware` returns that response on a Site Builder page, and `TotalCMS::processBufferMacros()` sends it in place of a Stacks page.
 
 Source: `resources/extensions/totalcms/protect/`
 
@@ -40540,7 +40914,7 @@ Now commit `./builder` — there's nothing special to ignore. `tcms-data/` stays
 |---|---|---|
 | Templates live in | `tcms-data/builder/` | `./builder/` (committed) |
 | Editing | In the dashboard | In your IDE → commit → deploy |
-| Dashboard editor | Editable | **Read-only** ("Editing Disabled") in every environment |
+| Dashboard editor | Editable | **Read-only** ("Editing Disabled"), except when `env` is `dev` |
 | Template sync | Via the Sync Manager | **Disabled** — templates travel by git |
 
 ### Read hierarchy
@@ -40555,11 +40929,19 @@ So your committed templates always win, and you can extend the shipped `layouts/
 
 ### The dashboard goes read-only
 
-Once `./builder` exists, the template and builder editors show an **"Editing Disabled"** notice and hide Save/Delete — in *every* environment, including local dev. This is deliberate: the repo is the single source of truth, so there's never a second, conflicting way to change a template. Edit the files in your editor and reload to preview.
+Once `./builder` exists, the template and builder editors show an **"Editing Disabled"** notice and hide Save/Delete. This keeps a server's files clean, so a deploy's `git pull` can't conflict with an edit made on the server.
+
+### Editing in the dashboard during development
+
+When `env` is `dev` (`$settings['env'] = 'dev';`), the dashboard editor stays editable. A save writes to `./builder`, the same file your code editor would change, so it appears in `git status` as an uncommitted change. Commit it to deploy it.
+
+Only `dev` unlocks the editor. Production, staging and any site that hasn't set `env` stay read-only, so make sure `env` isn't `dev` on a server you deploy to. Sync and the Template Designer still skip git-managed templates in `dev`.
+
+The lock also covers other template writes. In `dev`, a JumpStart import and `tcms builder:history` restores write to `./builder` too. Check `git status` after running them.
 
 ## Deploying
 
-Because templates are committed and the dashboard can't write them, your production working tree stays clean — a deploy webhook's `git pull` never hits an uncommitted-changes conflict:
+Because templates are committed and the dashboard can't write them on a server, your production working tree stays clean — a deploy webhook's `git pull` never hits an uncommitted-changes conflict:
 
 ```bash
 cd /var/www/your-site
@@ -40592,7 +40974,7 @@ Super-admins can temporarily act as any other user — operator or front-end mem
 
 Impersonation is a full session swap. While active, every request — reads **and writes** — executes as the target user. If you save, delete, or modify content while impersonating, those changes are attributed to the target, not to you. Use this feature carefully.
 
-A fixed banner appears at the top of every page (admin and front-end) while impersonation is active. Click **Return to your account** in that banner to end the session immediately and return to your own account.
+A fixed badge showing the user's name appears at the bottom of every page (admin and front-end) while impersonation is active. Click the **×** on the badge to end the session immediately and return to your own account.
 
 ## Starting Impersonation
 
@@ -40615,7 +40997,7 @@ Total CMS redirects you automatically based on the target's type:
 
 ## Ending Impersonation
 
-Click **Return to your account** in the fixed banner. This works from any page — admin or front-end — and is the only way to end the session. The banner's return action is CSRF-protected.
+Click the **×** on the fixed badge. This works from any page — admin or front-end — and is the only way to end the session. The banner's return action is CSRF-protected.
 
 ## Audit Trail
 

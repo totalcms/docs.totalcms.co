@@ -75,6 +75,8 @@ With an API key:
 }
 ```
 
+Cursor also reads the Total CMS agent skill from `.claude/skills/`, so a project needs no separate Cursor rules. Composer installs get the skill automatically. On a zip install, run `skill:install` by hand (see [CLI](/extensions/cli)).
+
 ## VS Code
 
 From the command line:

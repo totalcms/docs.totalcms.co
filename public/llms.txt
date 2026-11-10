@@ -149,6 +149,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Field Settings](https://docs.totalcms.co/forms/fields): Image validation rules, date field natural language defaults, and ID auto-generation configuration.
 - [Form Options](https://docs.totalcms.co/forms/options): General form options, behavior settings, actions, CSS classes, state management, and status banner configuration.
 - [Validation Patterns](https://docs.totalcms.co/forms/patterns): Built-in validation patterns for form fields including postal codes, phone numbers, and dynamic patterns.
+- [Public Uploads](https://docs.totalcms.co/forms/public-uploads): Let visitors without an account send files to a depot from a public page with cms.form.depotDrop: the publicUpload setting, file types, size limits, comments, rate limits, and what to know before you turn it on.
 - [Report Form](https://docs.totalcms.co/forms/report): Export collection data as CSV or JSON reports with field selection and filtering.
 - [Specialized Forms](https://docs.totalcms.co/forms/specialized): Schema forms, collection forms, import forms, job queue management, and factory forms.
 
@@ -205,10 +206,11 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Bundled Overview](https://docs.totalcms.co/extensions/bundled): Bundled extensions ship with Total CMS — installed by default, managed through the same UI as user-installed extensions, but cannot be removed.
 - [A/B Split](https://docs.totalcms.co/extensions/ab-split): Render an alternate page template at the same URL for a percentage of visitors to test layout, copy, or CTA variations.
 - [Algolia Search](https://docs.totalcms.co/extensions/algolia-search): Algolia search provider for Total CMS. Routes MCP search tools through Algolia's hosted keyword and neural search instead of built-in search.
+- [Client Help](https://docs.totalcms.co/extensions/client-help): Write how-tos and notes for your client and show them inside the admin, in a help area that matches the built-in docs.
 - [Geo Redirect](https://docs.totalcms.co/extensions/geo-redirect): Redirect visitors by country using CDN-injected headers. Useful for compliance redirects, regional landing pages, and localized URLs.
 - [Maintenance](https://docs.totalcms.co/extensions/maintenance): Per-page 503 maintenance mode: take single pages offline with a custom message while the rest of the site stays up. Admins bypass it.
 - [Podcast](https://docs.totalcms.co/extensions/podcast): Host a podcast from two collections with the podcast and podcast-episode schemas, a directory-ready feed, and the podcast_feed() Twig function.
-- [Protect](https://docs.totalcms.co/extensions/protect): Gate a page behind a numeric passcode that unlocks it for the session. Useful for client previews, soft launches, and draft staging URLs.
+- [Protect](https://docs.totalcms.co/extensions/protect): Gate a page behind a passcode that unlocks it for the session. Useful for client previews, soft launches, and draft staging URLs.
 - [Pushover](https://docs.totalcms.co/extensions/pushover): Send push notifications via Pushover when forms are submitted. Supports Twig templates, image attachments, priority levels, and delivery groups.
 - [Scheduled](https://docs.totalcms.co/extensions/scheduled): Only render a builder page between set start and end times. Useful for holiday campaigns, embargoed announcements, and time-limited sales.
 - [Stock Photos](https://docs.totalcms.co/extensions/stock-photos): Search free Pixabay photos, or your own library galleries, in the object editor and drag them onto image and gallery fields. Each photo is copied into the object with its alt text and credit.
