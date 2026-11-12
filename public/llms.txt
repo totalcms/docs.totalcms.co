@@ -222,6 +222,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Backups](https://docs.totalcms.co/operations/backups): Total CMS keeps a snapshot history for every object: its state before each save and its final state on delete. List and restore them from the CLI.
 - [Configuration](https://docs.totalcms.co/operations/configuration): Configure Total CMS with the config/tcms.php bootstrap file, the deep-merge override model, real settings keys, the logger path, and reading config in Twig.
 - [Cron URLs](https://docs.totalcms.co/operations/cron-urls): Run the job queue and scheduled automations over HTTP when your host cannot run scheduled shell commands.
+- [Demo Mode](https://docs.totalcms.co/operations/demo-mode): Put a Total CMS site online as a read-only demo: anyone can open the admin without signing in, and nothing they do is saved.
 - [Deployment](https://docs.totalcms.co/operations/deployment): Deploy Total CMS to production with Git configuration, cache clearing scripts, CI/CD integration for GitHub Actions and GitLab, and troubleshooting.
 - [Filesystem](https://docs.totalcms.co/operations/filesystem): Explore the Total CMS filesystem structure including tcms-data directory, collection JSON files, object assets, indexes, and custom schema storage.
 - [Git-First Templates](https://docs.totalcms.co/operations/git-first-templates): Keep Site Builder templates in git: add a builder/ folder to your project, and the repo becomes the source of truth that you deploy with git.

@@ -6228,6 +6228,25 @@ The pattern is enforced at JSON Schema validation time (rejects raw input
 that wouldn't be a valid snake_case id even after slugification — e.g.
 identifiers starting with a digit).
 
+## Regenerate When a Toggle Turns On
+
+`regenerateOn` names another field in the same form, usually a toggle. Each
+time that field turns on, the form makes a new value from the `autogen`
+pattern. It works on any `id`-type property except the object's own `id`,
+which is locked once the object exists. A value someone typed over is kept.
+
+```json
+{
+	"autogen"      : "${uid-32}",
+	"regenerateOn" : "indexNowEnabled",
+	"readonly"     : true
+}
+```
+
+The Site SEO record uses this for its IndexNow key, so turning IndexNow on
+shows a new key straight away. The setting only acts in the admin form. Code
+that saves through the API decides the value for itself.
+
 ## Special Autogen Variables
 
 * **now** - Current timestamp in milliseconds (e.g., 1692123456789)
@@ -9764,6 +9783,7 @@ The `.starterignore` file itself is never copied.
 
 - **Users are left out.** Collections using the `auth` schema are copied empty, so the setup wizard runs for whoever installs the starter and creates their admin account.
 - **Secrets are blanked.** Every settings value whose field type is `password` or `secret` (SMTP password, sync key, extension keys) is emptied, and so is any value holding this project's path.
+- **IndexNow is turned off and its key left out** of the Site SEO record, so sites built from the starter don't share one. A site makes its own key when IndexNow is turned on.
 - **`config/tcms.php` is replaced** with a blank one, because it can hold credentials and machine-specific paths. The command lists the keys your file set, so you can move what the starter needs into the admin's Settings.
 - **`composer.json`** gets the new name and description, the `totalcms-starter` keyword, `totalcms/cms` pinned to the running minor version (`^3.6`), and a post-install script that prints next steps.
 - **`.gitignore`** tracks `tcms-data/` (the plain skeleton ignores it) but leaves out runtime files.
@@ -10122,7 +10142,7 @@ After scaffolding, every starter ships with a `/readme` page (hidden from naviga
 
 ### Minimal
 
-The simplest starting point — a single homepage with a clean layout.
+The simplest starting point — a single homepage with a warm, soft look: cream paper, rounded corners and a picture of colored shapes.
 
 **Pages:** Home
 
@@ -10138,13 +10158,17 @@ public/assets/css/
   style.css                  ← edit me (css/style.css with the Vite pipeline)
 ```
 
+**Features:**
+- A hero picture of colored shapes, stored as the `hero` object in the Images collection. Upload your own picture there.
+- Colors kept as CSS variables at the top of `style.css`
+
 **Best for:** Starting from scratch with maximum flexibility.
 
 ---
 
 ### Business
 
-A professional business website with multiple pages and a card-based layout.
+A professional business website in navy, blue and mint, with its services in a collection.
 
 **Pages:** Home, About, Services, Contact
 
@@ -10164,8 +10188,9 @@ public/assets/css/
 ```
 
 **Features:**
-- Hero section on homepage
-- Service cards in a responsive grid
+- A navy hero on the homepage, with the service cards rising into it
+- Service cards and a Services page, both read from the `services` collection in the order set on each service
+- A picture of colored shapes on each service
 - Contact form template
 - Professional navigation with dynamic page links
 
@@ -10191,17 +10216,20 @@ tcms-data/builder/
   partials/nav.twig
   partials/footer.twig
   partials/post-card.twig
+  partials/post-lead.twig
+  partials/post-row.twig
 public/assets/css/
   style.css                  ← edit me (css/style.css with the Vite pipeline)
 ```
 
 **Features:**
-- Homepage shows latest 5 posts from a `blog` collection
-- Blog index lists all posts
+- Homepage leads with the newest post and its picture, then shows the next few as cards
+- Blog index lists all posts with their pictures, ten to a page
+- Post pages with a large picture and a drop cap on the first paragraph
 - Reusable post card partial
 - Serif typography for readability
 
-**Note:** The blog starter expects a `blog` collection with the `blog` schema to exist. Create one in the admin to see posts rendered in the templates. The templates gracefully handle the case where no blog collection exists yet.
+The starter installs the `blog` collection with five sample posts, each with a photo. The templates still work, without pictures, for posts that have none.
 
 **Best for:** Personal blogs, content-focused sites, writing platforms.
 
@@ -10209,7 +10237,7 @@ public/assets/css/
 
 ### Portfolio
 
-A portfolio site for showcasing projects with a visual grid layout.
+A dark gallery site for showcasing projects, with the projects in a collection.
 
 **Pages:** Home, Work, About, Contact
 
@@ -10229,11 +10257,10 @@ public/assets/css/
 ```
 
 **Features:**
-- Featured work grid on homepage
-- Full project gallery on work page
+- The projects ticked Featured on the homepage, the first one large
+- Every project on the Work page, from the `projects` collection in display order
 - Skills tags on about page
 - Contact form
-- Subtle hover animations on project cards
 
 **Best for:** Designers, developers, agencies, creatives.
 
@@ -10295,10 +10322,14 @@ Every starter ships a `jumpstart.json` alongside its `manifest.json`. It is the 
 
 | Starter | What jumpstart.json installs |
 |---------|------------------------------|
-| `minimal` | 2 pages (Home + Getting Started) |
-| `portfolio` | 5 pages (Home, Work, About, Contact, Getting Started) |
-| `blog` | 5 pages + the reserved `blog` collection + 5 sample posts (featured + categories + tags populated) |
-| `business` | 5 pages + a `service` schema + a `services` collection + 4 sample services (Strategy, Design, Development, Ongoing Support) |
+| `minimal` | 3 pages (Home, Getting Started, 404) + the `image` collection with the home page's `hero` picture |
+| `portfolio` | 6 pages (Home, Work, About, Contact, Getting Started, 404) + a `project` schema + a `projects` collection + 6 sample projects with photos |
+| `blog` | 6 pages + the reserved `blog` collection + 5 sample posts with photos (featured + categories + tags populated) |
+| `business` | 6 pages + a `service` schema + a `services` collection + 4 sample services with pictures (Strategy, Design, Development, Ongoing Support) |
+
+The pictures are made during the import with [factory rules](docs/twig/factory): `image(1600,900)` downloads a photo from picsum.photos, and `imageShapes(1280,720,e8edff|3b5bdb|3dd6a0)` draws shapes in the starter's colors. A photo that can't be downloaded, on a server without internet access, is left out, and the pages show the post or project without it.
+
+The pages appear in the nav and the admin sidebar in the order `jumpstart.json` lists them.
 
 The import runs automatically as part of `tcms builder:init`. If it fails for any reason — schema conflict, disk error, etc. — the scaffold itself still succeeds (templates have already been copied) and you can re-run manually:
 
@@ -10344,6 +10375,8 @@ tcms starter:export ~/Developer/starter-restaurant --name=yourname/starter-resta
 ```
 
 Commit the output to its own repository and publish it on Packagist. Anyone can then install it with `composer create-project yourname/starter-restaurant mysite`, and the setup wizard creates their admin account on first visit.
+
+To let people look around the finished site before they install it, put a copy online in [demo mode](docs/operations/demo-mode): anyone can open its admin without signing in, and nothing they change is saved.
 
 ## Creating Custom Starters
 
@@ -11892,7 +11925,7 @@ What is submitted is exactly what the sitemap would list, decided by the same ru
 
 Imports count too: a CSV or JSON import that publishes a hundred posts submits their hundred URLs together when it completes. Submissions are queued, never sent during a save, and coalesced: every URL that changes between two runs of [`tcms jobs:process`](docs/extensions/cli#jobs-process) — every minute under the standard cron — goes out as one request, up to the protocol's 10,000 URLs, and a record saved five times in that window is submitted once. A rate limit or outage puts the unsent URLs back for the next run; a rejected submission is logged once under `indexnow` and dropped. Clearing the job queue discards the pending submissions with it.
 
-The key the engines verify against is generated for you the first time the form is saved with the toggle on, and served at `/{key}.txt`. It is not an API key: IndexNow has no accounts, registration or vendor credentials. The key is a token this site made up, and hosting it at that address is the whole proof that the submissions come from here. If a submission is rejected, that file being unreachable is the usual reason — a rewrite rule or a static `.txt` handler in front of PHP.
+The key the engines verify against is generated for you each time IndexNow is turned on, and served at `/{key}.txt`. A new key on every switch-on means a site copied from another, such as one built from a starter, never shares its key. Other saves keep the key. It is not an API key: IndexNow has no accounts, registration or vendor credentials. The key is a token this site made up, and hosting it at that address is the whole proof that the submissions come from here. If a submission is rejected, that file being unreachable is the usual reason — a rewrite rule or a static `.txt` handler in front of PHP.
 
 ## What Is Not Included
 
@@ -15214,6 +15247,15 @@ imageBW($width = 640, $height = 480): string
 imageBWBlur($width = 640, $height = 480, $blur = 10): string
 imageText($width = 640, $height = 480, $textSize = 200, $bgColor = 'f8f8f8', $textColor = null, $text = null): string
 imageShapes($width = 640, $height = 480, $bgColor = 'f8f8f8'): string
+```
+
+`imageShapes` draws gray shapes on the background color. Give it a palette
+instead, colors joined with `|`, to draw in color: the first color is the
+background and the shapes take the rest. Use `|` because commas separate the
+rule's arguments. Write the colors without quotes or `#`.
+
+```
+imageShapes(1280,720,f3e7dc|e07a5f|3d405b|f2cc8f)
 ```
 
 ## Gallery
@@ -23839,7 +23881,9 @@ Get the list of supported languages as a name-to-locale mapping.
 
 ### set()
 
-Set the active locale for the current request. Requires the PHP `intl` extension.
+Set the active locale for the current request. This sets dates and numbers, and also the language of Total CMS's own text for the rest of that request, including admin previews such as the Twig Playground. Dates and numbers need the PHP `intl` extension; the translated text does not.
+
+`set()` accepts `es`, `es-MX` and `es_MX`. A value that is malformed or that Total CMS ships no text for is ignored, and the page keeps its current language. Form and API messages follow the language the page was rendered in, so a page that calls `set('es')` gets Spanish messages from its forms. The forms do this by sending the page's language in an `X-Locale` header, and any API client can send the same header (`X-Locale: es`) to get Total CMS's messages in that language.
 
 ```twig
 {{ cms.locale.set('de_DE') }}
@@ -24358,6 +24402,19 @@ When you add fields yourself, or pass your own markup to `build()`, the form sho
 {# Build and render the form #}
 {{ form.build() }}
 ```
+
+### Autofill on a Public Form
+
+Fields turn the browser's autofill off by default, so the admin never fills a record with the editor's own name and address. On a form for visitors, give each field the hint its browser needs with the `autocomplete` attribute:
+
+```twig
+{% do form.addField('name', {settings: {attributes: {autocomplete: 'name'}}}) %}
+{% do form.addField('phone', {settings: {attributes: {autocomplete: 'tel'}}}) %}
+{% do form.addField('email', {settings: {attributes: {autocomplete: 'email'}}}) %}
+{% do form.addField('address', {field: 'textarea', settings: {attributes: {autocomplete: 'street-address'}}}) %}
+```
+
+Any token from the HTML standard works, such as `postal-code` or `organization`. Other attributes in `settings.attributes` are added to the field, but they never replace what Total CMS sets itself, such as its name and type. `autocomplete` is the one exception.
 
 ## Advanced Example
 
@@ -33373,6 +33430,8 @@ Anonymous callers see only what you have deliberately exposed. An API key raises
 
 Create one in **Admin → API Keys**, then supply it as an `X-API-Key` header, or paste it into the desktop extension's **API key** field at install time.
 
+For a site in Total CMS Studio, **Connect AI tools** runs `tcms mcp:local-key`, which makes an admin key that works only on Studio's server and only from your computer. Studio writes it into the project's `.mcp.json` (Claude Code), `.cursor/mcp.json` (Cursor) and `.vscode/mcp.json` (VS Code) under the server name `totalcms-local`, so it doesn't replace a `totalcms` connection to your live site. See `mcp:local-key` in the [CLI docs](docs/extensions/cli).
+
 Without a key, what an agent can reach is governed by `mcp.publicAccess` and each collection's own `mcp.access` setting. Public access is on by default, but every collection starts as admin-only, so a site exposes nothing to anonymous callers until a collection is marked public.
 
 ## If it doesn't connect
@@ -36926,6 +36985,25 @@ The password is read from the first line of stdin and is never an option, so it 
 
 The command only makes the *first* admin. When the site already has one, it changes nothing and exits **1** with "This site already has an admin account." It also exits 1 for an invalid email or a short password. With `--json` it prints `{"created": true, "email": "…", "name": "…"}` on success and `{"error": "…"}` otherwise.
 
+### `mcp:local-key`
+
+Create an admin API key for AI tools working on a site in Total CMS Studio, such as Claude Code, Cursor or VS Code. Studio runs it when you choose **Connect AI tools**.
+
+```bash
+tcms mcp:local-key
+tcms mcp:local-key --name="Claude Code" --json
+```
+
+The key can do everything an admin can, but only where all of these hold:
+
+- The web server accepts local-only keys by setting the `TCMS_LOCAL_KEYS=1` server variable. Studio's server does; a live server doesn't, so the key doesn't work there if your `tcms-data` folder is uploaded.
+- The request comes from the same computer, with no proxy in between.
+- The request names the site as `localhost`, `*.localhost` or `127.0.0.1`, so it fails through a Studio share link.
+
+Still treat the key as a secret: anyone on your computer can use it. Studio keeps it out of git by listing the config files in your `.gitignore`.
+
+Running it again replaces the local-only key with the same name, so tools that reconnect don't pile up keys. Keys you make in **Admin → API Keys** are never touched. `--name` defaults to `Local AI tools`. With `--json` it prints `{"key": "…", "id": "…", "name": "…"}`. Without it, the command prints the key and one line about where to use it. In the admin, the key shows as **This computer only**.
+
 ## Schema Commands
 
 ### `schema:list`
@@ -40452,6 +40530,93 @@ Nothing needs undoing. Point a normal cron job at the two commands at the top of
 
 ---
 
+## Demo Mode
+
+Demo mode turns a site into a showroom. Anyone can open the admin without
+signing in and look at everything: collections and their content, schemas,
+Site Builder pages and templates, settings and utilities. Nothing they do is
+saved. Use it to put a starter or a finished project online so people can see
+how the site is put together before they build their own.
+
+## Turning it on
+
+Demo mode is set in `config/tcms.php`, never in the admin, so nobody browsing
+the demo can turn it off:
+
+```php
+<?php
+
+return [
+	'demo' => [
+		'enable' => true,
+	],
+];
+```
+
+Only `true` turns it on. Remove the setting, or set it to `false`, to put the
+site back to normal.
+
+## What visitors see
+
+- **No sign-in.** Going to `/admin` opens the dashboard. Sign-in is off for
+  the whole site while demo mode is on, as if `auth.enable` were `false`, so
+  visitors see the admin as an administrator would.
+- **A banner on every admin page** saying the site is a demo and changes are
+  not saved.
+- **Forms work until Save.** A visitor can open any form and type into it.
+  Save, Delete and uploads answer with "This site is in demo mode, so saving
+  is disabled."
+- **The Log Analyzer is hidden.** The logs hold the IP addresses of the
+  people who visit, and on a public demo those are other visitors. The page,
+  its download, and its links in the menus and quick actions are all gone.
+  The Activity Log stays: it records what changed, and nothing changes.
+
+## What is refused
+
+Every request that could change something is refused, which on the web means
+every request other than `GET`, `HEAD` and `OPTIONS`. The rule is the
+request's method, not a list of pages, so it covers all of these without
+exception:
+
+- saving, deleting and uploading, in the admin and through the REST API
+- imports, JumpStart, `tcms push`, cache clears, and running jobs or
+  automations from the admin
+- the Twig Playground and the Twig Debugger, since their renders run code on
+  the server
+- the forms on the site itself, such as contact forms, registrations and
+  ratings
+- the MCP server, whose requests are all `POST`, reads included
+
+The admin's API calls get the message as JSON (`{"error": "…"}`) with a `403`,
+HTMX requests get it as a box swapped in where the result would have gone, and
+a plain form post gets the access-denied page.
+
+## What demo mode does not stop
+
+Demo mode guards the web requests. It does not change what runs on the server
+itself:
+
+- **The `tcms` CLI and cron jobs still write.** If the server runs
+  `jobs:process` or `automations:process` on a schedule, scheduled automations
+  still run. A demo usually has no reason to run them, so leave the cron lines
+  out.
+- **Reads still have side effects.** Image renders fill the image cache,
+  visits open sessions, and the [emergency cache URLs](docs/operations/security)
+  work as on any site. None of these change the site's content.
+
+## Putting a starter online
+
+1. Install the starter on the server the usual way.
+2. Add the `demo` setting to `config/tcms.php`.
+3. Leave out the cron lines for jobs and automations.
+4. Open `/admin` in a private window and check that the banner shows and Save
+   is refused.
+
+To change the demo later, turn demo mode off, make the change, and turn it
+back on, or make the change on a copy and deploy it.
+
+---
+
 ## Deployment Guide
 
 This guide covers best practices for deploying Total CMS sites to production and managing deployments with version control.
@@ -41120,7 +41285,7 @@ When you export your current CMS data to JumpStart format:
 - **Binary Uploads**: Image files, gallery images, uploaded files, and depot files are **not included** in JumpStart exports. Image, file, depot, and gallery field values are normalized/referenced but not embedded. If you need to preserve all files and binary data, use the **Export to Zip** option in each collection instead.
 
 ### 🔧 **What Supports Factory Generation**
-- **Images**: Can use `"image": "imageBlur"` factory rules
+- **Images**: Can use factory rules such as `"image": "imageBlur"`, or `"image": "imageShapes(1280,720,f3e7dc|e07a5f|3d405b)"` for shapes in your own colors (see [Factory](docs/twig/factory))
 - **Galleries**: Can use factory rules to generate sample gallery items
 
 > **Note**: Schema-level `factory` definitions apply only to entries in the

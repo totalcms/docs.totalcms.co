@@ -696,6 +696,10 @@
                 "slug": "operations/cron-urls"
             },
             {
+                "label": "Demo Mode",
+                "slug": "operations/demo-mode"
+            },
+            {
                 "label": "Deployment",
                 "slug": "operations/deployment"
             },
