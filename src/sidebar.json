@@ -247,6 +247,10 @@
             {
                 "label": "SEO",
                 "slug": "site-builder/seo"
+            },
+            {
+                "label": "Share Cards",
+                "slug": "site-builder/share-cards"
             }
         ]
     },
@@ -758,6 +762,10 @@
             {
                 "label": "Sync",
                 "slug": "operations/sync"
+            },
+            {
+                "label": "Total CMS Studio",
+                "slug": "operations/studio"
             },
             {
                 "label": "Updates",

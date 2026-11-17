@@ -99,6 +99,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Frontend Assets](https://docs.totalcms.co/site-builder/frontend): Set up Vite (or any build tool) to compile CSS and JavaScript for your Site Builder site.
 - [Builder Twig Reference](https://docs.totalcms.co/site-builder/twig): Reference for the cms.builder namespace providing navigation helpers and asset management for Site Builder pages.
 - [SEO](https://docs.totalcms.co/site-builder/seo): One Twig call emits the title, description, canonical, robots, Open Graph, Twitter and JSON-LD for any Site Builder page or collection object.
+- [Share Cards](https://docs.totalcms.co/site-builder/share-cards): Every page's social share card on one admin page, the way a link preview shows it, with the reason any card fell back to the plain image.
 
 ### Twig
 
@@ -238,6 +239,7 @@ Total CMS is designed for web designers and developers who want a powerful CMS w
 - [Sharing Sessions](https://docs.totalcms.co/operations/sharing-sessions): Share $_SESSION data between Total CMS and other PHP apps on the same site: where sessions live, the one rule to follow, and fixing split sessions.
 - [Supported Locales](https://docs.totalcms.co/operations/supported-locales): Every locale code Total CMS recognizes, with native name, English name, and writing direction, for the system locale and localized text fields.
 - [Sync](https://docs.totalcms.co/operations/sync): Push and pull schemas and templates between local development and production Total CMS instances using the CLI or admin dashboard.
+- [Total CMS Studio](https://docs.totalcms.co/operations/studio): Total CMS Studio is a free Mac app that runs Total CMS sites on your computer. Make a demo site from a starter in minutes, bring in an existing Composer project, share a site with a client, and get it ready to upload.
 - [Updates](https://docs.totalcms.co/operations/updates): Keep Total CMS up to date with one-click dashboard updates, CLI commands, or manual upgrades. Includes rollback and maintenance mode details.
 
 ## AI Integration

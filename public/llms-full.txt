@@ -188,6 +188,8 @@ When you load your install URL for the first time, the [setup wizard](docs/get-s
 
 You'll be up and running in under 5 minutes. The setup wizard handles everything after the initial command.
 
+On a Mac, [Total CMS Studio](docs/operations/studio) is quicker still. It's a free app with PHP and a web server built in, so you can make a working site from a starter in a few minutes without installing anything else.
+
 ## Composer install (recommended)
 
 ```bash
@@ -198,7 +200,7 @@ This downloads Total CMS into `my-site/`, then runs a short post-install script 
 
 ### What the install asks
 
-After Composer finishes downloading, you'll be prompted with up to three questions.
+After Composer finishes downloading, you'll be prompted with up to four questions.
 
 #### 1. Layout
 
@@ -222,13 +224,19 @@ A starter pre-seeds your install with sample pages and content so you have somet
 | business | Homepage with sections, about page, contact form |
 | portfolio | Project gallery layout with sample entries |
 
-Pick `none` if you want a fully empty install. You can run `tcms builder:init <starter>` later to apply one.
+Pick `none` for a bare install: no sample pages, no frontend pipeline and no git-managed templates, and the install asks nothing more. You can run `tcms builder:init <starter>` later to apply a starter, or `tcms builder:frontend` to add the pipeline. For a scripted install, the environment variables [below](#non-interactive-installs) can still turn either on.
 
-#### 3. Frontend pipeline *(root layout only)*
+#### 3. Frontend pipeline *(root layout with a starter)*
 
 Installs Vite at the project root to compile your site's CSS and JS into `public/assets/`. Builder layouts load the compiled files with `{{ cms.builder.css(...) }}`. It builds during the install if Node 20.19+ or 22.12+ is present. Without Node, the files are installed and you can build later.
 
 Default: **yes**. Answer no if you bring your own tooling. You can add it later with `tcms builder:frontend`.
+
+#### 4. Git-managed templates *(root layout with a starter)*
+
+Keeps the Site Builder templates in a `builder/` folder at the project root instead of in `tcms-data/`, so they live in your git repository. Total CMS sees the folder and treats it as the source of truth: the dashboard's template editor becomes read-only, and the Sync Manager leaves templates to git. See [Git-First Templates](docs/operations/git-first-templates).
+
+Default: **no**.
 
 ### After the install
 
@@ -247,12 +255,22 @@ For CI or scripted installs, set environment variables and the prompts use those
 |---|---|---|
 | `TCMS_LAYOUT` | root &#124; subpath | `root` |
 | `TCMS_STARTER` | none &#124; minimal &#124; blog &#124; business &#124; portfolio | `none` |
-| `TCMS_FRONTEND` | 0 &#124; 1 | `1` |
+| `TCMS_FRONTEND` | 0 &#124; 1 | `1`, or `0` when `TCMS_STARTER` is `none` |
+| `TCMS_GIT_TEMPLATES` | 0 &#124; 1 | `0` |
 
 ```bash
 TCMS_LAYOUT=root TCMS_STARTER=blog TCMS_FRONTEND=1 \
   composer create-project totalcms/totalcms my-site --no-interaction
 ```
+
+`--no-interaction` with no variables at all gives a bare root install: no starter, no frontend pipeline, templates in `tcms-data/`. Set every variable anyway in a script you keep, so it doesn't change if a default does:
+
+```bash
+TCMS_LAYOUT=root TCMS_STARTER=none TCMS_FRONTEND=0 TCMS_GIT_TEMPLATES=0 \
+  composer create-project totalcms/totalcms my-site --no-interaction
+```
+
+`TCMS_FRONTEND=1` and `TCMS_GIT_TEMPLATES=1` work without a starter too. Git-managed templates then start from the built-in default layout.
 
 ## Alternative: zip download
 
@@ -2681,8 +2699,48 @@ Each collection has a **Sitemap** card on its edit form (`/admin/collections/{co
 | **Priority** | Default crawl priority for objects (0.0 to 1.0). |
 | **Include Filter** | Only include objects matching this expression (e.g. `published:true`). |
 | **Exclude Filter** | Skip objects matching this expression (e.g. `draft:true`). |
+| **Images** | Image and gallery properties to list under each object. See [Images and Videos](#images-and-videos). |
+| **Videos** | Video properties to list under each object. See [Images and Videos](#images-and-videos). |
 
 Saving the collection writes these into the collection's `.meta.json` under a `sitemap` block. The `/sitemap/{collection}` route reads them as defaults — no query string required for routine use.
+
+## Images and Videos
+
+A sitemap can also list the images and videos on each object's page. Search engines find an image in an `<img>` tag on their own. What they miss are images that load later: a gallery's full-size images in a lightbox, or objects that Load More brings in. Listing them in the sitemap is how those get into image search.
+
+Name the properties in the collection's Sitemap card:
+
+- **Images** offers the schema's image and gallery properties. A gallery lists every image in it, up to 1,000 per object.
+- **Videos** offers the schema's video properties.
+
+Choose only the images that are the page's own content, such as a post's photo or a product's gallery. Leave out an author's photo or an icon.
+
+Each image is listed as an ImageWorks address 1,600px wide, so it carries the schema's watermark and is the same image visitors see:
+
+```xml
+<url>
+  <loc>https://example.com/blog/harvest-trip</loc>
+  <image:image>
+    <image:loc>https://example.com/imageworks/blog/harvest-trip/image.jpg?w=1600&amp;cache=4bb8c592</image:loc>
+  </image:image>
+</url>
+```
+
+Google requires a thumbnail, a title and a description for each video, and a video without a thumbnail is left out:
+
+| Tag | Comes from |
+|---|---|
+| `video:thumbnail_loc` | The video's uploaded poster, else the thumbnail its provider supplies |
+| `video:title` | The video's own title, else the object's title, else the page title |
+| `video:description` | The page's meta description, else the title |
+| `video:player_loc` | The provider's player, for YouTube, Vimeo and the other services the video field knows |
+| `video:content_loc` | The file itself, for a video file such as an `.mp4` |
+
+A link to a video page the video field does not recognize is left out, since there is no player to point to.
+
+Objects excluded from the sitemap, or with **No Index** on, list nothing. The social share image is never listed: it is not on the page.
+
+Naming any property here means each object is read in full when the sitemap is built, not just the collection index. On a collection of many thousands of objects, the sitemap takes longer to build.
 
 ## Pages Sitemap
 
@@ -6544,7 +6602,7 @@ Watermark settings allow you to automatically apply watermarks to images and gal
 
 Watermark settings are enforced during image processing:
 - **Cannot be removed** via URL parameters
-- **Cannot be overridden** via URL parameters
+- **Cannot be overridden** via URL parameters: they are drawn last, on top of any marks the URL asks for, and no URL parameter (not even `markalpha=0`) changes them
 - **Protects all image requests** (Twig templates, direct API access, etc.)
 - **Maximum security** for photographers and content creators
 
@@ -6566,10 +6624,26 @@ Watermark settings are enforced during image processing:
 - **markw** - Watermark width (pixels or percentage like "50w")
 - **markh** - Watermark height (pixels or percentage)
 - **markpad** - Padding from edge in pixels
-- **markpos** - Position: `top-left`, `top`, `top-right`, `left`, `center`, `right`, `bottom-left`, `bottom`, `bottom-right`
-- **markalpha** - Transparency (0-100, where 100 is fully opaque)
+- **markpos** - Position: `top-left`, `top`, `top-right`, `left`, `center`, `right`, `bottom-left`, `bottom`, `bottom-right`, or `tile` to repeat the logo over the whole image
+- **markalpha** - Transparency (0-100, where 100 is fully opaque). Tiled logos default to 30
+- **markrepeat** - With `tile`, how many logos run across the image (1-12, default 4)
 
 Replacing the watermark image with a new file under the same name re-renders every image on its next request.
+
+#### Tiled Logo Watermark
+
+```json
+{
+	"watermark": {
+		"mark": "logo.png",
+		"markpos": "tile",
+		"markrepeat": 5,
+		"limit": 800
+	}
+}
+```
+
+The logo repeats in offset rows across the whole image. Size, padding and fit settings don't apply to a tiled logo. See [ImageWorks → Tiled Logo Watermarks](docs/twig/imageworks#tiled-logo-watermarks).
 
 ### Text Watermarks
 ```json
@@ -6631,6 +6705,8 @@ You can use both image and text watermarks together:
 	}
 }
 ```
+
+A schema text mark replaces a text mark the URL sends, and a schema logo replaces the URL's logo. Layers a template lists in [`marks`](docs/twig/imageworks#layered-marks) stay, under the schema's watermark.
 
 ### Dimension-Based Watermark Control
 
@@ -11407,6 +11483,7 @@ Every Site Builder page has an **SEO** section on its edit form. It holds the pe
 | **Description** | Replaces the meta description for this record. |
 | **Social Description** | A punchier description for share cards. It replaces `og:description` and `twitter:description` only — `<meta name="description">` and the JSON-LD are untouched. Leave it empty and the share cards use the description. |
 | **Social Image** | The share image. 1200×630 is the recommendation; Total CMS crops to that ratio. |
+| **Use the Image as Is** | Shares this record's image without the site's [share image overlay](#share-image-overlays), for an image that was designed as a share card already. |
 | **No Index** | Asks crawlers not to index this page. **Also removes it from the sitemaps.** |
 | **No Follow** | Asks crawlers not to follow the links on this page. |
 | **Structured Data Type** | `Automatic`, `Webpage`, `Article` or `Blog post`. For an object, Automatic is the collection's Structured Data Type; for a Site Builder page it is Webpage, because a page has no collection setting behind it. The other three override that for this one record, on `og:type` and in the JSON-LD alike: Article and Blog post add the matching node and the `article:` dates, Webpage opts a record out of a blog collection's default. |
@@ -11498,6 +11575,7 @@ Open **Collections → your collection → Settings** and fill in the **SEO** se
 | **Description Template** | Composes the meta description from the object's properties, with the same `${property}` placeholders as the titles: `${summary}`, `${cuisine} in ${city}`, `${site}` for the site name, dot paths into cards. A bare property name on its own is that property, so `summary` works as well as `${summary}`. Markup and markdown are stripped and the result is capped at 160 characters. Used when an object has no SEO description of its own. |
 | **Social Description Template** | The same, for `og:description` and `twitter:description`, independent of the Description Template. Leave it empty to use the description. |
 | **Image Property** | Which property supplies the social image. Point it at a **gallery** and its first image is used — handy for a collection whose objects carry a gallery instead of a single hero image. The gallery has to be a property of the object itself; one nested inside a card is not picked up. |
+| **Social Image Overlay** | The layers drawn over this collection's share images, in place of the site's overlay. See [Share Image Overlays](#share-image-overlays). |
 
 Saving writes the mapping into the collection's `.meta.json`:
 
@@ -11552,6 +11630,7 @@ tcms collection:create seo-site
 | **Default Social Description** | The same for `og:description` and `twitter:description`, independent of the Default Description. Leave it empty and the share cards use whatever description resolved. |
 | **Default Social Image** | An image **upload**, not a URL. The fallback share image, served through ImageWorks at 1200×630 and emitted as an absolute URL. |
 | **Twitter / X Handle** | With or without the `@`. Emitted as `twitter:site`. |
+| **Social Image Overlay** | Layers drawn over every share image: the page title, a logo, a dark fade behind the text. Leave it empty for the plain image. See [Share Image Overlays](#share-image-overlays). |
 | **Organization Name** | The publishing entity in the JSON-LD. Falls back to the site name. |
 | **Organization Logo** | An image **upload** too. Any aspect ratio, at least 112×112 — it is never cropped or upscaled, only bounded, and served through ImageWorks at up to 600px wide. |
 | **Social Profiles** | One absolute URL per line — X, Instagram, LinkedIn, GitHub. Emitted as `Organization.sameAs`. |
@@ -11584,7 +11663,7 @@ Site-wide values of your own — a tagline, a phone number, a footer blurb — c
     "id": "myseo",
     "type": "object",
     "inheritFrom": ["seo-site"],
-    "formgrid": "siteName baseUrl\ntitleTemplate socialTitleTemplate\ndefaultDescription defaultDescription\n---Social Sharing---\ndefaultSocialDescription defaultSocialDescription\ndefaultImage twitterHandle\n---Organization---\norganizationName organizationLogo\nsameAs sameAs\n---Meta Tags---\nmetaTags metaTags\n---Output---\nemitJsonLd emitSocial\n---Site---\ntagline .",
+    "formgrid": "siteName baseUrl\ntitleTemplate socialTitleTemplate\ndefaultDescription defaultDescription\n---Social Sharing---\ndefaultSocialDescription defaultSocialDescription\ndefaultImage twitterHandle\nsocialImageOptions socialImageOptions\n---Organization---\norganizationName organizationLogo\nsameAs sameAs\n---Meta Tags---\nmetaTags metaTags\n---Output---\nemitJsonLd emitSocial\n---Site---\ntagline .",
     "properties": {
         "tagline": {
             "type": "string",
@@ -11660,6 +11739,133 @@ Every size is cut from that one upload by ImageWorks, so 512×512 or larger is t
 No page at that route means no link. A draft, a redirect, or a collection URL pattern that happens to swallow the path does not count.
 
 `cms.seo.icons()` prints just these tags — the icons, the manifest link and the theme color — for a layout that places the pieces itself.
+
+## Share Image Overlays
+
+A link shared on social media shows its `og:image`. Most pages have a photo there and nothing else, so a post looks like every other post until someone reads the small print under it. An overlay draws the page's own title over that photo, with your logo and a dark fade behind the text, so the image says what the page is. You design it once, and every page gets its own card.
+
+The overlay is a list of [ImageWorks layers](docs/twig/imageworks#layered-marks), the same `marks` a template can pass to `cms.render.image()`. Text layers can take values from the record they are drawn for.
+
+> **Share image overlays are a Pro edition feature,** because they are drawn with layered marks. Below Pro, `cms.seo.head()` shares the plain image and the overlay settings are kept for when the site moves to Pro.
+
+### Setting One Up
+
+Open **Site SEO** and click **Add overlay…** beside **Social Image Overlay**. A dialog opens with your share image on the right, drawn on one of your own records:
+
+1. **Pick a preset.** Title on fade, Title and site name, Byline, Band, and Logo in the corner (offered once the **watermarks** gallery has a file). Each one shows its card on the record you are previewing.
+2. **Adjust it on the Layers tab.** The list runs from the top layer down, as in an image editor: drag a row to move it, click the eye to hide it from the preview while you work, or delete it. **Add layer** offers a Fill, Text, a Photo from a record, or a Logo, up to six layers. Select a layer to change it (see below).
+3. **Check it on other records.** **Preview with** switches the record, so you can see a long title, a short one and a light photo. The line under the preview says whether the card draws, or why it doesn't, in the same words as [Share Cards](docs/site-builder/share-cards).
+4. **Click Apply, then save the record.** Nothing is saved until you save the form. **Cancel** or Escape throws away what you did in the dialog.
+
+What each kind of layer offers:
+
+- **Fill:** a color (your own, or one of the photo's five palette colors), opacity, a fade that is solid at one edge and clear at the other, a size and a position. Put it under the text to keep white text readable on a light photo.
+- **Text:** the text, a size, a wrap width and a line limit (long titles step down in size to fit), alignment, colors, a font from the **watermark-fonts** depot, a position, padding and a lift off the edge. **Insert field…** puts a placeholder at the cursor: the share title, the site name or page path, or any text field of the record you are previewing, including fields inside cards (`${seo.title}`).
+- **Photo from a record:** pick the field on this record that holds another record's id, the collection that id points to, and the image. A post's author photo is `team/${author}/photo`. Turn on **Cut to a circle** for a profile photo.
+- **Logo:** a file from the watermarks gallery, with a size, opacity and position.
+
+Sizes take a unit: **% width** or **% height** of the card, or pixels at 1200×630. Percentages keep the card right at every size. A layer key the dialog has no control for (a text stroke or shadow, say) is kept, and listed under the layer's controls so it doesn't surprise you.
+
+**Crop** at the top of the dialog sets which part of the photo is kept (`fit`). **Remove overlay** clears it, so shares use the plain image again.
+
+The row on the form shows a small copy of the card and a one-line summary such as "3 layers · fade, title, site name". Click **Design…** to change it.
+
+### Writing It by Hand
+
+The overlay is stored as JSON, and the dialog's **JSON** tab edits it directly. Anything you write there is kept, including keys the dialog has no controls for. The preview updates as you type, and **Apply** stays off while the JSON doesn't parse. This is the format AI agents and the API write:
+
+```json
+{
+    "fit": "crop-focalpoint",
+    "marks": [
+        {"markfill": "0b0f1a", "markgradient": "bottom", "markh": "100h", "markpos": "bottom", "markalpha": 85},
+        {"marktext": "${socialTitle}", "marktextw": "80w", "marktextsize": "7w", "marktextpos": "bottom-left", "marktextpad": "5w"},
+        {"marktext": "${site}", "marktextsize": "3w", "marktextpos": "top-left", "marktextpad": "5w"}
+    ]
+}
+```
+
+That draws, from the bottom up:
+
+1. A dark fade, solid at the bottom edge and gone by the top, so white text is readable on any photo. See [Color Fills](docs/twig/imageworks#color-fills) for other fades.
+2. The share title, in the lower left. It wraps onto up to three lines and gets smaller if a long title needs more. See [Text Size](docs/twig/imageworks#text-size).
+3. The site name, small, in the upper left.
+
+Every page and record now shares a card like that in place of its plain image. The head prints the card's address and nothing else changes.
+
+`fit` is optional and takes the ImageWorks [fit modes](docs/twig/imageworks#fit-modes); the default, `crop-focalpoint`, keeps each image's focal point in the frame. The size is always 1200×630. ImageWorks never makes an image larger than it is, so a smaller source image gives a narrower card. A bare list of layers, without the `fit` and `marks` around it, works too.
+
+### Placeholders
+
+Any text in a layer can hold `${…}` placeholders:
+
+| Placeholder | Fills in |
+|---|---|
+| `${socialTitle}` | The share title, exactly as `og:title` has it: the card's Social Title, the collection's Social Title Template, or the title. |
+| `${site}` | The site name. |
+| `${path}` | The page's path, such as `/blog/meet-the-roaster`. |
+| `${title}`, `${author}`, `${category.name}` | Any property of the record, dot paths into cards included. A list fills in its first item, so a post with several authors shows the first. |
+
+Markup is stripped from what a placeholder fills in, and the value is cut to 255 characters.
+
+A layer whose placeholders all come back empty is left out, so a post with no author does not get an empty "By" line. A layer with no placeholders is always drawn.
+
+Placeholders work in `markimage` too, which draws an image from another record. A post whose `author` holds the id of a record in a `team` collection can show that person's photo:
+
+```json
+{"markimage": "team/${author}/photo", "markshape": "circle", "markw": "12w", "markpos": "top-right", "markpad": "5w"}
+```
+
+The text is drawn in the site's default watermark font. To use another, upload it to the **watermark-fonts** depot and name it with `marktextfont`. See [Custom Fonts](docs/twig/imageworks#custom-fonts).
+
+### One Collection, Another Look
+
+A collection can have an overlay of its own: **Collections → your collection → Settings → SEO → Social Image Overlay**. The same dialog designs it, and its preview uses that collection's records. It replaces the site's overlay for that collection's objects. The two are not merged, so a collection overlay that wants the site name says `${site}` itself.
+
+A blog can show the author and the date where the rest of the site shows only a title:
+
+```json
+{
+    "marks": [
+        {"markfill": "0b0f1a", "markgradient": "bottom", "markh": "100h", "markpos": "bottom", "markalpha": 85},
+        {"marktext": "${socialTitle}", "marktextw": "80w", "marktextsize": "7w", "marktextpos": "bottom-left", "marktextpad": "5w"},
+        {"marktext": "By ${author}", "marktextsize": "3w", "marktextpos": "top-left", "marktextpad": "5w"}
+    ]
+}
+```
+
+Site Builder pages have no collection settings, so they always use the site's overlay.
+
+### Opting a Record Out
+
+Turn on **Use the Image as Is** in a record's SEO card to share its image without any overlay. Use it for an image that was designed as a share card already, with its own text on it.
+
+### How the Card Is Served
+
+The head does not put the layers in the URL. It prints a short address for the record:
+
+```html
+<meta property="og:image" content="https://example.com/imageworks/social/blog/meet-the-roaster.jpg?v=c174c0ce73206b56">
+```
+
+When a social network asks for that image, Total CMS reads the record again, builds the same layers and draws them. The `v` value is a hash of everything drawn, signed with the site's own key:
+
+- **Only the site can make a card.** A link someone types with a different `v` gets the plain 1200×630 image, never their own text over your photo.
+- **An edit gives a new address.** Change the title, the image or the overlay and `v` changes with it, so the networks fetch the new card instead of showing a cached old one. Most of them cache a share image for days, so this is what keeps a corrected title from going out with the old one.
+- **The card is cached like any ImageWorks image.** The first request draws it, and later ones are served from the cache.
+
+An overlay that ImageWorks would refuse, such as a misspelled position or a size out of range, is not drawn at all, and the plain image is shared instead. To check every card at once, open [Share Cards](docs/site-builder/share-cards) (**Utilities → Reporting**): it shows each page's card and says why any of them fell back to the plain image.
+
+> **Don't change a drawn value before the head.** The hash covers what the record says. A template that merges a new title onto the record before `cms.seo.head()`, such as `object|merge({title: 'Total CMS: ' ~ object.title})`, signs a card the image route can't rebuild, and every share gets the plain image. Shape the share title with the SEO card's **Social Title** or the collection's **Social Title Template** instead. See [A Card That No Longer Matches](docs/site-builder/share-cards#a-card-that-no-longer-matches).
+
+### Limits
+
+An overlay needs a record to read again when the image is requested. Two kinds of page do not have one, and they share the plain image:
+
+- A page that hands `cms.seo.head()` a [literal set of values](#pages-the-router-did-not-render), the shape a Stacks page uses.
+- A page that calls `cms.seo.head()` with nothing at all.
+
+A Site Builder page and a collection object always have a record, and get the card.
 
 ## Structured Data
 
@@ -11945,6 +12151,73 @@ The last three are the remit of the **SEO Pro** extension planned for 3.6.
 - [Sitemaps](docs/collections/sitemap-builder)
 - [Builder Twig Reference](docs/site-builder/twig)
 - [Starter Templates](docs/site-builder/starters)
+
+---
+
+## Share Cards
+
+**Utilities → Reporting → Share Cards** shows the card every page shares on social media, the way a link preview shows it: the image, the title and the description. Check it before a launch. Most networks cache a share image for days, so a broken card that goes out with the first share stays broken.
+
+Each card says why it looks the way it does. A card that fell back to the plain image says what stopped the [overlay](docs/site-builder/seo#share-image-overlays), and a filter shows only the cards that need a look.
+
+> **Share Cards is a Pro edition feature,** like the overlays it checks. Below Pro the page says it needs Pro, and it is left out of the Utilities menu.
+
+## What It Shows
+
+The page has one section for the Site Builder pages, then one for each collection the Site Builder serves.
+
+- **Pages:** each page with a fixed route, such as `/about`. A page with a dynamic route (`/posts/{id}`) can't be listed, and a redirect has no card, so both are left out.
+- **Collections:** each collection with a URL, pretty URLs on, and a `pages/{collection}.twig` template. Every object is shown.
+- **Drafts are included,** with a **Draft** badge, because before a launch they are what is about to go live. A record with **No Index** on gets a badge too. Neither counts as a problem.
+- **A page that isn't HTML,** such as a feed or `robots.txt`, has no card, so it is left out. A section's count drops to match once its cards load.
+
+A collection with a URL but no Site Builder template, such as one a Stacks page serves, is named at the bottom of the page as skipped. Stacks pages aren't covered: Total CMS doesn't render them, so it can't preview them. The page needs the Site Builder, and says so on a site without it.
+
+The cards load a section at a time, 25 at a time. The counts in the filter bar grow while they load. Loading the images also draws and caches them, so the first real share is served from the cache.
+
+## Reading a Card
+
+Each section header links to the overlay its cards draw: the collection's SEO settings, or **Site SEO** for the Pages section. Each card links to the page itself and to the record's edit page.
+
+| Message | What it means | What to do |
+|---|---|---|
+| (none) | The overlay was drawn. | Nothing. |
+| Shared as is | **Use the Image as Is** is on in the record's SEO card. | Turn it off to draw the overlay. |
+| No overlay set | Neither the collection nor the site has an overlay. | Set one in **Site SEO → Social Image Overlay**. |
+| Built by the page | The template passed `cms.seo.head()` its own values, not a record, so there is no record to draw from. | Nothing, if it's on purpose. This one doesn't count as a problem. |
+| Doesn't come from this record's image | The share image isn't the record's image, its mapped image property, or the site default. | Share one of those images, or turn on **Use the Image as Is**. |
+| No share image | The page shares no image at all. | Give the record an image, or set the **Default Image** in Site SEO. |
+| ImageWorks refused layer N | A layer has a value ImageWorks won't take; the message names the parameter. | Fix that layer in the overlay. The first layer is layer 1. |
+| Every layer was empty | Every layer's placeholders came back empty for this record. | Fill in the fields the overlay reads, or add a layer without placeholders. |
+| The site key isn't set up | The install has no site key yet, so it can't sign a card's address. | Finish the setup wizard. |
+| The page changed a value the card draws | The template changed a value the overlay draws before calling `cms.seo.head()`, so the card no longer matches the record. | See [below](#a-card-that-no-longer-matches). |
+| No title / No description | The page shares no `og:title` or no `og:description`. | Fill in the record's title or description, or the SEO card's. |
+
+## A Card That No Longer Matches
+
+The share image's address carries a hash of everything the overlay draws. When a network fetches it, Total CMS reads the record again and draws the card only if the hash matches. A template that changes the record first breaks that:
+
+```twig
+{# The head signs "Total CMS: 3.6"; the image route reads "3.6" from the record. #}
+{% set object = object|merge({title: 'Total CMS: ' ~ object.title}) %}
+{{ cms.seo.head(object, {collection: 'releases'}) }}
+```
+
+The image route then shares the plain image. Leave the record as it is and change the share title another way: the SEO card's **Social Title**, or the collection's **Social Title Template**. Total CMS also writes one line a day to the ImageWorks log for each address that doesn't match.
+
+## How the Pages Are Rendered
+
+Each page renders through its real template, as you: your session, your login and your access groups. The page's own middleware (passcodes, access gates) doesn't run, because you're previewing, not visiting. A template that writes to the session or sets a cookie does so while it renders here.
+
+A page that doesn't render gets the card its record works out to, labeled with why: it refused to render (`cms.notFound()`), it redirects, it answers with its own response, or it failed. Only a failure counts as a problem; the others are the template's own choice. A failed page shows the first line of its error; the Log Analyzer (**Utilities → System**) has the rest. One page that fails costs one card, and a chunk that can't load at all costs those 25 cards, not the page.
+
+## On a Local or Staging Copy
+
+The page links use the **Base URL** in Site SEO, because that's what a share shows. An image on the site's own address loads from the install you're on, so it shows what this copy draws; an image on another host, such as a CDN, loads from there.
+
+## Access
+
+Share Cards is a utility like the others. An access group can give it with **Share Cards** under its utilities.
 
 ---
 
@@ -12930,10 +13203,10 @@ For generating download/stream URLs, see [cms.media](docs/twig/media).
 
 ### depot()
 
-Get depot (multi-file storage) data as an array. Default collection: `depot`, default property: `depot`.
+Get depot (multi-file storage) data as an array. The files are in its `files` key. Default collection: `depot`, default property: `depot`.
 
 ```twig
-{% set files = cms.data.depot('documents') %}
+{% set files = cms.data.depot('documents').files %}
 {% for file in files %}
     <p>{{ file.name }} ({{ file.size }} bytes)</p>
 {% endfor %}
@@ -23359,6 +23632,8 @@ ImageWorks is the image processing engine in Total CMS. It transforms images on-
 | `crop-{position}` | Crop anchored to a position (see below) |
 | `crop-focalpoint` | Crop using the image's saved focal point |
 
+ImageWorks never makes an image larger than the original. With a crop, a size bigger than the image keeps its shape: `{w: 1200, h: 630, fit: 'crop'}` on a 640×480 photo gives a 640×336 image, the same 1.91:1 shape, just smaller. Other fits cap each side at the original's size.
+
 ### Crop Positions
 
 Use with `fit: 'crop-{position}'`:
@@ -23395,7 +23670,9 @@ Use with `fit: 'crop-{position}'`:
 | `blur` | integer | Blur amount (0-100) |
 | `sharp` | integer | Sharpen amount (0-100) |
 | `pixel` | integer | Pixelate amount (0-1000) |
-| `filt` | string | Filter: `greyscale`, `sepia` |
+| `filt` | string | Filter name, or a comma chain of up to 3 (`ember,vignette`). See [Photo Filters](#photo-filters) |
+| `filtamt` | integer | Filter strength (0-100, default 100). Applies to the whole `filt` chain |
+| `duo` | string | Two colors for the `duotone` filter, `shadow,highlight` (hex without `#`, or `palette0`-`palette4`) |
 | `bri` | integer | Brightness adjustment (-100 to 100) |
 | `con` | integer | Contrast adjustment (-100 to 100) |
 | `gam` | float | Gamma correction (0.1 to 9.99) |
@@ -23409,6 +23686,124 @@ Use with `fit: 'crop-{position}'`:
 
 {# Sharpened product photo #}
 {{ cms.media.imagePath('product', {w: 600, sharp: 15}) }}
+```
+
+### Photo Filters
+
+`filt` applies a look to the image when it is rendered, so the original stays untouched and one edit to a template or preset changes the look site-wide. Filters are free in every edition.
+
+![Every built-in filter on the same photo](docs/twig/images/imageworks-filters.jpg)
+
+| Group | Filters |
+|-------|---------|
+| Looks | `sepia` (warm brown, classic), `bloom` (bright and airy), `harbor` (cool and crisp), `ember` (golden hour), `meadow` (soft and faded, green-yellow cast), `dusk` (moody, rose-violet), `attic` (vintage), `pop` (punchy), `matte` (lifted blacks, muted color), `polar` (cold and bright), `noir` (high-contrast black and white), `ash` (soft black and white) |
+| Duotones | `lagoon` (navy to aqua), `sunset` (purple to orange), `fern` (green to sage), `blush` (burgundy to pink), `duotone` (your own two colors, see below) |
+| Extras | `vignette` (darkens the corners), `grain` (film grain in the midtones, the same look at any image size), `warm` (a soft golden tint), `cool` (a soft blue tint), `leak` (warm light bleeding in from the top-right corner). Made for chains: they stack on top of a look |
+
+`greyscale` still works exactly as before. `sepia` keeps its name, but since 3.6.10 it is a recipe like the other looks: the old version washed out to near-white on Imagick servers and crushed the shadows on GD, so existing `sepia` images re-render once with the new look.
+
+```twig
+{# One look #}
+{{ cms.media.imagePath('hero', {w: 1600, filt: 'ember'}) }}
+
+{# A chain is applied in order, left to right #}
+{{ cms.media.imagePath('hero', {w: 1600, filt: 'harbor,vignette'}) }}
+
+{# A look with film grain on top #}
+{{ cms.media.imagePath('hero', {w: 1600, filt: 'ember,grain'}) }}
+
+{# Half strength: the filtered image blended over the original #}
+{{ cms.media.imagePath('portrait', {w: 600, filt: 'noir', filtamt: 50}) }}
+```
+
+Rules for the URL:
+
+- Names are not case-sensitive: `Greyscale` is `greyscale`, and shares its cache file. A chain takes up to 3 names, and order matters.
+- A name that is not registered (a typo, or a disabled extension's filter) is dropped silently. If none of the names is known, the image is served as it would be with no `filt`: unfiltered from the same cache file, or with the default `filt` when `imageworks.defaults` sets one. A malformed value, such as a name with a space or 4 names, is a 400.
+- `filtamt` runs from 0 to 100, where 100 (the default) is full strength and 0 is no filter at all (the same cache file as no `filt`). The public URL rounds it to the nearest 5, so there are 21 strengths and not 101.
+- `filt`, `filtamt` and `duo` are applied before watermarks and marks, so a logo keeps its colors under `noir`.
+- Transparent PNG and WebP images stay transparent at any `filtamt`: only the colors are blended, never the alpha.
+- An animated GIF is filtered frame by frame.
+
+If `imageworks.defaults` sets `filtamt`, that value applies to URLs that do not send one, and a URL cannot override it back to 100.
+
+### Duotone
+
+`filt=duotone` maps the image's brightness onto two colors: `duo` is `shadow,highlight`. Each color is a 3 or 6 digit hex value without `#`, in any case (`fff`, `FFFFFF` and `ffffff` are the same color and the same cache file), or `palette0` to `palette4` to use one of the image's [own colors](#color-palette-integration). A pair with anything else in it, such as a color name, falls back to the default. `duo` only applies with the `duotone` filter and is ignored otherwise.
+
+```twig
+{# Fixed colors #}
+{{ cms.media.imagePath('hero', {w: 1600, filt: 'duotone', duo: '1b1f3b,f4a261'}) }}
+
+{# Black to the photo's dominant color, which is also the default #}
+{{ cms.media.imagePath('hero', {w: 1600, filt: 'duotone', duo: '000000,palette0'}) }}
+
+{# Duotone plus a vignette #}
+{{ cms.media.imagePath('hero', {w: 1600, filt: 'duotone,vignette'}) }}
+```
+
+Without `duo`, `duotone` uses `000000,palette0`: a monochrome image in the photo's own color.
+
+### Your own filters
+
+Define filters in `tcms.php` as recipes: an ordered list of steps, as plain data. Once defined, a filter is used like a built-in, in `filt`, in presets and in the admin ImageWorks tool.
+
+```php
+return [
+    'imageworks' => [
+        'filters' => [
+            'golden' => [
+                'label' => 'Golden',
+                'group' => 'look',
+                'steps' => [
+                    ['sepia', 0.25],
+                    ['saturate', 1.3],
+                    ['overlay', 'ff9a3c', 'soft-light', 0.25],
+                    ['vignette', 0.3],
+                ],
+            ],
+        ],
+    ],
+];
+```
+
+```twig
+{{ cms.media.imagePath('hero', {w: 1600, filt: 'golden'}) }}
+```
+
+A filter needs a `steps` list (1 to 12 steps). `label` is the name shown in the admin tool, and `group` (`look`, `duotone` or `effect`, default `look`) decides where it sits in the admin strip: looks and then duotones share the first row, where one is picked at a time, and `effect` filters are listed under Extras, where they stack on top of the chosen look instead of replacing it. An extension's looks and duotones get a row of their own, titled with the extension's name; they are still picked one at a time along with the core looks, and its `effect` filters join Extras. Names are 1-48 lowercase letters, digits and hyphens. A recipe that is not valid is refused and logged, and the rest still load.
+
+| Step | Arguments | What it does |
+|------|-----------|--------------|
+| `brightness` | factor (0-10) | Like CSS `brightness()`; 1 is unchanged |
+| `contrast` | factor (0-10) | Like CSS `contrast()`; 1 is unchanged |
+| `saturate` | factor (0-10) | Like CSS `saturate()`; 1 is unchanged |
+| `grayscale` | amount (0-1) | Like CSS `grayscale()` |
+| `sepia` | amount (0-1) | Like CSS `sepia()` |
+| `hue-rotate` | degrees (-360 to 360) | Like CSS `hue-rotate()` |
+| `fade` | amount (0-1) | Lifts the blacks for a matte look |
+| `overlay` | color, mode, opacity (0-1) | A flat color layered over the image. Modes: `normal`, `multiply`, `screen`, `overlay`, `soft-light` |
+| `vignette` | strength (0-1), optional color | Darkens toward the corners; the color defaults to black |
+| `gradient-map` | 2 to 8 colors | Maps brightness onto the colors, shadows first. This is a duotone |
+| `grain` | amount (0-1) | Monochrome film grain, strongest in the midtones; pure black and white are left alone. The grain grows with the image (one grain per pixel up to a 900px short side, then larger), so it looks the same at any size. The pattern is fixed, so the same image always renders the same |
+| `leak` | color, position, amount (0-1) | A light leak: screens the color in from a corner (`top-left`, `top-right`, `bottom-left`, `bottom-right`) or an edge (`top`, `bottom`, `left`, `right`), fading out over 60% of the image |
+
+Colors are 3 or 6 digit hex, with or without `#`.
+
+The steps use the CSS filter scale, where 1 means unchanged. That is not the scale of the `bri` and `con` parameters (-100 to 100). The advantage is that you can try a look with CSS `filter:` in the browser and copy the numbers.
+
+Notes:
+
+- A filter with the same name as a built-in replaces it, `sepia` included. Only `greyscale` cannot be redefined.
+- Editing a recipe re-renders its images automatically: the cache key carries a version of the recipe.
+- Extensions can ship filters of their own. See [Image Filters](docs/extensions/extension-points#image-filters) in Extension Points.
+
+#### Image size limit
+
+On servers using the GD driver, filters run in PHP, pixel by pixel. A filter on an image larger than `imageworks.filterMaxPixels` (default 25,000,000 pixels, enough for a 5K retina image) is refused with a 400 and nothing is cached. On GD the limit covers the built-in filters and recipes from `tcms.php` or an extension; `greyscale` and an extension's own PHP class filters are not limited. Imagick runs the color steps natively, so there the limit applies only to filters with a `vignette`, `grain` or `leak` step (`ember`, `attic`, `noir`, `vignette`, `grain`, `leak`, and any recipe that uses one), the steps that are still computed in PHP. An animation counts every frame: a 10-frame GIF of 3,000,000 pixels is 30,000,000. A value of 0 or less turns the limit off. Raise or lower it in `tcms.php`:
+
+```php
+return ['imageworks' => ['filterMaxPixels' => 40000000]];
 ```
 
 ## Borders
@@ -23440,9 +23835,10 @@ Overlay another image as a watermark.
 | `mark` | string | Watermark image filename |
 | `markw` | mixed | Watermark width (pixels or percentage like `25w`) |
 | `markh` | mixed | Watermark height (pixels or percentage like `25h`) |
-| `markpos` | string | Position: `top-left`, `top`, `top-right`, `left`, `center`, `right`, `bottom-left`, `bottom`, `bottom-right` |
+| `markpos` | string | Position: `top-left`, `top`, `top-right`, `left`, `center`, `right`, `bottom-left`, `bottom`, `bottom-right`, or `tile` to repeat the logo over the whole image |
 | `markpad` | integer | Padding from edge in pixels |
-| `markalpha` | integer | Opacity (0-100, where 100 is fully opaque) |
+| `markalpha` | integer | Opacity (0-100, where 100 is fully opaque). Default: 100, or 30 when tiled |
+| `markrepeat` | integer | Tiled mode only: logos across the image (1-12, default: 4) |
 | `markfit` | string | How the watermark fits: `contain`, `max`, `fill`, `stretch`, `crop` |
 
 ```twig
@@ -23454,6 +23850,25 @@ Overlay another image as a watermark.
     markpos: 'bottom-right',
     markpad: 20,
     markalpha: 70
+}) }}
+```
+
+### Tiled Logo Watermarks
+
+`markpos: 'tile'` repeats the logo over the whole image in offset rows, the
+same way a [tiled text mark](#tiled-watermarks) does, so there is no clean
+corner to crop out. The logo is faint (`markalpha` 30) unless you set the
+opacity, and `markrepeat` sets how many logos run across the image.
+`markw`, `markh`, `markpad` and `markfit` don't apply to a tiled logo. Use a
+PNG with a transparent background: a JPEG logo tiles as solid rectangles.
+
+```twig
+{# Proof sheet: the studio logo repeated across the image #}
+{{ cms.media.imagePath('photo', {
+    w: 1600,
+    mark: 'logo.png',
+    markpos: 'tile',
+    markrepeat: 5
 }) }}
 ```
 
@@ -23481,7 +23896,7 @@ You can configure watermarks at the schema, collection, or per-object level usin
 
 Watermark settings follow the three-level override hierarchy: **schema → collection → per-object**. Override at the collection level in collection meta, or per-object using custom properties.
 
-**Replacing the logo.** Watermarked renders are cached by the logo file's modified time, so uploading a new `logo.png` under the same name re-renders every image on its next request. The old renders stay on disk until you clear the cache.
+**Replacing the logo.** Watermarked renders are cached by the logo file's modified time, so uploading a new `logo.png` under the same name re-renders every image on its next request. The old renders stay on disk until you clear the cache. The same goes for an image placed with [`markimage`](#images-from-other-records).
 
 ### Protecting Original Images
 
@@ -23495,10 +23910,13 @@ the source image. When the property carries `settings.watermark`, that shortcut
 is skipped: the image is processed and marked before it is served, so there is
 no URL that yields a clean original.
 
-**They override URL parameters.** Schema settings are merged *after* anything
-in the query string, so a visitor cannot weaken, move or remove the mark by
-editing the URL. Passing `marktextsize=1` against a schema that sets
-`marktextsize=140` still produces the schema's watermark.
+**They override URL parameters.** The schema's watermark is drawn last, on top
+of anything the URL asks for, and no URL parameter changes it, so a visitor
+cannot weaken, move or remove the mark by editing the URL. Passing
+`marktextsize=1` or `marktextalpha=0` against a schema that sets
+`marktextsize=140` still produces the schema's watermark. A schema text mark
+replaces the URL's own `marktext`, and a schema logo replaces the URL's `mark`;
+layers the URL lists in [`marks`](#layered-marks) are drawn under the schema's.
 
 If you need the unmarked file, read it from the object's property directly in a
 template rather than through an ImageWorks URL.
@@ -23553,13 +23971,15 @@ Render text directly on images without needing a separate watermark image.
 |-----------|------|-------------|
 | `marktext` | string | Text to render |
 | `marktextfont` | string | Font family name (TTF/OTF from the watermark-fonts depot) |
-| `marktextsize` | integer | Font size the text is drawn at, in pixels (default: 500). Set it without `marktextw` for a fixed size; see [Text size](#text-size) |
+| `marktextsize` | mixed | Font size in pixels, or relative to the image (`6w` is 6% of its width, `4h` 4% of its height). With `marktextw` the text wraps; see [Text size](#text-size) |
 | `marktextcolor` | string | Text color as hex without `#` (e.g., `ffffff`) |
 | `marktextbg` | string | Background color as hex (optional, transparent if not set) |
 | `marktextpad` | integer | Padding around text in pixels (default: 10) |
 | `marktextangle` | integer | Rotation angle in degrees (-360 to 360, default: 0) |
 | `marktextpos` | string | Position (same options as image watermarks), or `tile` to repeat the text over the whole image |
 | `marktextw` | mixed | Text width in pixels or relative to the image (e.g., `50w` for 50% of image width). Default: `40w` when `marktextsize` is not set |
+| `marktextlines` | integer | Wrapped text only: the most lines before the font size steps down (1-6, default: 3) |
+| `marktextalign` | string | How the lines line up: `left` (default), `center` or `right` |
 | `marktextalpha` | integer | Opacity (0-100, where 100 is fully opaque). Default: 100, or 30 when tiled |
 | `marktextstroke` | integer | Outline width as a percentage of the font size (0-25, default: 0) |
 | `marktextstrokecolor` | string | Outline color as hex (default: `000000`) |
@@ -23572,11 +23992,42 @@ Render text directly on images without needing a separate watermark image.
 With no size set, the text spans 40% of the image's width, so the mark has
 the same weight on a 400px thumbnail as on the 2,400px original.
 
-- **`marktextw`** sets that width yourself: `25w` for a quarter of the image,
-  or a pixel width.
-- **`marktextsize` alone** draws the text at that fixed pixel size, whatever
-  the image size. If the text would be wider than the image, it is shrunk to
-  90% of the image width.
+- **`marktextw` alone** sets that width yourself: `25w` for a quarter of the
+  image, or a pixel width. The text stays on one line and is scaled to fit,
+  so a long title comes out small.
+- **`marktextsize` alone** draws the text at that size, whatever the image
+  size. If the text would be wider than the image, it is shrunk to 90% of the
+  image width.
+- **Both together wrap the text.** `marktextw` is the box and `marktextsize`
+  the font size: the text breaks between words to stay inside the box (its
+  plate and padding included). When it still needs more than `marktextlines`
+  lines (default 3), or a single word is wider than the box, the font size
+  steps down until it fits. A title that fits on one line is left as it is.
+  Wrapping is a Pro edition feature: below Pro the text is drawn on one line
+  at `marktextsize`, as it was before wrapping.
+
+A relative size such as `6w` keeps a wrapped title the same shape at any
+image size, which matters when the image is smaller than the size you asked
+for (ImageWorks never enlarges a photo, so `w: 1200` on a 1,024px photo
+gives a 1,024px card).
+
+```twig
+{# A share card title: up to three lines across 60% of the image #}
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markgradient: 'bottom', markh: '100h', markpos: 'bottom', markalpha: 85},
+    {marktext: post.title, marktextw: '60w', marktextsize: '6w', marktextlines: 3,
+     marktextpos: 'bottom-left', marktextx: '5w', marktexty: '8h'}
+]}, {collection: 'blog'}) }}
+
+{# Centered over a darkened photo #}
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markalpha: 65},
+    {marktext: post.title, marktextw: '70w', marktextsize: '7w', marktextalign: 'center', marktextpos: 'center'}
+]}, {collection: 'blog'}) }}
+```
+
+A line break in the text always starts a new line, though URLs do not accept
+one: line breaks reach a mark only from settings stored on the server.
 
 ### Tiled Watermarks
 
@@ -23619,12 +24070,17 @@ font size, so they keep their look at any image size.
 }) }}
 ```
 
-Outline and shadow need a TTF or OTF font. On a server without FreeType, the
-text falls back to GD's built-in bitmap font and is drawn without them.
+Text is drawn with the TTF or OTF font you choose, or Roboto by default.
 
 ### Custom Fonts
 
-Upload TTF or OTF fonts to the watermark-fonts depot (configurable via `watermarkFontsDepot` setting). The default font is RobotoRegular.
+Text is drawn in Roboto Regular unless a mark names another font. To add one:
+
+1. Open the **Depot** collection in the admin and create an object with the id `watermark-fonts`, or open it if it exists.
+2. Upload your `.ttf` or `.otf` files to its depot field.
+3. Name a font by its file name in `marktextfont`, with or without the extension: `Dorsa-Regular` finds `Dorsa-Regular.ttf`.
+
+A name that matches no file draws in Roboto without an error, so check the spelling when the font does not change. The depot object's id is the `watermarkFontsDepot` ImageWorks setting, if you want another.
 
 ```twig
 {# Simple copyright watermark #}
@@ -23661,6 +24117,171 @@ Upload TTF or OTF fonts to the watermark-fonts depot (configurable via `watermar
     marktextalpha: 50
 }) }}
 ```
+
+## Layered Marks
+
+`marks` takes a list of marks and draws them in order, each over the last.
+Each entry takes the same parameters as a single mark: `mark*` for a logo, an
+image or a [color fill](#color-fills), `marktext*` for text. That gives you a large headline over a small
+caption, two logos, or a profile photo beside a name, all in one render.
+
+> **Layered marks are a Pro edition feature.** That covers `marks`, images from other records (`markimage`, `markshape`), color fills (`markfill`, `markgradient`) and [wrapped text](#text-size). Below Pro, ImageWorks leaves those parameters out and draws the image without them, in a URL and in a schema's watermark settings alike, so a lapsed license gives plainer images, not broken ones. One logo and one line of text, tiled or not, work on every edition.
+
+```twig
+{# A share card: big title, caption, address, and the logo #}
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {marktext: post.title, marktextw: '70w', marktextpos: 'top-left', marktextx: '5w', marktexty: '8h', marktextbg: '0b0f1a'},
+    {marktext: 'Read the full story', marktextw: '30w', marktextpos: 'bottom-left', marktextx: '5w', marktexty: '8h'},
+    {marktext: 'example.com', marktextcolor: 'f97318', marktextw: '20w', marktextpos: 'top-right', marktextpad: '4w'},
+    {mark: 'logo.png', markw: '8w', markpos: 'bottom-right', markpad: '4w'}
+]}, {collection: 'blog'}) }}
+```
+
+- The flat parameters still work, and draw first: `mark` and `marktext`
+  outside the list are a logo layer and a text layer, in that order. An entry
+  with both `mark` and `marktext` is two layers too.
+- One request draws at most **6 layers**, counting the flat ones. A public
+  image URL asking for more is refused with a 400.
+- Tiled marks (`markpos: 'tile'`, `marktextpos: 'tile'`) work as layers.
+- A [schema watermark](#schema-level-watermarks) is drawn on top of every
+  layer the URL asks for.
+
+### Color Fills
+
+`markfill` lays a color over the image, or over a band of it, so the text and
+logos drawn after it stay readable on any photo. It is a layer like any other:
+put it first in `marks` and everything after it sits on top.
+
+| Parameter | Description |
+|-----------|-------------|
+| `markfill` | The color: hex (`0b0f1a`), or `palette0` to `palette4` for one of the image's own colors |
+| `markalpha` | Opacity, 0-100 (default: 50) |
+| `markgradient` | `top`, `bottom`, `left` or `right`: solid at that edge, fading to clear at the other. Leave it out for a flat color |
+| `markw`, `markh` | Size of the fill (default: the whole image), e.g. `markh: '30h'` for a band 30% of the image tall |
+| `markpos`, `markx`, `marky` | Where the fill sits, as for a logo (default: `center`) |
+
+#### Fade from the bottom
+
+The one to reach for first on a share card. The fade runs the full height of
+the image, so the top of the photo stays clear and bright while the bottom,
+where the text sits, is dark enough to read white text on any photo.
+
+```twig
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markgradient: 'bottom', markh: '100h', markpos: 'bottom', markalpha: 85},
+    {marktext: post.title, marktextw: '60w', marktextsize: '6w', marktextpos: 'bottom-left', marktextx: '5w', marktexty: '8h'},
+    {mark: 'logo.png', markw: '12w', markpos: 'top-right', markpad: '4w'}
+]}, {collection: 'blog'}) }}
+```
+
+#### Two fades for bright photos
+
+One fade strong enough for a white sky darkens the whole photo. Stack two
+instead: a light fade over the full height, then a short, strong one at the
+edge where the text sits. Fills are layers, so the second darkens the first.
+
+```twig
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markgradient: 'bottom', markh: '100h', markpos: 'bottom', markalpha: 50},
+    {markfill: '0b0f1a', markgradient: 'bottom', markh: '45h', markpos: 'bottom', markalpha: 80},
+    {marktext: post.title, marktextw: '60w', marktextsize: '6w', marktextpos: 'bottom-left', marktextx: '5w', marktexty: '8h'}
+]}, {collection: 'blog'}) }}
+```
+
+#### Fade from the top
+
+The same idea for a headline at the top: flip `markgradient`, `markpos` and
+the text position.
+
+```twig
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markgradient: 'top', markh: '100h', markpos: 'top', markalpha: 85},
+    {marktext: post.title, marktextw: '60w', marktextpos: 'top-left', marktextx: '5w', marktexty: '8h'}
+]}, {collection: 'blog'}) }}
+```
+
+#### Fade from one side
+
+Text down one side, with the photo's subject clear on the other. The fill is
+`70w` wide, so the last 30% of the image is untouched.
+
+```twig
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markgradient: 'left', markw: '70w', markh: '100h', markpos: 'left', markalpha: 90},
+    {marktext: post.title, marktextw: '35w', marktextpos: 'left', marktextx: '5w'}
+]}, {collection: 'blog'}) }}
+```
+
+#### Darken the whole photo
+
+A flat tint for text in the middle of the image. The photo shows through less
+than with a fade, so keep it for busy photos where text anywhere is hard to read.
+
+```twig
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markalpha: 65},
+    {marktext: post.title, marktextw: '70w', marktextpos: 'center'}
+]}, {collection: 'blog'}) }}
+```
+
+#### A solid band
+
+A strip of color behind a short label.
+
+```twig
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markh: '22h', markpos: 'bottom', markalpha: 90},
+    {marktext: 'New on the blog', marktextw: '40w', marktextpos: 'bottom', marktexty: '6h'}
+]}, {collection: 'blog'}) }}
+```
+
+#### Tips
+
+- **How strong:** 60-75 for a flat tint behind white text, 85-100 for a fade.
+  A fade loses opacity evenly from its solid edge, so halfway along it is at
+  half the opacity you set; that is why it needs the higher number. Below
+  about 50, a dark fill on a dark photo is hard to notice at all.
+- **Near-black beats pure black.** A deep navy or charcoal such as `0b0f1a`
+  looks richer than `000000` and still gives white text full contrast.
+- **Palette colors follow the photo.** `palette0` is the image's main color,
+  which can be light on one photo and dark on the next. White text on a light
+  palette color is unreadable, so use a palette fill where the text color is
+  chosen for it, or as a low-opacity tint under a hex fade.
+- **Keep every mark in `marks`.** The flat `mark` and `marktext` parameters
+  are drawn before the `marks` list, so they would end up under the fill.
+
+### Images From Other Records
+
+`markimage` places an image from another record, such as the author's photo on
+a blog post's share image, or a member's photo on their profile card. It takes
+the same sizing and position parameters as `mark`.
+
+| Value | Image |
+|-------|-------|
+| `collection/id/property` | The image in an image field |
+| `collection/id/property/name` | The gallery image with that file name (without its extension) |
+| `collection/id/property/first` | The first gallery image (`last` for the last one) |
+
+| Parameter | Description |
+|-----------|-------------|
+| `markimage` | The image to place, as above |
+| `markshape` | `circle` cuts the image to a circle. With only `markw` set it is cut square first, around the image's focal point |
+
+```twig
+{# The author's photo, round, in the bottom-left corner #}
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markimage: 'authors/' ~ post.author ~ '/photo', markshape: 'circle', markw: '15w', markpos: 'bottom-left', markpad: '4w'},
+    {marktext: post.author_name, marktextw: '30w', marktextpos: 'bottom-left', marktextx: '22w', marktexty: '8h'}
+]}, {collection: 'blog'}) }}
+```
+
+- Only image and gallery fields can be placed. `random` and `featured` are not
+  offered, because the render is cached and would keep its first pick.
+- When the record or its image is missing, that layer is left out and the rest
+  of the image is drawn as usual.
+- With `markfit: 'crop'`, any image is cut around its focal point.
+- Every image ImageWorks can place is already public through its own
+  ImageWorks URL; `markimage` reaches nothing that URL does not.
 
 ## Color Palette Integration
 
@@ -28662,6 +29283,7 @@ When creating custom password reset email templates, the following variables are
 | `data.resetUrl` | string | Complete password reset URL with token |
 | `data.expiryMinutes` | integer | Number of minutes before token expires |
 | `data.collection` | string | Authentication collection name |
+| `data.redirect` | string | Where the visitor started, such as `/es/private`, or empty. Use it to pick the email's language |
 
 **Note**: All variables must be accessed via the `data` object (e.g., `{{ data.resetUrl }}`), which is consistent with all custom mailer templates in Total CMS.
 
@@ -28787,6 +29409,18 @@ This is useful for:
 ```html
 <a href="/forgot-password?email={{ user.email }}">Reset your password</a>
 ```
+
+It also takes `redirect`, the same address the login form takes. When the login page has a `redirect`, its Forgot Password link passes it on, and it stays with the visitor through each step: the forgot-password form, the link in the reset email, and the reset form, which sends them there once the password is saved. Only an address on your own site is kept.
+
+That lets a whitelabel template on each step tell where the visitor started. On a bilingual site, `whitelabel/forgot-password-above.twig` and `whitelabel/reset-password-above.twig` can switch the page to Spanish for someone who came from an `/es` page, so the form's labels and messages follow:
+
+```twig
+{% if redirect|default('') matches '{^/es(/|\\?|$)}' %}
+	{% do cms.locale.set('es') %}
+{% endif %}
+```
+
+The reset email itself is still sent in English. To send it in another language, set up a custom mailer (see [Custom Email Templates](#custom-email-templates)) and choose the wording from `data.redirect`.
 
 ## Template Customization
 
@@ -31542,11 +32176,14 @@ Scopes define what an authorized connection can do. When you create a static cli
 | `cms:write` | Create, update, and delete your content | `POST`, `PUT`, `PATCH`, `DELETE` on `/api/collections/*` and `/api/objects/*` | `create_object`, `update_object`, `patch_object` |
 | `cms:admin` | Administer your site | `/api/schemas/*`, `/api/cache/*`, `/api/extensions/*` | `create_schema`, `update_schema`, `delete_schema`, `create_collection`, `clear_cache`, `list_extensions` |
 | `mcp:tools` | Call AI tools on your site | (MCP only) | Authorizes all `tools/call` requests |
-| `mcp:resources` | Read addressable AI resources | (MCP only) | Authorizes `resources/read`, `resources/subscribe`, `resources/list` |
+| `mcp:resources` | Read addressable AI resources | (MCP only) | Authorizes `resources/read`, `resources/list`, `resources/templates/list`, `resources/subscribe`, `resources/unsubscribe`, `subscriptions/listen` |
+| `mcp:prompts` | List and retrieve AI prompts | (MCP only) | Authorizes `prompts/list`, `prompts/get` |
+
+Any `mcp:*` scope lets a client open a connection: `initialize`, and `server/discover` on the 2026-07-28 protocol revision.
 
 `cms:admin` implies `cms:read` and `cms:write` — you don't need all three for a full-access connection.
 
-**Scope is not the whole story — your access groups cap what a token can actually reach.** REST and MCP both resolve a token's real authority as *scope ∩ the approving user's access-group permissions*, the same groups you manage under **Admin → Access Groups**. A `cms:write` token approved by a blogger-group user can write only to the collections that group can create/update in the dashboard — not every collection `cms:write` mentions in the table above. A `cms:read` token similarly only reads what the user's groups (or, for MCP calls only, a collection's own public MCP exposure) allow — REST has no such exposure carve-out; `CollectionAccessMiddleware`'s Bearer branch is a plain group check regardless of the collection's `mcp.access` setting. **Admin (API keys, or a token elevated to the admin persona — see below) bypasses the group check**, same as it always has.
+**Scope is not the whole story — your access groups cap what a token can actually reach.** REST and MCP both resolve a token's real authority as *scope ∩ the approving user's access-group permissions*, the same groups you manage under **Admin → Access Groups**. A `cms:write` token approved by a blogger-group user can write only to the collections that group can create/update in the dashboard — not every collection `cms:write` mentions in the table above. A `cms:read` token similarly only reads what the user's groups (or, for MCP calls only, a collection's own public MCP exposure) allow — REST has no such exposure carve-out; `CollectionAccessMiddleware`'s Bearer branch is a plain group check regardless of the collection's `mcp.access` setting. **Admin (an API key with every path and every method, or a token elevated to the admin persona — see below) bypasses the group check**, same as it always has. A key limited to some paths or methods is checked like a group made from them; see [Keys over MCP](docs/apis/api-keys#keys-over-mcp).
 
 `cms:admin` is additionally **privilege-gated at issuance**: it lands in a token when the approving user is in the **admin group**, OR when their access groups grant at least one `schemas` / `collectionsMeta` / `utils` permission (the same permissions that unlock schema editing, collection settings, or utilities like cache-clearing in the dashboard). For anyone else the requested scope is silently narrowed away — the consent screen doesn't display it, and the issued token doesn't carry it. Holding the scope only grants what those groups actually allow: a non-admin schema editor's `cms:admin` token can create/update/delete the schemas their groups permit, and nothing else — it does not become a full-access admin token. See [Super-admin elevation](#super-admin-elevation) for the separate, stricter bar on becoming the unrestricted admin persona.
 
@@ -31586,7 +32223,7 @@ Navigate to **Admin → Utilities → OAuth Grants** (`/admin/utils/oauth-grants
 
 ### Delete a client
 
-In **Admin → Utilities → OAuth Clients**, click **Delete** on any client. This cascades — all active grants for that client are revoked and their tokens become invalid. The connected app cannot reconnect without a new client setup.
+In **Admin → Utilities → OAuth Clients**, click **Delete** on any client. This cascades — all active grants for that client are revoked, its refresh tokens stop working, and its access tokens are refused from the next request on rather than when they expire. The connected app cannot reconnect without a new client setup.
 
 ### Self-revocation
 
@@ -31669,7 +32306,7 @@ The JWT access tokens are RS256-signed. Resource servers (or auditing tools) can
 
 ## Pruning expired grants and stale clients with `oauth:gc`
 
-OAuth records accumulate over time. Expired access tokens are rejected at the endpoint, but the underlying grant records remain on disk until explicitly pruned. Self-registered clients pile up even faster: MCP clients (claude.ai, Claude Desktop, Cursor) register a fresh client every time a connector is added, so failed or abandoned connection attempts each leave a client record behind. The `oauth:gc` command removes both:
+OAuth records accumulate over time. Expired access tokens are rejected at the endpoint, but the underlying grant records remain on disk until explicitly pruned. Self-registered clients pile up even faster: MCP clients (claude.ai, Claude Desktop, Cursor) register a fresh client every time a connector is added, so failed or abandoned connection attempts each leave a client record behind. The `oauth:gc` command removes both, along with expired entries in `tcms-data/.system/oauth-state/`:
 
 ```bash
 tcms oauth:gc
@@ -31682,11 +32319,13 @@ Pruned 14 expired OAuth grants.
 Pruned 6 stale dynamic clients.
   - Anthropic/ClaudeAI (f9920001-…)
   ...
+Pruned 37 expired OAuth state entries (codes, revocations, rotated refresh tokens).
 ```
 
 The command is safe to run at any time:
 
 - **Grants** are removed only after their refresh token has passed its configured lifetime (`oauth.refreshTokenTtl`) — active grants are untouched.
+- **OAuth state** — authorization codes waiting to be exchanged, revoked access-token ids, and the hashes of rotated refresh tokens kept to catch a replay — is removed only once it has expired.
 - **Clients** are removed only when they are self-registered (RFC 7591), at least 24 hours old, and hold no active grant. Every completed connection creates a grant at the consent screen, so a grantless dynamic client is a dead registration by definition; the 24-hour floor protects registrations whose user is still mid-consent. Manually configured clients are never touched.
 
 The same client cleanup is available in the admin: the **Remove stale clients** button on the OAuth Applications page (Utilities → OAuth Applications) prunes the self-registered list on demand.
@@ -31720,10 +32359,11 @@ Every OAuth lifecycle event is appended to `tcms-data/.system/logs/mcp.log` unde
 | `client.deleted` | INFO | A client is deleted from the admin (cascades to all grants) |
 | `consent.granted` | INFO | A user approves the consent screen |
 | `consent.denied` | INFO | A user clicks Deny on the consent screen |
-| `token.issued` | INFO | An access token is minted after code exchange |
+| `token.issued` | INFO | An access token is minted after code exchange; `user_id` is the user who approved it |
 | `token.refreshed` | INFO | An access token is renewed via refresh token |
 | `token.revoked` | INFO | A token is revoked via the admin or `POST /oauth/revoke` |
 | `scope.rejected` | INFO | A request is rejected because the token lacks the required scope |
+| `group.rejected` | INFO | A request is rejected because the caller's access groups (or a limited API key's paths and methods) do not grant it; `target` names the collection or schema when there is one |
 | `login_collection.rejected` | **WARNING** | A session from an auth collection other than the [login collection](#login-collection) tried to authorize a client |
 | `security.refresh_replay` | **WARNING** | A previously-used refresh token is presented — the entire grant chain is revoked immediately |
 | `security.rate_limit` | **WARNING** | The token endpoint or dynamic-registration rate limit is hit |
@@ -31747,7 +32387,7 @@ The `token_hash` in replay events is a truncated prefix of the presented token's
 
 Tokens issued through the OAuth flow authenticate requests to `/mcp` — but only if they carry an `mcp:*` scope. A token with `cms:read` alone, without any `mcp:*` scope, receives a **403** on every MCP request regardless of what collections it could otherwise reach.
 
-The token's scopes determine which tools and resources appear in `tools/list` and `resources/list`. An agent whose token lacks `mcp:resources` cannot subscribe to change notifications; one without `mcp:prompts` cannot invoke prompts. T3 filters the surface at session initialization so agents only see what their token can actually call.
+The token's scopes determine which tools, resources and prompts the server offers. An agent whose token lacks `mcp:resources` cannot read resources or subscribe to change notifications; one without `mcp:prompts` cannot get prompts. T3 filters the surface when it builds the server for each request, so agents only see what their token can actually call: listing resources or prompts the token was not granted returns an empty list rather than a 403, which some clients take as a broken connection.
 
 ### Super-admin elevation
 
@@ -31802,6 +32442,10 @@ T3 requires an exact string match including protocol (`https://`), hostname, pat
 **"Insufficient scope" (403)**
 
 The token was authorized with a narrower scope than the operation requires. Example: a token with only `cms:read` calling `query_collection` on an admin-access collection, or a token without `mcp:tools` calling a tool. Either re-authorize with broader scopes or check whether the collection's `mcp.access` setting is more restrictive than intended.
+
+**"Authorization code has been revoked" on the first connect**
+
+The token exchange found no record of the code it was handed. Before 3.6.10 codes were kept in the cache, so the exchange failed whenever dev mode was on, the cache was cleared between consent and exchange, or the host's APCu was not shared between PHP workers. Codes now live in `tcms-data/.system/oauth-state/`; on 3.6.10 or later this error means the code was already used, or the client took longer than `oauth.authCodeTtl` (10 minutes) to exchange it. Check that `tcms-data/.system/` is writable by the web server.
 
 **429 on `/oauth/token`**
 
@@ -33134,6 +33778,8 @@ Admin → Settings → MCP Server → CORS Allowed Origins
 
 Preflight `OPTIONS` requests short-circuit to a 204 with the standard handshake headers; the rate limiter doesn't see them so a single browser tab can perform a normal session without burning the public-IP quota on preflights.
 
+A browser client may send `Authorization`, `X-API-Key`, `Mcp-Session-Id`, `MCP-Protocol-Version`, `Mcp-Method`, `Mcp-Name` and `Last-Event-ID`, and may read `Mcp-Session-Id`, `WWW-Authenticate` and `Retry-After` from the response, so it can keep its session, start OAuth sign-in on a 401 and back off on a 503.
+
 ---
 
 ## API key authorization
@@ -33280,7 +33926,7 @@ Before submitting your site to Anthropic's Connector Directory, walk through:
 - [ ] Tool names ≤ 64 characters (including any `toolPrefix`).
 - [ ] Read and write operations split into separate tools (no mixed-mode tools).
 - [ ] Tool descriptions don't instruct Claude ("always do X", "you must call Y first") — Total CMS uses `setInstructions()` for cross-tool guidance.
-- [ ] Tools report errors by throwing `Mcp\Exception\ToolCallException` with a recovery hint in the message — the SDK sets `isError: true` for you (see [Extending MCP](docs/mcp/extensions), "Returning data and reporting errors"). A hand-built `['isError' => true, ...]` return array does NOT set the outer `CallToolResult.isError`.
+- [ ] Tools report errors by throwing `Mcp\Server\Exception\ToolCallException` with a recovery hint in the message — the SDK sets `isError: true` for you (see [Extending MCP](docs/mcp/extensions), "Returning data and reporting errors"). A hand-built `['isError' => true, ...]` return array does NOT set the outer `CallToolResult.isError`.
 - [ ] Lazy authentication verified: public tools work unauthenticated; only protected tools challenge.
 - [ ] Submission slug chosen carefully (fixed after publication).
 
@@ -33291,6 +33937,7 @@ Before submitting your site to Anthropic's Connector Directory, walk through:
 - **Anonymous content is opt-in.** `mcp.publicAccess` defaults to `true`, so anonymous callers can open a session, but `mcp.access` defaults to `admin` on every collection, so a fresh install never leaks content until the operator opts a collection in. Set `mcp.publicAccess: false` to turn anonymous callers away with a 401.
 - **Drafts are server-filtered.** Public/anonymous callers can never see `draft:true` items regardless of caller intent — `query_collection`, `search_collection`, and `get_object` enforce this server-side. AUTHENTICATED (OAuth) callers see drafts only in collections where their access groups grant `read` — public `mcp.access` exposure by itself does not unlock drafts, even though it unlocks published content. `get_view` / `query_view` are the one exception: a view's result is built with full access, drafts included, and is gated by the `dataviews` permission as a whole — see [Data views follow the data views grant](#data-views-follow-the-data-views-grant).
 - **Public registration carries automatic login.** Forms that use the public registration endpoint auto-log the new user in; gate them with CAPTCHA / rate limit / email verification when the access group new users land in reaches sensitive content. (Unrelated to MCP directly, but worth flagging — the same operator who exposes a collection to MCP might also be running public registration.)
+- **A session belongs to the caller that opened it.** A request naming another caller's `Mcp-Session-Id` gets 404, as if the session did not exist: another API key, another OAuth client, or the same client acting for another user. An OAuth client that refreshes its token keeps its session. Anonymous callers share one unbound surface, and cannot use a session an identified caller opened. A client ends its session with `DELETE /mcp` and its `Mcp-Session-Id`; only the caller that opened it can.
 - **API keys are scoped.** A key scoped only to `/collections/blog` does NOT unlock MCP; the operator must explicitly include `/mcp` (or `*`) in the scope.
 - **No prompt-injection mitigation at the tool layer.** Content stored in `styledtext` fields is returned to the agent verbatim (after format conversion). Operators with untrusted user-generated content should sanitize at write time, not rely on MCP-side filtering.
 
@@ -34224,7 +34871,7 @@ The template handler's named parameters map one-to-one with `{name}` placeholder
 
 **Return raw data — do not wrap it in a `content` envelope.** The SDK formats your return value into the MCP `content` array for you: an array is JSON-encoded into a single text block, and a string or scalar becomes a text block verbatim. If you return your own `['content' => [...]]` wrapper, the SDK encodes that *entire wrapper* as text, and the agent receives a double-encoded envelope it has to unwrap twice. Match the core tools in `src/Domain/Mcp/Tool/` — return the bare data.
 
-**Report errors by throwing `\Mcp\Exception\ToolCallException`.** The SDK catches it at the tool boundary and builds a protocol-level error result (it sets the `isError` flag for you). Returning a hand-built `['isError' => true, ...]` array does *not* work — that array contains no `Content` objects, so the SDK JSON-encodes it as ordinary text and the call still reports success.
+**Report errors by throwing `\Mcp\Server\Exception\ToolCallException`.** The SDK catches it at the tool boundary and builds a protocol-level error result (it sets the `isError` flag for you). Returning a hand-built `['isError' => true, ...]` array does *not* work — that array contains no `Content` objects, so the SDK JSON-encodes it as ordinary text and the call still reports success.
 
 ```php
 handler: function (string $invoice_id) use ($context): array {
@@ -34232,12 +34879,14 @@ handler: function (string $invoice_id) use ($context): array {
     $invoice = $repo->find($invoice_id);
 
     if ($invoice === null) {
-        throw new \Mcp\Exception\ToolCallException("Invoice '{$invoice_id}' not found.");
+        throw new \Mcp\Server\Exception\ToolCallException("Invoice '{$invoice_id}' not found.");
     }
 
     return $invoice;
 },
 ```
+
+Before Total CMS 3.6.10 (mcp/sdk 0.10) the class was `\Mcp\Exception\ToolCallException`. That name still works, as an alias of the new one, so an extension written against it keeps loading, but use the new name in new code: the alias will be removed in a later release.
 
 Use `ToolCallException` for recoverable domain errors — bad input, a missing record, a failed external call — so the agent receives a structured error it can reason about and report to the user. Let genuine programming exceptions propagate; the SDK converts them to a generic error response at the transport boundary, which surfaces as a Sentry event if Sentry is configured.
 
@@ -34255,7 +34904,7 @@ $context->registerMcpTool(
         $userId  = $session?->get('AUTH_USER');
 
         if ($userId === null) {
-            throw new \Mcp\Exception\ToolCallException('Not authenticated.');
+            throw new \Mcp\Server\Exception\ToolCallException('Not authenticated.');
         }
 
         $orders = $context->get(\Acme\Orders\Repository\OrderRepository::class)
@@ -35297,6 +35946,7 @@ When an extension is enabled, the system runs a trial registration to discover w
 | `container` | `$context->addContainerDefinition(...)` | DI container services |
 | `page-middleware` | `$context->addPageMiddleware(...)` | Per-page middleware |
 | `form-actions` | `$context->addFormAction(...)` | Custom form action types (Pro) |
+| `imageworks:filters` | `$context->addImageFilter(...)` | ImageWorks photo filters for `filt` |
 
 If a new version of an extension adds a capability it didn't have before, Total CMS detects it on update and adds it to the permissions list **turned off** — the operator opts into the new feature from the extension's settings. (For sideloaded extensions, an update whose code contains high-risk patterns disables the extension until the operator reviews it.) See [Stability & Safety](docs/extensions/safety) for how the review and update protections work.
 
@@ -36313,6 +36963,54 @@ public function register(ExtensionContext $context): void
 Provider ids must be unique across all extensions + the built-in `text` provider. The registrar logs and skips collisions during boot. When `isAvailable()` returns false, SearchService silently falls back to text search. Throwing from `search()` also triggers the fallback. Throwing from `index()` or `delete()` enqueues a retry job.
 
 See the bundled [Algolia Search extension](docs/extensions/algolia-search) for a complete working example.
+
+## Image Filters
+
+Register a photo filter that ImageWorks users pick with `filt`, in templates, presets and the admin ImageWorks tool. A filter is a recipe (an array) or a class.
+
+```php
+use TotalCMS\Domain\ImageWorks\Filter\FilterContext;
+use TotalCMS\Domain\ImageWorks\Filter\ImageFilter;
+use Intervention\Image\Interfaces\ImageInterface;
+
+public function register(ExtensionContext $context): void
+{
+    // A recipe: same format as imageworks.filters in tcms.php
+    $context->addImageFilter('acme-noir', [
+        'label' => 'Acme Noir',
+        'steps' => [
+            ['grayscale', 1],
+            ['contrast', 1.25],
+            ['vignette', 0.4],
+        ],
+    ]);
+
+    // A class, for anything a recipe cannot do. The third argument is the admin group
+    $context->addImageFilter('acme-grain', new GrainFilter(), 'effect');
+}
+
+final class GrainFilter implements ImageFilter
+{
+    public function label(): string { return 'Acme Grain'; }
+
+    public function apply(ImageInterface $image, FilterContext $context): ImageInterface
+    {
+        // $context->driver is 'gd' or 'imagick'; $context->palette is the image's hex colors
+        return $image;
+    }
+
+    public function version(): string { return '1'; }
+}
+```
+
+**Capability:** `imageworks:filters` ("Image Filters")
+
+- **The vendor prefix.** The name must start with the extension's vendor and a hyphen: `acme/photo-pack` may register `acme-noir`, never `noir`. Core filter names never contain a hyphen, so an extension can never replace a built-in. When one vendor's name is a prefix of another's, the longer vendor keeps its own: with `acme-labs/pack` installed, `acme/photo-pack` cannot register `acme-labs-noir`. A name without the prefix, a duplicate, or an invalid recipe is refused and logged, and the rest of the extension still loads.
+- **Recipes** use the step reference in [ImageWorks](docs/twig/imageworks#your-own-filters). Their cache key follows the steps, so editing one re-renders automatically.
+- **Classes** implement `ImageFilter`: `label()`, `apply(ImageInterface $image, FilterContext $context)` and `version()`. Work on both GD and Imagick, keep the alpha channel, and return the image. `version()` is part of the cache key: change it whenever the output changes, or visitors keep getting files rendered by the old look. Your `label()`, `apply()` and `version()` run under the extension guard, like your Twig functions and event listeners: a throw is logged against your extension and counts toward [auto-quarantine](docs/extensions/safety). A filter that throws is skipped and the image renders as it was before your filter ran, even if `apply()` changed it first. A throwing `label()` shows the filter's name in the admin, and a throwing `version()` keys the render under `err`. Class filters are not held to the `filterMaxPixels` limit; they own their cost.
+- **Strength** (`filtamt`) is applied by ImageWorks around your filter. Do not implement it.
+- **In the admin**, your looks and duotones get their own row in the ImageWorks tool's filter strip, titled with your extension's `name` from `extension.json`. They are still picked one at a time along with the core looks. Your `effect` filters join the Extras row, where they stack on top of a look.
+- An admin can switch the **Image Filters** capability off. The extension's filters are then unregistered, and their names drop out of URLs silently, serving the unfiltered image.
 
 ## Agent Skill
 
@@ -37654,7 +38352,7 @@ tcms jumpstart:import my-site.json --json
 
 Push and pull schemas, templates, site-machinery objects, and collection settings between a local development instance and a production server. Configure the production server URL and API key in **Settings > Sync** in the admin dashboard. Full details, including the object-seeding workflow: [Sync guide](docs/operations/sync).
 
-> **3.5.1 note:** `--collections` now means collection *settings* (it used to mean objects from five allowlisted collections). The flag formerly named `collection-meta` is gone — `--collections` does its job now. Objects for those five collections move via their own feature flags instead (`--pages`, `--dataviews`, `--mailer`, `--mcp-prompts`, `--automations`), and any other collection's object data can be seeded with `--objects`. Full breaking-changes writeup: [Sync guide](docs/operations/sync).
+> **3.5.1 note:** `--collections` now means collection *settings* (it used to mean objects from five allowlisted collections). The flag formerly named `collection-meta` is gone — `--collections` does its job now. Objects for those five collections move via their own feature flags instead (`--pages`, `--dataviews`, `--mailer`, `--mcp-prompts`, `--automations`, and since 3.6.10 `--seo`), and any other collection's object data can be seeded with `--objects`. Full breaking-changes writeup: [Sync guide](docs/operations/sync).
 
 ### `push`
 
@@ -37682,6 +38380,7 @@ tcms push --schemas=blog --templates=blog-post --dry-run
 | `--mailer[=id,id]` | Mailer templates — all of them, or just the ones listed |
 | `--mcp-prompts[=id,id]` | MCP prompts — all of them, or just the ones listed |
 | `--automations[=id,id]` | Automations — all of them, or just the ones listed |
+| `--seo` | The Site SEO record (its IndexNow key and images stay on each site) |
 | `--collections` | Comma-separated collection IDs whose SETTINGS to push (any collection; counters never travel) |
 | `--objects` | Seed object data: `collection` or `collection:id,id`, repeatable. Existing objects on the target are skipped unless `--overwrite` is given. Push-only |
 | `--overwrite` | Let `--objects` overwrite objects that already exist on the target |
@@ -37710,14 +38409,15 @@ tcms pull --collections=comparisons
 | `--mailer[=id,id]` | Mailer templates — all of them, or just the ones listed |
 | `--mcp-prompts[=id,id]` | MCP prompts — all of them, or just the ones listed |
 | `--automations[=id,id]` | Automations — all of them, or just the ones listed |
+| `--seo` | The Site SEO record (its IndexNow key and images stay on each site) |
 | `--collections` | Comma-separated collection IDs whose SETTINGS to pull (any collection; counters never travel) |
 | `--dry-run` | Compare both sides: per-item unchanged/differs/new status with newer-side hints |
 
-**What gets synced:** Custom schemas, custom templates, collection settings for any collection (never its counters), objects for the five feature-flagged collections — `builder-pages` (`--pages`), `mailer`, `mcp-prompt` (`--mcp-prompts`), `dataviews`, `automations` — and, push-only, seeded object data for any other seedable collection via `--objects`.
+**What gets synced:** Custom schemas, custom templates, collection settings for any collection (never its counters), objects for the feature-flagged collections — `builder-pages` (`--pages`), `mailer`, `mcp-prompt` (`--mcp-prompts`), `dataviews`, `automations`, `seo-site` (`--seo`) — and, push-only, seeded object data for any other seedable collection via `--objects`.
 
 **What never gets synced:** Objects in custom collections you haven't named with `--objects`; the `image`, `gallery`, `file`, `depot`, and `playground` collections, which can never be seeded; image/file/gallery/depot **fields** on any object, which are always stripped from every payload; media/images; system settings; API keys; reserved schemas. A custom collection's *schema* syncs; its objects only travel if you explicitly seed them.
 
-**Filter semantics:** a bare `tcms push` or `tcms pull` is a full mirror of schemas, templates, the five feature-flagged collections, and collection settings — it never seeds `--objects`, which only runs when named explicitly. The moment any filter flag is given, the categories you did not mention are excluded entirely, so `tcms push --schemas=blog` moves the blog schema and nothing else.
+**Filter semantics:** a bare `tcms push` or `tcms pull` is a full mirror of schemas, templates, the feature-flagged collections, and collection settings — it never seeds `--objects`, which only runs when named explicitly. The moment any filter flag is given, the categories you did not mention are excluded entirely, so `tcms push --schemas=blog` moves the blog schema and nothing else.
 
 **Backups:** before an overwrite lands, the receiving instance snapshots the current version to `tcms-data/.system/backups/{schemas,objects}/...` (ten most recent per item). See the [Sync guide](docs/operations/sync) for details.
 
@@ -39140,6 +39840,10 @@ Set in **Admin → Extensions → Protect**. These apply to every page with `pro
 | `promptTitle` | string | `"Enter passcode to view"` | Heading shown on the passcode form. |
 | `cookieHours` | number | `168` | How long a visitor stays unlocked after entering the passcode, in hours (168 = 7 days). Set to `0` for a session cookie that clears when the browser closes. |
 | `globalScope` | toggle | `false` | **Site-wide passcode.** Lock the whole site behind one shared passcode and a single unlock cookie instead of per-page locking. When on, every protected page uses the Default Passcode and per-page passcodes/`protectScope` groups are ignored — enter the code once and the whole site unlocks. |
+| `headerHtml` | code | none | **HTML Above the Form.** Shown inside the box, above the heading and the form: a logo, a welcome line, a contact link. Added exactly as written, so it can carry a `<style>` block to restyle the page. |
+| `footerHtml` | code | none | **HTML at the Bottom of the Page.** Shown at the bottom of the passcode page, below the box: a copyright line, links, a script. Added exactly as written. |
+
+Both HTML settings apply to every protected page, including pages gated with `protect_page()`. They go into the page unescaped, which is safe because only an admin can save extension settings. To restyle the page, target `.tcms-protect` (the box), `.tcms-protect-header` and `.tcms-protect-footer`.
 
 ## Per-page configuration
 
@@ -41472,7 +42176,7 @@ Total CMS is a one-time purchase, licensed per domain. There is no subscription:
 
 ## Editions
 
-Total CMS is sold in two editions. **Standard** covers a typical content site: blogs, galleries, file depots, forms that send email, access groups, passkeys, and a read-only MCP server for AI agents. **Pro** adds custom schemas, the external REST API with API keys, the OAuth server, Automations, Data Views, the bulk mailer, webhook form actions, and Algolia search.
+Total CMS is sold in two editions. **Standard** covers a typical content site: blogs, galleries, file depots, forms that send email, access groups, passkeys, and a read-only MCP server for AI agents. **Pro** adds custom schemas, the external REST API with API keys, the OAuth server, Automations, Data Views, the bulk mailer, webhook form actions, Algolia search, and layered ImageWorks marks with the share image overlays and Share Cards built on them.
 
 Every feature's documentation notes when it needs Pro. For the full side-by-side comparison and current prices, see the [pricing page](https://totalcms.co/pricing).
 
@@ -42420,6 +43124,28 @@ return [
 ### HTML Sanitization
 
 Total CMS sanitizes HTML content by default to prevent XSS attacks. This is especially important for user-generated content.
+
+When a text or styled text field is saved, the sanitizer:
+
+- Removes `<script>`, `<style>`, `<object>`, `<embed>`, `<form>`, `<input>`, `<link>`, `<meta>`, `<base>` and frames
+- Removes event handler attributes (`onclick`, `onerror`, …) and `srcdoc`
+- Keeps an `<iframe>` only when its `src` is on an allowed host (YouTube, Vimeo, and the others in `allowed_iframe_domains`)
+- Checks every link and media address after decoding it, as the browser does, so `javas&#99;ript:` counts as `javascript:`
+
+A link (`href`) must be a relative path or use one of these schemes: `http`, `https`, `mailto`, `tel`, `sms`, `callto`, `ftp`, `sftp`, `webcal`, `xmpp`, `geo`. Any other link is saved as `href="#sanitized"`, so it still looks like a link but goes nowhere. An image or video `src` may also be an inline `data:image/...` picture; any other `src` is removed.
+
+To allow another scheme, replace the list in `tcms.php`. Include the defaults you still want:
+
+```php
+return [
+	'htmlclean' => [
+		'allowed_url_schemes' => [
+			'http', 'https', 'mailto', 'tel', 'sms', 'callto', 'ftp', 'sftp', 'webcal', 'xmpp', 'geo',
+			'whatsapp',
+		],
+	],
+];
+```
 
 **⚠️ Warning: Disabling HTML Sanitization**
 
@@ -43841,7 +44567,7 @@ Sync lets you push schemas and templates from a local development instance to a 
 
 - **`--collections` now means collection SETTINGS**, not objects. Before 3.5.1 it moved objects from five allowlisted collections; that meaning is gone.
 - **The flag formerly named `collection-meta` is removed.** Its job — pushing/pulling collection settings — is now `--collections`.
-- Objects for the five site-machinery collections move via their own feature flags instead: `--pages`, `--dataviews`, `--mailer`, `--mcp-prompts`, `--automations`.
+- Objects for the site-machinery collections move via their own feature flags instead: `--pages`, `--dataviews`, `--mailer`, `--mcp-prompts`, `--automations`, and (since 3.6.10) `--seo`.
 - **New:** `push --objects=collection[:id,id]` seeds object data from any seedable collection to production. Unlike everything else in Sync, it never overwrites — existing objects on the target are skipped unless you add `--overwrite`. It is push-only; `pull` has no equivalent.
 
 If you have scripts or CI steps calling `tcms push --collections=...` expecting objects, or the old collection-settings flag, update them before upgrading.
@@ -43850,17 +44576,30 @@ If you have scripts or CI steps calling `tcms push --collections=...` expecting 
 
 - Custom schemas (`.schemas/` directory)
 - Custom templates
-- **Collection settings** — every collection's configuration (`.meta.json`): URL, MCP card, sitemap settings, access groups, schema overrides, form settings. Moved with `--collections` (any collection, not just the five below). A collection that exists on the source but not the target is created there (settings only — its objects don't travel). The environment-local counters (`count`, `totalObjects`) and the content timestamp (`lastUpdated`) **never** move: the receiving side always keeps its own, no matter what a payload carries.
-- **Site-machinery objects**, one feature flag per collection — `--pages` (`builder-pages`), `--dataviews` (`dataviews`), `--mailer` (`mailer`), `--mcp-prompts` (`mcp-prompt`), `--automations` (`automations`). Each upserts: given with no value it moves every object in that collection (`--pages`), given a value it moves just those ids (`--pages=home,about`).
+- **Collection settings** — every collection's configuration (`.meta.json`): URL, MCP card, sitemap settings, access groups, schema overrides, form settings. Moved with `--collections` (any collection, not just the flagged ones below). A collection that exists on the source but not the target is created there (settings only — its objects don't travel). The environment-local counters (`count`, `totalObjects`) and the content timestamp (`lastUpdated`) **never** move: the receiving side always keeps its own, no matter what a payload carries.
+- **Site-machinery objects**, one feature flag per collection — `--pages` (`builder-pages`), `--dataviews` (`dataviews`), `--mailer` (`mailer`), `--mcp-prompts` (`mcp-prompt`), `--automations` (`automations`), `--seo` (`seo-site`, the Site SEO record). Each upserts: given with no value it moves every object in that collection (`--pages`), given a value it moves just those ids (`--pages=home,about`).
 - **Seeded objects (push only)** — `--objects=collection[:id,id]` exports object data from any seedable collection and lands it on the target, but only where the target doesn't already have that id. See [Seeding objects with `--objects`](#seeding-objects-with-objects) below.
 
 > **Git-managed templates are excluded.** If you keep a `builder/` folder at your project root, templates travel by git, not Sync — so Sync skips them and carries schemas and the flagged/settings/seeded data only. See [Git-First Templates](docs/operations/git-first-templates).
 
-### The five feature flags
+### The feature flags
 
-`--pages`, `--dataviews`, `--mailer`, `--mcp-prompts`, and `--automations` each move one reserved collection's objects, always in upsert mode (same as schemas and templates — the target's copy is replaced). They're named for the admin feature, not the storage collection, so you don't have to know that Pages live in a collection called `builder-pages`.
+`--pages`, `--dataviews`, `--mailer`, `--mcp-prompts`, `--automations`, and `--seo` each move one reserved collection's objects, always in upsert mode (same as schemas and templates — the target's copy is replaced). They're named for the admin feature, not the storage collection, so you don't have to know that Pages live in a collection called `builder-pages`.
 
-These five are the only collections sync can move *destructively* (overwriting an existing object on the target). Every other collection's objects only ever arrive via `--objects`, which is non-destructive by default — see below.
+These are the only collections sync can move *destructively* (overwriting an existing object on the target). Every other collection's objects only ever arrive via `--objects`, which is non-destructive by default — see below.
+
+Site SEO is on the list because every install creates its record, so a seed push, which never overwrites, could not move a change to it.
+
+#### What each site keeps for itself
+
+A few fields of a flagged record are the site's own state, not something you authored, so they never travel in either direction and the receiving side keeps its own:
+
+| Collection | Fields | Why |
+|---|---|---|
+| Data Views | `lastBuilt`, `lastError` | Every scheduled rebuild writes them on the site that ran it. Without this, a view rebuilt on production showed as newer there forever. |
+| Site SEO | `indexNowEnabled`, `indexNowKey` | The key identifies one site to the search engines. Turn IndexNow on separately on each site. |
+
+The images on the Site SEO record (default image, logo, icons) don't travel either, like every other media field. Upload them on each site.
 
 ### Seeding objects with `--objects`
 
@@ -43870,7 +44609,7 @@ These five are the only collections sync can move *destructively* (overwriting a
 - A push that mixes seeded objects with anything else — `push --schemas=faq --objects=faq` — sends **two** requests: the schemas, templates, feature-flag objects and collection settings upsert through `/api/sync/import`, then the seeded objects alone go to the skip-existing `/api/import/jumpstart`. Each half keeps the semantics its flag documents. The mirror half goes first (so a new schema or collection exists before its rows land); if it fails, the seed is not sent and the command says so, and it exits non-zero if either half fails.
 - `--objects` and `--overwrite` are **push-only** — `pull` has no seeding mode.
 - Not every collection is seedable:
-  - The five feature-flag collections (`builder-pages`, `dataviews`, `mailer`, `mcp-prompt`, `automations`) are reachable only through their own flag, not `--objects`.
+  - The feature-flag collections (`builder-pages`, `dataviews`, `mailer`, `mcp-prompt`, `automations`, `seo-site`) are reachable only through their own flag, not `--objects`.
   - `image`, `gallery`, `file`, and `depot` can never be seeded — see [Binaries never travel](#what-never-gets-synced) below.
   - `playground` can never be seeded — it's a per-install scratchpad created on demand, not portable content.
 - Binaries never travel even for seedable collections: a card or field that references an image/file/gallery/depot is exported without that field, so the receiving object simply won't have it populated. A pushed blog post never blanks a production image or file field, because the field never arrives at all.
@@ -43921,7 +44660,7 @@ On your **production** Total CMS instance:
 
 1. Go to **Utilities > API Keys**
 2. Create a new key with **GET** and **POST** permissions
-3. Under endpoints, choose **Specific endpoints** and tick **Sync Manager** — this grants the `/sync` routes that push (`POST /sync/import`) and pull (`GET /sync/export`) use, and nothing else. Both routes are admin only for a signed-in session; an API key is checked against its own endpoint grant instead
+3. Under endpoints, choose **Specific endpoints** and tick **Sync Manager** — this grants the `/sync` routes that push (`POST /sync/import`) and pull (`GET /sync/export`) use, and nothing else. Both routes are admin only for a signed-in session; an API key is checked against its own endpoint grant instead. A key with Sync Manager can push everything sync moves, **automations included**, and an automation's handler is PHP that runs on the server. Only a super-admin can create a key, so this is their authority, but keep the key as safe as an admin password
 4. If you will seed objects with `tcms push --objects`, also tick **Content Import (seeding)**. Seeded objects go to `POST /import/jumpstart`, a different route from the rest of a push, so a key granted only Sync Manager answers `401 Invalid API key or insufficient permissions` for that half while everything else succeeds
 5. Copy the generated API key
 
@@ -44012,7 +44751,7 @@ tcms push --dry-run
 tcms push --json
 ```
 
-Filters are exclusive: as soon as any of `--schemas`, `--templates`, `--pages`, `--dataviews`, `--mailer`, `--mcp-prompts`, `--automations`, `--collections`, or `--objects` is given, the categories you did not mention are left out entirely.
+Filters are exclusive: as soon as any of `--schemas`, `--templates`, `--pages`, `--dataviews`, `--mailer`, `--mcp-prompts`, `--automations`, `--seo`, `--collections`, or `--objects` is given, the categories you did not mention are left out entirely.
 
 `--objects` and `--overwrite` are push-only — seeding content onto production has no pull equivalent.
 
@@ -44092,7 +44831,7 @@ Everything except a plain `--objects` seed overwrites on the target: if a schema
 
 `--objects` is the exception, and deliberately so: existing objects on the target are left alone unless you add `--overwrite`, because seeding a fresh site with starter content should never clobber something an editor already changed in production.
 
-> **A bare `tcms push` is a full mirror.** With no filter flags, a push carries every custom schema, every template, every object in the five feature-flagged collections, and every collection's settings — but never seeds `--objects`, which only ever runs when named explicitly. If pages are edited on the production server, push from local with that in mind. To move one thing, name it: the moment any filter flag is given, the categories you did not mention are excluded — `tcms push --schemas=blog` pushes the blog schema and nothing else. `--dry-run` shows the complete payload.
+> **A bare `tcms push` is a full mirror.** With no filter flags, a push carries every custom schema, every template, every object in the feature-flagged collections, and every collection's settings — but never seeds `--objects`, which only ever runs when named explicitly. If pages are edited on the production server, push from local with that in mind. To move one thing, name it: the moment any filter flag is given, the categories you did not mention are excluded — `tcms push --schemas=blog` pushes the blog schema and nothing else. `--dry-run` shows the complete payload.
 
 ## Automatic Backups
 
@@ -44110,7 +44849,7 @@ Backups only cover what sync overwrites. They are not a substitute for real back
 
 ## Timestamps
 
-Schemas carry a top-level `updated` value stamped on every save, and each of the five feature-flagged collections (`builder-pages`, `dataviews`, `mailer`, `mcp-prompt`, `automations`) has an auto-maintained `updated` field. These exist so dry-run can tell you which side of a difference holds the newer edit.
+Schemas carry a top-level `updated` value stamped on every save, and each of the feature-flagged collections (`builder-pages`, `dataviews`, `mailer`, `mcp-prompt`, `automations`, `seo-site`) has an auto-maintained `updated` field. These exist so dry-run can tell you which side of a difference holds the newer edit.
 
 Collections carry **two** timestamps with deliberately different meanings:
 
@@ -44141,11 +44880,184 @@ Both approaches can coexist. Use git for your primary deployment workflow, and S
 
 **"Sync not configured"** — Set the production URL and API key in Settings > Sync.
 
-**Push fails with HTTP 401** — The API key is invalid or doesn't have the required permissions. Verify the key on the production server has GET and POST access to `/export/*` and `/import/*`.
+**Push fails with HTTP 401** — The API key is invalid or doesn't have the required permissions. Verify the key on the production server has GET and POST and the **Sync Manager** endpoint (plus **Content Import** if you seed objects).
 
 **Push fails with HTTP 404** — The production server URL may be incorrect. Make sure it points to the Total CMS API root (e.g., `https://example.com/tcms`), not the site root.
 
 **Connection timeout** — The production server may be unreachable from your local environment. Check network connectivity and firewall rules.
+
+---
+
+## Total CMS Studio
+
+Total CMS Studio is a Mac app that runs Total CMS sites on your own computer. PHP, Composer, Node and a web server come built in, so there is nothing else to install or configure. Pick a starter and you have a working site with its admin in a few minutes. It's the fastest way to try Total CMS, build a demo for a client, or work on a site before it goes live.
+
+[Download Total CMS Studio](https://totalcms.co/studio/download)
+
+Studio needs macOS 14 (Sonoma) or later on a Mac with Apple silicon. It needs an internet connection to create a site, because it downloads Total CMS and the starter at that point.
+
+## Your first site in minutes
+
+1. Open the downloaded disk image and drag **Total CMS Studio** to your **Applications** folder, then open it from there.
+2. Click **New Site…**.
+3. Pick a starter. Starters marked "Coming soon" aren't available yet.
+4. Choose a folder for the site. Pick an empty folder, or make one with **New Folder**. The site's files go straight into it. Studio starts you in `~/Sites`.
+   With one of the Total CMS starters (not a starter pack), two options sit under the folder:
+   - **Build CSS and JavaScript with Vite**, on by default. Turn it off if you bring your own tools.
+   - **Git-managed templates**, off by default. It keeps the Site Builder templates in the site's `builder/` folder so they go into git with your code. See [Git-First Templates](docs/operations/git-first-templates).
+5. Fill in the admin account: name, email and password. Leave the password empty to set the account up in the browser instead.
+6. Click **Create Site**.
+
+Studio downloads Total CMS, installs the frontend packages, builds the CSS and JavaScript (unless you turned that off), and creates your admin account. When it's done, the site's homepage opens in your browser. **Open Admin** in Studio takes you to the admin, already set up and ready to sign in.
+
+Each site gets its own address on your computer, such as `http://photo-test.localhost:8780`, with the admin at `/admin`. Sites on a `.localhost` address run with every Pro feature and need no license key. See [Development Domains](docs/operations/licenses#development-domains).
+
+## Bring an existing site into Studio
+
+If you already build Total CMS sites with Composer, Studio can run them for you.
+
+1. Click **Add Existing…** and choose the project folder: the folder that holds `composer.json`.
+2. Studio checks the folder, runs Composer install with its own PHP, and starts serving the site at its own `.localhost` address.
+
+Your files stay where they are. Studio doesn't copy or move the project, and **Remove from Studio…** only takes the site out of Studio's list. It never deletes files.
+
+Studio runs a site when:
+
+- the folder is a Composer project whose `composer.json` requires `totalcms/cms`
+- the site uses the standard root layout, with the front controller at `public/index.php`
+
+Studio doesn't support these yet:
+
+- **Zip installs.** A site installed from the zip download has no `composer.json` that requires `totalcms/cms`.
+- **Stacks sites.** A site built with the Total CMS stacks isn't a Composer project.
+- **The subpath layout.** A project with its front controller at `public/tcms/index.php`.
+
+If Studio turns a folder away, the message says why. They are all listed under [Troubleshooting](#troubleshooting).
+
+## Everyday use
+
+Select a site in the sidebar to see what you can do with it.
+
+- **Start Site** and **Stop Site** run and stop the site. A site you add starts running straight away. Stopped sites keep their place in the list.
+- **Open in Browser** and **Open Admin** open the site and its admin.
+- **Open in…** opens the project in an editor installed on your Mac, and Studio remembers the one you pick.
+- **Show in Finder** shows the project folder, and **Show log** opens the site's log.
+- **Rename…** changes the name Studio shows. The site's address stays the same.
+
+### Watch CSS & JS
+
+Turn on **Watch CSS & JS** and Studio rebuilds the site's CSS and JavaScript each time you save a file. It runs the `watch` script in the site's `package.json`, which every starter has. Sites without a `watch` script don't show the switch. When Studio builds a site for another reason, such as an update, it stops watching while it builds. Turn it back on when you're ready.
+
+### Connect AI tools
+
+**Connect AI tools** lets Claude Code, Cursor and VS Code work on the site. Studio creates an admin key that works only on Studio's server and only from your computer, and writes it into the project's `.mcp.json`, `.cursor/mcp.json` and `.vscode/mcp.json` under the name `totalcms-local`. Open the folder in one of those tools and it connects to the site. The site must be running for them to reach it.
+
+The name `totalcms-local` keeps it apart from a `totalcms` connection to your live site. Studio also lists those files in the project's `.gitignore` so the key stays out of git. See [Connect an AI client](docs/mcp/connect) for how the key works.
+
+### Let AI tools create sites
+
+**Connect AI tools** works inside one site. This is different: it lets an AI tool manage Studio itself. Ask Claude Code, Codex, Claude Desktop, Cursor or VS Code to "make a portfolio demo site in Studio" and it can do it without you clicking through **New Site…**. It can:
+
+- list the sites in Studio and the starters you can build from
+- create a site from a starter, and open its homepage when it's done
+- add an existing Composer project, with the same checks as **Add Existing…**
+
+It can't start, stop, rename, share or remove a site. To work on a site's content, use **Connect AI tools**.
+
+To set it up, open Settings (**Total CMS Studio › Settings…**) and find **AI tools**. Each AI tool has a row with one button:
+
+- **Claude Code** and **Codex (ChatGPT)**: click **Copy Prompt** and paste it into the tool. The prompt asks the tool to add Studio itself, and to tell you when to restart it. Claude Code adds Studio for your user, so it works in every folder. These two rows are always there, because Studio can't tell whether they're installed.
+- **Cursor** and **VS Code**: click **Add to Cursor** or **Add to VS Code**. The app opens and asks you to confirm before it adds Studio.
+- **Claude Desktop**: click **Add to Claude Desktop**. Studio adds itself to Claude Desktop's settings and leaves everything else in that file alone. Quit and reopen Claude Desktop to use it.
+
+Cursor, VS Code and Claude Desktop only get a row when they're in your Applications folder. For any other AI tool, open **Show setup for other tools** and copy the command or config it needs: the Claude Code command, JSON for Claude Desktop and Cursor, JSON for VS Code, and TOML for Codex. If the tool already has a config file, add the `totalcms-studio` entry under its existing `mcpServers` key (`servers` in VS Code) rather than replacing the file. For Codex, replace any existing `[mcp_servers.totalcms-studio]` table in `config.toml`, because a second one makes the file invalid.
+
+ChatGPT's chat can only connect to MCP servers on the internet, and Studio opens no network port, so it can't reach Studio. Use Codex, ChatGPT's coding agent, instead.
+
+The setup points at the copy of Studio that's running. If you move Studio, set it up again; the prompts replace the old entry. If Studio is running from its disk image, or macOS is running it from a temporary location, Settings asks you to move it to your Applications folder first, because the path wouldn't last.
+
+You don't need to have Studio open. When an AI tool asks for something, Studio opens in the background if it isn't running. Creating a site takes a few minutes, the same as in the window, and the new site appears in the sidebar when it's done. Some AI tools stop waiting after a minute or so. The site is still being made, and it shows up in `list_sites` once it's done, so the tool should check again later instead of starting over. Studio makes one site at a time, so **New Site…** asks you to wait while an AI tool is creating one.
+
+AI tools reach Studio through a private file on your Mac that only your user account can open. Studio doesn't open a network port for this, so no web page or other computer can reach it.
+
+## Share a site
+
+**Share** gives a running site a public link, so you can show it to a client before it's live. **Copy link** copies it, and **Stop sharing** ends it. Share links also end when you quit or restart Studio.
+
+There are two kinds of link.
+
+- **Quick link.** Without any setup, Studio opens a temporary link on `trycloudflare.com`. Anyone with the link can see the site, admin login included. Each share gets a new random address.
+- **Your own domain.** If your domain is on Cloudflare, click **Connect Cloudflare…** in Settings (**Total CMS Studio › Settings…**) and pick the domain on the Cloudflare page that opens. Each site then shares on its own name on that domain, such as `photo-test.yourdomain.com`, and keeps the same name every time you share it. **Use another domain…** switches domains, and **Disconnect** goes back to quick links.
+
+## Updates
+
+### Studio
+
+Studio checks for a new version once a day, and **Check for Updates…** in the app menu checks now. When an update is ready, **Restart to Update** installs it. Your sites stop and share links end while Studio restarts.
+
+Studio can only update itself from a folder it can write to. Keep it in **Applications**, or another folder on your Mac or an external drive. It can't update while it runs straight from the downloaded disk image.
+
+### Your sites
+
+The **Maintenance** section of each site has three jobs.
+
+- **Update Total CMS** updates the site's PHP packages with Composer, Total CMS included, then runs `tcms deploy` to clear caches and finish the update. See [Updates](docs/operations/updates).
+- **Update frontend packages** updates the packages in `package.json` and rebuilds the CSS and JavaScript.
+- **Prepare for upload** gets the folder ready to copy to your web host. It takes out the PHP development tools and builds the CSS and JavaScript. Then upload the folder as described in [Deployment](docs/operations/deployment). **Update Total CMS** puts the development tools back.
+
+Studio runs one job on a site at a time. If you stop a job before it finishes, run it again before you use the site.
+
+## Languages
+
+Studio comes in English (US and UK), German, Spanish, Italian, Dutch and Polish, and follows your Mac's language.
+
+To use Studio in a different language from the rest of your Mac, open System Settings › General › Language & Region › Applications, add Total CMS Studio and choose the language, then reopen Studio.
+
+Starter descriptions and update notes come from totalcms.co, so they are always in English.
+
+## Troubleshooting
+
+Studio shows these messages in your Mac's language, and the tables list the English wording. Most problems come with a message that says what to do. The site log (**Show log**) has the details for anything that fails while Studio works on a site.
+
+### Adding a site
+
+| Message | What to do |
+|---|---|
+| That folder isn't a Composer project. Choose the folder that contains composer.json. | Pick the project's top folder, not `public/` or `tcms-data/`. Zip installs and Stacks sites have no `composer.json` and aren't supported yet. |
+| That folder isn't a Total CMS project. Its composer.json doesn't require totalcms/cms. | The project doesn't install Total CMS through Composer. |
+| This project uses the subpath layout (public/tcms/), which Studio doesn't support yet. | Studio only runs the root layout for now. |
+| This project has no public/index.php, so there is nothing to serve. | Check that the site's front controller is at `public/index.php`. |
+| That folder is already in Studio as "…". | The site is already in the sidebar under that name. |
+| This version of Total CMS can't create the admin account from Studio yet. The setup wizard will ask for it when you open the site. | The site was created with an older Total CMS. Finish the setup wizard in the browser. |
+| Studio is already creating a site. Try again when it's done. | Studio makes one site at a time. An AI tool may be creating one. Wait for it to finish. |
+
+### Sharing
+
+| Message | What to do |
+|---|---|
+| Cloudflare is limiting quick links right now. Try again in a few minutes. | Quick links are rate limited by Cloudflare. Wait, or connect your own domain. |
+| Cloudflare didn't open the link in time. Try again. | Share again. |
+| Studio couldn't reach Cloudflare. Check your internet connection and try again. | Check that your Mac is online. |
+| Cloudflare didn't finish connecting. Try again, and pick your domain on the Cloudflare page. | The Cloudflare page closed before a domain was picked. |
+| Your Cloudflare login has expired. Connect Cloudflare again in Settings. | Click **Connect Cloudflare…** in Settings. |
+| Cloudflare doesn't have this site's tunnel any more. Share again and Studio will make a new one. | The tunnel was deleted in Cloudflare. Share again. |
+
+### Updates and AI tools
+
+| Message | What to do |
+|---|---|
+| Move Total CMS Studio to your Applications folder to get updates. | Studio is running from the disk image or a folder it can't write to. Move it to **Applications** and open it from there. |
+| This update didn't pass Studio's security check, so Studio didn't install it. Download Studio again from totalcms.co. | [Download Studio again](https://totalcms.co/studio/download) and replace the copy in **Applications**. |
+| This site's Total CMS is too old to connect AI tools. Use Update Total CMS first, then try again. | Run **Update Total CMS**, then **Connect AI tools** again. |
+| Total CMS updated, but its cleanup step (tcms deploy) failed. The site log has the details. | The update is in place. Check the log, then run **Update Total CMS** again. |
+
+### Studio itself
+
+| Message | What to do |
+|---|---|
+| Studio couldn't find a free port near 8780 for its local web server. | Other apps are using the ports Studio looks for. Quit them and restart Studio. |
+| The local web server didn't start. Details are in the server log. | Restart Studio. If it happens again, the server log says why. |
+| Total CMS Studio is missing some of its built-in tools. Please reinstall the app. | [Download Studio again](https://totalcms.co/studio/download) and replace the copy in **Applications**. |
 
 ---
 

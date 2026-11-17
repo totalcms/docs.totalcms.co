@@ -33,6 +33,8 @@ ImageWorks is the image processing engine in Total CMS. It transforms images on-
 | `crop-{position}` | Crop anchored to a position (see below) |
 | `crop-focalpoint` | Crop using the image's saved focal point |
 
+ImageWorks never makes an image larger than the original. With a crop, a size bigger than the image keeps its shape: `{w: 1200, h: 630, fit: 'crop'}` on a 640×480 photo gives a 640×336 image, the same 1.91:1 shape, just smaller. Other fits cap each side at the original's size.
+
 ### Crop Positions
 
 Use with `fit: 'crop-{position}'`:
@@ -69,7 +71,9 @@ Use with `fit: 'crop-{position}'`:
 | `blur` | integer | Blur amount (0-100) |
 | `sharp` | integer | Sharpen amount (0-100) |
 | `pixel` | integer | Pixelate amount (0-1000) |
-| `filt` | string | Filter: `greyscale`, `sepia` |
+| `filt` | string | Filter name, or a comma chain of up to 3 (`ember,vignette`). See [Photo Filters](#photo-filters) |
+| `filtamt` | integer | Filter strength (0-100, default 100). Applies to the whole `filt` chain |
+| `duo` | string | Two colors for the `duotone` filter, `shadow,highlight` (hex without `#`, or `palette0`-`palette4`) |
 | `bri` | integer | Brightness adjustment (-100 to 100) |
 | `con` | integer | Contrast adjustment (-100 to 100) |
 | `gam` | float | Gamma correction (0.1 to 9.99) |
@@ -83,6 +87,124 @@ Use with `fit: 'crop-{position}'`:
 
 {# Sharpened product photo #}
 {{ cms.media.imagePath('product', {w: 600, sharp: 15}) }}
+```
+
+### Photo Filters
+
+`filt` applies a look to the image when it is rendered, so the original stays untouched and one edit to a template or preset changes the look site-wide. Filters are free in every edition.
+
+![Every built-in filter on the same photo](./images/imageworks-filters.jpg)
+
+| Group | Filters |
+|-------|---------|
+| Looks | `sepia` (warm brown, classic), `bloom` (bright and airy), `harbor` (cool and crisp), `ember` (golden hour), `meadow` (soft and faded, green-yellow cast), `dusk` (moody, rose-violet), `attic` (vintage), `pop` (punchy), `matte` (lifted blacks, muted color), `polar` (cold and bright), `noir` (high-contrast black and white), `ash` (soft black and white) |
+| Duotones | `lagoon` (navy to aqua), `sunset` (purple to orange), `fern` (green to sage), `blush` (burgundy to pink), `duotone` (your own two colors, see below) |
+| Extras | `vignette` (darkens the corners), `grain` (film grain in the midtones, the same look at any image size), `warm` (a soft golden tint), `cool` (a soft blue tint), `leak` (warm light bleeding in from the top-right corner). Made for chains: they stack on top of a look |
+
+`greyscale` still works exactly as before. `sepia` keeps its name, but since 3.6.10 it is a recipe like the other looks: the old version washed out to near-white on Imagick servers and crushed the shadows on GD, so existing `sepia` images re-render once with the new look.
+
+```twig
+{# One look #}
+{{ cms.media.imagePath('hero', {w: 1600, filt: 'ember'}) }}
+
+{# A chain is applied in order, left to right #}
+{{ cms.media.imagePath('hero', {w: 1600, filt: 'harbor,vignette'}) }}
+
+{# A look with film grain on top #}
+{{ cms.media.imagePath('hero', {w: 1600, filt: 'ember,grain'}) }}
+
+{# Half strength: the filtered image blended over the original #}
+{{ cms.media.imagePath('portrait', {w: 600, filt: 'noir', filtamt: 50}) }}
+```
+
+Rules for the URL:
+
+- Names are not case-sensitive: `Greyscale` is `greyscale`, and shares its cache file. A chain takes up to 3 names, and order matters.
+- A name that is not registered (a typo, or a disabled extension's filter) is dropped silently. If none of the names is known, the image is served as it would be with no `filt`: unfiltered from the same cache file, or with the default `filt` when `imageworks.defaults` sets one. A malformed value, such as a name with a space or 4 names, is a 400.
+- `filtamt` runs from 0 to 100, where 100 (the default) is full strength and 0 is no filter at all (the same cache file as no `filt`). The public URL rounds it to the nearest 5, so there are 21 strengths and not 101.
+- `filt`, `filtamt` and `duo` are applied before watermarks and marks, so a logo keeps its colors under `noir`.
+- Transparent PNG and WebP images stay transparent at any `filtamt`: only the colors are blended, never the alpha.
+- An animated GIF is filtered frame by frame.
+
+If `imageworks.defaults` sets `filtamt`, that value applies to URLs that do not send one, and a URL cannot override it back to 100.
+
+### Duotone
+
+`filt=duotone` maps the image's brightness onto two colors: `duo` is `shadow,highlight`. Each color is a 3 or 6 digit hex value without `#`, in any case (`fff`, `FFFFFF` and `ffffff` are the same color and the same cache file), or `palette0` to `palette4` to use one of the image's [own colors](#color-palette-integration). A pair with anything else in it, such as a color name, falls back to the default. `duo` only applies with the `duotone` filter and is ignored otherwise.
+
+```twig
+{# Fixed colors #}
+{{ cms.media.imagePath('hero', {w: 1600, filt: 'duotone', duo: '1b1f3b,f4a261'}) }}
+
+{# Black to the photo's dominant color, which is also the default #}
+{{ cms.media.imagePath('hero', {w: 1600, filt: 'duotone', duo: '000000,palette0'}) }}
+
+{# Duotone plus a vignette #}
+{{ cms.media.imagePath('hero', {w: 1600, filt: 'duotone,vignette'}) }}
+```
+
+Without `duo`, `duotone` uses `000000,palette0`: a monochrome image in the photo's own color.
+
+### Your own filters
+
+Define filters in `tcms.php` as recipes: an ordered list of steps, as plain data. Once defined, a filter is used like a built-in, in `filt`, in presets and in the admin ImageWorks tool.
+
+```php
+return [
+    'imageworks' => [
+        'filters' => [
+            'golden' => [
+                'label' => 'Golden',
+                'group' => 'look',
+                'steps' => [
+                    ['sepia', 0.25],
+                    ['saturate', 1.3],
+                    ['overlay', 'ff9a3c', 'soft-light', 0.25],
+                    ['vignette', 0.3],
+                ],
+            ],
+        ],
+    ],
+];
+```
+
+```twig
+{{ cms.media.imagePath('hero', {w: 1600, filt: 'golden'}) }}
+```
+
+A filter needs a `steps` list (1 to 12 steps). `label` is the name shown in the admin tool, and `group` (`look`, `duotone` or `effect`, default `look`) decides where it sits in the admin strip: looks and then duotones share the first row, where one is picked at a time, and `effect` filters are listed under Extras, where they stack on top of the chosen look instead of replacing it. An extension's looks and duotones get a row of their own, titled with the extension's name; they are still picked one at a time along with the core looks, and its `effect` filters join Extras. Names are 1-48 lowercase letters, digits and hyphens. A recipe that is not valid is refused and logged, and the rest still load.
+
+| Step | Arguments | What it does |
+|------|-----------|--------------|
+| `brightness` | factor (0-10) | Like CSS `brightness()`; 1 is unchanged |
+| `contrast` | factor (0-10) | Like CSS `contrast()`; 1 is unchanged |
+| `saturate` | factor (0-10) | Like CSS `saturate()`; 1 is unchanged |
+| `grayscale` | amount (0-1) | Like CSS `grayscale()` |
+| `sepia` | amount (0-1) | Like CSS `sepia()` |
+| `hue-rotate` | degrees (-360 to 360) | Like CSS `hue-rotate()` |
+| `fade` | amount (0-1) | Lifts the blacks for a matte look |
+| `overlay` | color, mode, opacity (0-1) | A flat color layered over the image. Modes: `normal`, `multiply`, `screen`, `overlay`, `soft-light` |
+| `vignette` | strength (0-1), optional color | Darkens toward the corners; the color defaults to black |
+| `gradient-map` | 2 to 8 colors | Maps brightness onto the colors, shadows first. This is a duotone |
+| `grain` | amount (0-1) | Monochrome film grain, strongest in the midtones; pure black and white are left alone. The grain grows with the image (one grain per pixel up to a 900px short side, then larger), so it looks the same at any size. The pattern is fixed, so the same image always renders the same |
+| `leak` | color, position, amount (0-1) | A light leak: screens the color in from a corner (`top-left`, `top-right`, `bottom-left`, `bottom-right`) or an edge (`top`, `bottom`, `left`, `right`), fading out over 60% of the image |
+
+Colors are 3 or 6 digit hex, with or without `#`.
+
+The steps use the CSS filter scale, where 1 means unchanged. That is not the scale of the `bri` and `con` parameters (-100 to 100). The advantage is that you can try a look with CSS `filter:` in the browser and copy the numbers.
+
+Notes:
+
+- A filter with the same name as a built-in replaces it, `sepia` included. Only `greyscale` cannot be redefined.
+- Editing a recipe re-renders its images automatically: the cache key carries a version of the recipe.
+- Extensions can ship filters of their own. See [Image Filters](/extensions/extension-points#image-filters) in Extension Points.
+
+#### Image size limit
+
+On servers using the GD driver, filters run in PHP, pixel by pixel. A filter on an image larger than `imageworks.filterMaxPixels` (default 25,000,000 pixels, enough for a 5K retina image) is refused with a 400 and nothing is cached. On GD the limit covers the built-in filters and recipes from `tcms.php` or an extension; `greyscale` and an extension's own PHP class filters are not limited. Imagick runs the color steps natively, so there the limit applies only to filters with a `vignette`, `grain` or `leak` step (`ember`, `attic`, `noir`, `vignette`, `grain`, `leak`, and any recipe that uses one), the steps that are still computed in PHP. An animation counts every frame: a 10-frame GIF of 3,000,000 pixels is 30,000,000. A value of 0 or less turns the limit off. Raise or lower it in `tcms.php`:
+
+```php
+return ['imageworks' => ['filterMaxPixels' => 40000000]];
 ```
 
 ## Borders
@@ -114,9 +236,10 @@ Overlay another image as a watermark.
 | `mark` | string | Watermark image filename |
 | `markw` | mixed | Watermark width (pixels or percentage like `25w`) |
 | `markh` | mixed | Watermark height (pixels or percentage like `25h`) |
-| `markpos` | string | Position: `top-left`, `top`, `top-right`, `left`, `center`, `right`, `bottom-left`, `bottom`, `bottom-right` |
+| `markpos` | string | Position: `top-left`, `top`, `top-right`, `left`, `center`, `right`, `bottom-left`, `bottom`, `bottom-right`, or `tile` to repeat the logo over the whole image |
 | `markpad` | integer | Padding from edge in pixels |
-| `markalpha` | integer | Opacity (0-100, where 100 is fully opaque) |
+| `markalpha` | integer | Opacity (0-100, where 100 is fully opaque). Default: 100, or 30 when tiled |
+| `markrepeat` | integer | Tiled mode only: logos across the image (1-12, default: 4) |
 | `markfit` | string | How the watermark fits: `contain`, `max`, `fill`, `stretch`, `crop` |
 
 ```twig
@@ -128,6 +251,25 @@ Overlay another image as a watermark.
     markpos: 'bottom-right',
     markpad: 20,
     markalpha: 70
+}) }}
+```
+
+### Tiled Logo Watermarks
+
+`markpos: 'tile'` repeats the logo over the whole image in offset rows, the
+same way a [tiled text mark](#tiled-watermarks) does, so there is no clean
+corner to crop out. The logo is faint (`markalpha` 30) unless you set the
+opacity, and `markrepeat` sets how many logos run across the image.
+`markw`, `markh`, `markpad` and `markfit` don't apply to a tiled logo. Use a
+PNG with a transparent background: a JPEG logo tiles as solid rectangles.
+
+```twig
+{# Proof sheet: the studio logo repeated across the image #}
+{{ cms.media.imagePath('photo', {
+    w: 1600,
+    mark: 'logo.png',
+    markpos: 'tile',
+    markrepeat: 5
 }) }}
 ```
 
@@ -155,7 +297,7 @@ You can configure watermarks at the schema, collection, or per-object level usin
 
 Watermark settings follow the three-level override hierarchy: **schema → collection → per-object**. Override at the collection level in collection meta, or per-object using custom properties.
 
-**Replacing the logo.** Watermarked renders are cached by the logo file's modified time, so uploading a new `logo.png` under the same name re-renders every image on its next request. The old renders stay on disk until you clear the cache.
+**Replacing the logo.** Watermarked renders are cached by the logo file's modified time, so uploading a new `logo.png` under the same name re-renders every image on its next request. The old renders stay on disk until you clear the cache. The same goes for an image placed with [`markimage`](#images-from-other-records).
 
 ### Protecting Original Images
 
@@ -169,10 +311,13 @@ the source image. When the property carries `settings.watermark`, that shortcut
 is skipped: the image is processed and marked before it is served, so there is
 no URL that yields a clean original.
 
-**They override URL parameters.** Schema settings are merged *after* anything
-in the query string, so a visitor cannot weaken, move or remove the mark by
-editing the URL. Passing `marktextsize=1` against a schema that sets
-`marktextsize=140` still produces the schema's watermark.
+**They override URL parameters.** The schema's watermark is drawn last, on top
+of anything the URL asks for, and no URL parameter changes it, so a visitor
+cannot weaken, move or remove the mark by editing the URL. Passing
+`marktextsize=1` or `marktextalpha=0` against a schema that sets
+`marktextsize=140` still produces the schema's watermark. A schema text mark
+replaces the URL's own `marktext`, and a schema logo replaces the URL's `mark`;
+layers the URL lists in [`marks`](#layered-marks) are drawn under the schema's.
 
 If you need the unmarked file, read it from the object's property directly in a
 template rather than through an ImageWorks URL.
@@ -227,13 +372,15 @@ Render text directly on images without needing a separate watermark image.
 |-----------|------|-------------|
 | `marktext` | string | Text to render |
 | `marktextfont` | string | Font family name (TTF/OTF from the watermark-fonts depot) |
-| `marktextsize` | integer | Font size the text is drawn at, in pixels (default: 500). Set it without `marktextw` for a fixed size; see [Text size](#text-size) |
+| `marktextsize` | mixed | Font size in pixels, or relative to the image (`6w` is 6% of its width, `4h` 4% of its height). With `marktextw` the text wraps; see [Text size](#text-size) |
 | `marktextcolor` | string | Text color as hex without `#` (e.g., `ffffff`) |
 | `marktextbg` | string | Background color as hex (optional, transparent if not set) |
 | `marktextpad` | integer | Padding around text in pixels (default: 10) |
 | `marktextangle` | integer | Rotation angle in degrees (-360 to 360, default: 0) |
 | `marktextpos` | string | Position (same options as image watermarks), or `tile` to repeat the text over the whole image |
 | `marktextw` | mixed | Text width in pixels or relative to the image (e.g., `50w` for 50% of image width). Default: `40w` when `marktextsize` is not set |
+| `marktextlines` | integer | Wrapped text only: the most lines before the font size steps down (1-6, default: 3) |
+| `marktextalign` | string | How the lines line up: `left` (default), `center` or `right` |
 | `marktextalpha` | integer | Opacity (0-100, where 100 is fully opaque). Default: 100, or 30 when tiled |
 | `marktextstroke` | integer | Outline width as a percentage of the font size (0-25, default: 0) |
 | `marktextstrokecolor` | string | Outline color as hex (default: `000000`) |
@@ -246,11 +393,42 @@ Render text directly on images without needing a separate watermark image.
 With no size set, the text spans 40% of the image's width, so the mark has
 the same weight on a 400px thumbnail as on the 2,400px original.
 
-- **`marktextw`** sets that width yourself: `25w` for a quarter of the image,
-  or a pixel width.
-- **`marktextsize` alone** draws the text at that fixed pixel size, whatever
-  the image size. If the text would be wider than the image, it is shrunk to
-  90% of the image width.
+- **`marktextw` alone** sets that width yourself: `25w` for a quarter of the
+  image, or a pixel width. The text stays on one line and is scaled to fit,
+  so a long title comes out small.
+- **`marktextsize` alone** draws the text at that size, whatever the image
+  size. If the text would be wider than the image, it is shrunk to 90% of the
+  image width.
+- **Both together wrap the text.** `marktextw` is the box and `marktextsize`
+  the font size: the text breaks between words to stay inside the box (its
+  plate and padding included). When it still needs more than `marktextlines`
+  lines (default 3), or a single word is wider than the box, the font size
+  steps down until it fits. A title that fits on one line is left as it is.
+  Wrapping is a Pro edition feature: below Pro the text is drawn on one line
+  at `marktextsize`, as it was before wrapping.
+
+A relative size such as `6w` keeps a wrapped title the same shape at any
+image size, which matters when the image is smaller than the size you asked
+for (ImageWorks never enlarges a photo, so `w: 1200` on a 1,024px photo
+gives a 1,024px card).
+
+```twig
+{# A share card title: up to three lines across 60% of the image #}
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markgradient: 'bottom', markh: '100h', markpos: 'bottom', markalpha: 85},
+    {marktext: post.title, marktextw: '60w', marktextsize: '6w', marktextlines: 3,
+     marktextpos: 'bottom-left', marktextx: '5w', marktexty: '8h'}
+]}, {collection: 'blog'}) }}
+
+{# Centered over a darkened photo #}
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markalpha: 65},
+    {marktext: post.title, marktextw: '70w', marktextsize: '7w', marktextalign: 'center', marktextpos: 'center'}
+]}, {collection: 'blog'}) }}
+```
+
+A line break in the text always starts a new line, though URLs do not accept
+one: line breaks reach a mark only from settings stored on the server.
 
 ### Tiled Watermarks
 
@@ -293,12 +471,17 @@ font size, so they keep their look at any image size.
 }) }}
 ```
 
-Outline and shadow need a TTF or OTF font. On a server without FreeType, the
-text falls back to GD's built-in bitmap font and is drawn without them.
+Text is drawn with the TTF or OTF font you choose, or Roboto by default.
 
 ### Custom Fonts
 
-Upload TTF or OTF fonts to the watermark-fonts depot (configurable via `watermarkFontsDepot` setting). The default font is RobotoRegular.
+Text is drawn in Roboto Regular unless a mark names another font. To add one:
+
+1. Open the **Depot** collection in the admin and create an object with the id `watermark-fonts`, or open it if it exists.
+2. Upload your `.ttf` or `.otf` files to its depot field.
+3. Name a font by its file name in `marktextfont`, with or without the extension: `Dorsa-Regular` finds `Dorsa-Regular.ttf`.
+
+A name that matches no file draws in Roboto without an error, so check the spelling when the font does not change. The depot object's id is the `watermarkFontsDepot` ImageWorks setting, if you want another.
 
 ```twig
 {# Simple copyright watermark #}
@@ -335,6 +518,171 @@ Upload TTF or OTF fonts to the watermark-fonts depot (configurable via `watermar
     marktextalpha: 50
 }) }}
 ```
+
+## Layered Marks
+
+`marks` takes a list of marks and draws them in order, each over the last.
+Each entry takes the same parameters as a single mark: `mark*` for a logo, an
+image or a [color fill](#color-fills), `marktext*` for text. That gives you a large headline over a small
+caption, two logos, or a profile photo beside a name, all in one render.
+
+> **Layered marks are a Pro edition feature.** That covers `marks`, images from other records (`markimage`, `markshape`), color fills (`markfill`, `markgradient`) and [wrapped text](#text-size). Below Pro, ImageWorks leaves those parameters out and draws the image without them, in a URL and in a schema's watermark settings alike, so a lapsed license gives plainer images, not broken ones. One logo and one line of text, tiled or not, work on every edition.
+
+```twig
+{# A share card: big title, caption, address, and the logo #}
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {marktext: post.title, marktextw: '70w', marktextpos: 'top-left', marktextx: '5w', marktexty: '8h', marktextbg: '0b0f1a'},
+    {marktext: 'Read the full story', marktextw: '30w', marktextpos: 'bottom-left', marktextx: '5w', marktexty: '8h'},
+    {marktext: 'example.com', marktextcolor: 'f97318', marktextw: '20w', marktextpos: 'top-right', marktextpad: '4w'},
+    {mark: 'logo.png', markw: '8w', markpos: 'bottom-right', markpad: '4w'}
+]}, {collection: 'blog'}) }}
+```
+
+- The flat parameters still work, and draw first: `mark` and `marktext`
+  outside the list are a logo layer and a text layer, in that order. An entry
+  with both `mark` and `marktext` is two layers too.
+- One request draws at most **6 layers**, counting the flat ones. A public
+  image URL asking for more is refused with a 400.
+- Tiled marks (`markpos: 'tile'`, `marktextpos: 'tile'`) work as layers.
+- A [schema watermark](#schema-level-watermarks) is drawn on top of every
+  layer the URL asks for.
+
+### Color Fills
+
+`markfill` lays a color over the image, or over a band of it, so the text and
+logos drawn after it stay readable on any photo. It is a layer like any other:
+put it first in `marks` and everything after it sits on top.
+
+| Parameter | Description |
+|-----------|-------------|
+| `markfill` | The color: hex (`0b0f1a`), or `palette0` to `palette4` for one of the image's own colors |
+| `markalpha` | Opacity, 0-100 (default: 50) |
+| `markgradient` | `top`, `bottom`, `left` or `right`: solid at that edge, fading to clear at the other. Leave it out for a flat color |
+| `markw`, `markh` | Size of the fill (default: the whole image), e.g. `markh: '30h'` for a band 30% of the image tall |
+| `markpos`, `markx`, `marky` | Where the fill sits, as for a logo (default: `center`) |
+
+#### Fade from the bottom
+
+The one to reach for first on a share card. The fade runs the full height of
+the image, so the top of the photo stays clear and bright while the bottom,
+where the text sits, is dark enough to read white text on any photo.
+
+```twig
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markgradient: 'bottom', markh: '100h', markpos: 'bottom', markalpha: 85},
+    {marktext: post.title, marktextw: '60w', marktextsize: '6w', marktextpos: 'bottom-left', marktextx: '5w', marktexty: '8h'},
+    {mark: 'logo.png', markw: '12w', markpos: 'top-right', markpad: '4w'}
+]}, {collection: 'blog'}) }}
+```
+
+#### Two fades for bright photos
+
+One fade strong enough for a white sky darkens the whole photo. Stack two
+instead: a light fade over the full height, then a short, strong one at the
+edge where the text sits. Fills are layers, so the second darkens the first.
+
+```twig
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markgradient: 'bottom', markh: '100h', markpos: 'bottom', markalpha: 50},
+    {markfill: '0b0f1a', markgradient: 'bottom', markh: '45h', markpos: 'bottom', markalpha: 80},
+    {marktext: post.title, marktextw: '60w', marktextsize: '6w', marktextpos: 'bottom-left', marktextx: '5w', marktexty: '8h'}
+]}, {collection: 'blog'}) }}
+```
+
+#### Fade from the top
+
+The same idea for a headline at the top: flip `markgradient`, `markpos` and
+the text position.
+
+```twig
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markgradient: 'top', markh: '100h', markpos: 'top', markalpha: 85},
+    {marktext: post.title, marktextw: '60w', marktextpos: 'top-left', marktextx: '5w', marktexty: '8h'}
+]}, {collection: 'blog'}) }}
+```
+
+#### Fade from one side
+
+Text down one side, with the photo's subject clear on the other. The fill is
+`70w` wide, so the last 30% of the image is untouched.
+
+```twig
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markgradient: 'left', markw: '70w', markh: '100h', markpos: 'left', markalpha: 90},
+    {marktext: post.title, marktextw: '35w', marktextpos: 'left', marktextx: '5w'}
+]}, {collection: 'blog'}) }}
+```
+
+#### Darken the whole photo
+
+A flat tint for text in the middle of the image. The photo shows through less
+than with a fade, so keep it for busy photos where text anywhere is hard to read.
+
+```twig
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markalpha: 65},
+    {marktext: post.title, marktextw: '70w', marktextpos: 'center'}
+]}, {collection: 'blog'}) }}
+```
+
+#### A solid band
+
+A strip of color behind a short label.
+
+```twig
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markfill: '0b0f1a', markh: '22h', markpos: 'bottom', markalpha: 90},
+    {marktext: 'New on the blog', marktextw: '40w', marktextpos: 'bottom', marktexty: '6h'}
+]}, {collection: 'blog'}) }}
+```
+
+#### Tips
+
+- **How strong:** 60-75 for a flat tint behind white text, 85-100 for a fade.
+  A fade loses opacity evenly from its solid edge, so halfway along it is at
+  half the opacity you set; that is why it needs the higher number. Below
+  about 50, a dark fill on a dark photo is hard to notice at all.
+- **Near-black beats pure black.** A deep navy or charcoal such as `0b0f1a`
+  looks richer than `000000` and still gives white text full contrast.
+- **Palette colors follow the photo.** `palette0` is the image's main color,
+  which can be light on one photo and dark on the next. White text on a light
+  palette color is unreadable, so use a palette fill where the text color is
+  chosen for it, or as a low-opacity tint under a hex fade.
+- **Keep every mark in `marks`.** The flat `mark` and `marktext` parameters
+  are drawn before the `marks` list, so they would end up under the fill.
+
+### Images From Other Records
+
+`markimage` places an image from another record, such as the author's photo on
+a blog post's share image, or a member's photo on their profile card. It takes
+the same sizing and position parameters as `mark`.
+
+| Value | Image |
+|-------|-------|
+| `collection/id/property` | The image in an image field |
+| `collection/id/property/name` | The gallery image with that file name (without its extension) |
+| `collection/id/property/first` | The first gallery image (`last` for the last one) |
+
+| Parameter | Description |
+|-----------|-------------|
+| `markimage` | The image to place, as above |
+| `markshape` | `circle` cuts the image to a circle. With only `markw` set it is cut square first, around the image's focal point |
+
+```twig
+{# The author's photo, round, in the bottom-left corner #}
+{{ cms.media.imagePath(post, {w: 1200, h: 630, fit: 'crop', marks: [
+    {markimage: 'authors/' ~ post.author ~ '/photo', markshape: 'circle', markw: '15w', markpos: 'bottom-left', markpad: '4w'},
+    {marktext: post.author_name, marktextw: '30w', marktextpos: 'bottom-left', marktextx: '22w', marktexty: '8h'}
+]}, {collection: 'blog'}) }}
+```
+
+- Only image and gallery fields can be placed. `random` and `featured` are not
+  offered, because the render is cached and would keep its first pick.
+- When the record or its image is missing, that layer is left out and the rest
+  of the image is drawn as usual.
+- With `markfit: 'crop'`, any image is cut around its focal point.
+- Every image ImageWorks can place is already public through its own
+  ImageWorks URL; `markimage` reaches nothing that URL does not.
 
 ## Color Palette Integration
 
