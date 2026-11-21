@@ -296,13 +296,23 @@ Custom singular term for collection items.
 **Required:** No
 **Default:** `"id"`
 
-The default property used to sort objects in the admin collection view.
+The default sort for the admin collection view. It takes the same syntax as the query API's [`sort` parameter](/apis/index-filter#sorting): one property, or several separated by commas, each with an optional direction. The field suggests the schema's properties.
+
+| Sort By | Order |
+|---|---|
+| `title` | Title A-Z |
+| `-date` | Date, newest first |
+| `date:desc` | The same, in the colon format |
+| `date:desc,title:asc` | Newest first, then alphabetical by title |
+| `-price` | Price, high to low |
 
 ```json
 {
-    "sortBy": "date"
+    "sortBy": "-date,title"
 }
 ```
+
+A single property name, the only form earlier versions accepted, still works as before. The Reverse Sort setting is gone: updating converts a collection that had it ticked into the reversed Sort By (`date` becomes `-date`). Clicking a column header in the table sorts by that column alone. `shuffle` is ignored here. A property the schema doesn't have changes nothing.
 
 **Common sort properties:**
 - `id` - Alphabetical by ID
@@ -311,27 +321,10 @@ The default property used to sort objects in the admin collection view.
 - `onCreate` - By creation date
 - `onUpdate` - By last modified date
 
----
-
-### reverseSort
-
-**Type:** `boolean`
-**Required:** No
-**Default:** `false`
-
-Reverses the default sort order (descending instead of ascending).
-
-```json
-{
-    "sortBy": "date",
-    "reverseSort": true
-}
-```
-
 **Common patterns:**
-- `sortBy: "date", reverseSort: true` - Newest first
-- `sortBy: "title", reverseSort: false` - A-Z
-- `sortBy: "priority", reverseSort: false` - Lowest priority first
+- `-date` - Newest first
+- `title` - A-Z
+- `-featured,title` - Featured first, then A-Z
 
 ---
 
@@ -548,6 +541,7 @@ Access groups grant operations per collection. On an owned collection the same g
 - **Create** — the owner is stamped server-side with the acting user's id, whatever the request sent. An anonymous public submission (`publicOperations: ["create"]`) stores an empty owner.
 - **Read, update, delete, property and file routes** — refused with `403` when the object belongs to someone else. A write that names an object id that does not exist is refused too (a read gets the usual `404`): members create through `POST /api/collections/{collection}`. The response is the same "Access denied" as a group refusal; the access log says `reason: owner` (or `reason: group` when the access group refused first).
 - **List and query** — `GET /api/collections/{c}/index` and `/query` return only the user's own objects. `ids=`, `filter=` and `search=` cannot widen that.
+- **In the admin.** A member's collection table lists only the objects they own, their drafts included, even when the collection's Read is public. Super admins see every object.
 - **Bulk delete, reindex and clone** — refused for scoped members; super admins, API keys and admin bearer tokens are unaffected. Bulk and reindex cannot be scoped; a clone would copy another object's owner.
 - **Whole-collection routes are an allow-list.** A scoped member can create (`POST /api/collections/{collection}`), list (`/query` and `/index`, both scoped) and open the admin collection page (not its export, import, factory, sitemap or feeds pages). Every other route that has no object id is refused with `403`: export (`/api/export/collections/{collection}/...`), report (`/api/report/collections/{collection}/...`), import (`/api/import/collections/{collection}/...`), reindex, bulk delete, and duplicating another object from the admin ("duplicate" on the add page), as well as `object-clone`.
 - The owner property itself cannot be changed by its owner. It is protected by being named here; see [protected](/schemas/validation#protected) for the per-field version.
@@ -810,7 +804,6 @@ A fully configured collection metadata file:
     "labelPlural": "Team Members",
     "labelSingular": "Team Member",
     "sortBy": "lastName",
-    "reverseSort": false,
 
     "groups": [],
     "publicOperations": ["read"],
