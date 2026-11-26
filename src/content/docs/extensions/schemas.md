@@ -54,6 +54,7 @@ Read-only schemas:
 - Cannot be edited by the user through the admin UI
 - Are removed when the extension is disabled or removed
 - Appear in the schema list alongside built-in and custom schemas
+- Can be chosen for a collection: the collection form lists them under **Extension Schemas**
 
 The presence of a `schemas/` directory is auto-detected when the extension is enabled and surfaces as a `Schemas` capability on the extension's permission list. Admins can toggle this capability off to hide the extension's read-only schemas without uninstalling the extension. If you add a `schemas/` directory to an already-enabled extension, disable + re-enable so the capability is re-detected.
 
@@ -65,7 +66,9 @@ When Total CMS looks up a schema, it checks in this order:
 2. **Extension schemas** (in extension `schemas/` directories)
 3. **Custom schemas** (in `tcms-data/.schemas/`)
 
-This means an extension schema cannot override a built-in schema, and a custom schema can override an extension schema if needed.
+The first match wins, so an extension schema cannot override a built-in schema, and a custom schema cannot override an extension schema: the extension's file is used and the custom one is ignored. Saving a custom schema under an extension schema's id is refused while the extension is enabled.
+
+A custom copy with the same id is only of use to an install that does not have the extension, such as a second install sharing the data folder. It is safer to give every such install the same extensions: see [Shared Data](/operations/shared-data#what-stays-per-install).
 
 ## Installable Schemas
 
